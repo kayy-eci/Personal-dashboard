@@ -2,7 +2,7 @@
 
 A personal web dashboard that turns real-life habits, goals, and tasks into an RPG-style progression system. Your character's stats, XP, level, and health are calculated automatically from what you actually get done.
 
-> **Status:** In planning. No stable version has been released yet.
+> **Status:** Dashboard UI prototype. Activity, quest, goal, and attribute values are sample data; dashboard check-ins are temporary previews and are not saved to a ledger.
 
 ## Why
 
@@ -36,13 +36,18 @@ Habits, tasks, and goals usually live in separate tools, and none of them show h
 
 ## Tech Stack
 
-- Frontend: [Vite](https://vite.dev)
-
-More will be added as the project takes shape.
+- Frontend: React, TypeScript, and [Vite](https://vite.dev)
 
 ## Getting Started
 
-Setup instructions will be added once the first version is ready.
+Install dependencies and start the local development server:
+
+```sh
+npm install
+npm run dev
+```
+
+Run the production build and lint checks with `npm run build` and `npm run lint`.
 
 ## License
 
