@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { EventManager, type ManagedEvent } from '../../components/event-manager'
 import { initialGoals } from '../Dashboard/dashboard-data'
 import { DemoNotice, FeaturePanel, ProgressTrack, SummaryGrid } from './FeaturePage.shared'
-import { GoalsCalendar, type GoalCalendarEvent } from './GoalsCalendar'
 
 interface Goal {
   id: string
@@ -82,31 +82,27 @@ export function GoalsPage() {
   const [targetDate, setTargetDate] = useState('')
   const [expandedGoalIds, setExpandedGoalIds] = useState<Set<string>>(() => new Set())
 
-  const calendarEvents = useMemo<GoalCalendarEvent[]>(
+  const goalEvents = useMemo<ManagedEvent[]>(
     () =>
       goals.flatMap((goal) => [
         ...(goal.targetDate
-          ? [
-              {
-                id: `${goal.id}-deadline`,
-                date: goal.targetDate,
-                goalTitle: goal.title,
-                title: goal.title,
-                type: 'goal' as const,
-              },
-            ]
+          ? [{
+              id: `${goal.id}-deadline`,
+              date: goal.targetDate,
+              title: goal.title,
+              goalTitle: goal.title,
+              type: 'goal' as const,
+            }]
           : []),
         ...goal.milestones.flatMap((milestone, index) =>
           milestone.dueDate
-            ? [
-                {
-                  id: `${goal.id}-milestone-${index}`,
-                  date: milestone.dueDate,
-                  goalTitle: goal.title,
-                  title: milestone.title,
-                  type: 'milestone' as const,
-                },
-              ]
+            ? [{
+                id: `${goal.id}-milestone-${index}`,
+                date: milestone.dueDate,
+                title: milestone.title,
+                goalTitle: goal.title,
+                type: 'milestone' as const,
+              }]
             : [],
         ),
       ]),
@@ -201,7 +197,7 @@ export function GoalsPage() {
           </form>
         )}
 
-        <GoalsCalendar events={calendarEvents} />
+        <EventManager events={goalEvents} />
 
         {goals.length === 0 ? (
           <div className="feature-empty" role="status">
