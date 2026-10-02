@@ -1,7 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { mockActivityYear } from '../../components/activity-data'
+import { GitHubActivityGrid } from '../../components/github-activity-grid'
 import type { HabitItem } from '../Dashboard/dashboard-data'
-import { ActivityGrid } from './ActivityGrid'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
+
+const activityDays = mockActivityYear(2026)
 
 type ManagedHabit = HabitItem & {
   done: boolean
@@ -134,7 +137,7 @@ export function HabitsPage() {
 
   return (
     <div className="feature-page feature-page__content">
-      <ActivityGrid seed={2026} />
+      <GitHubActivityGrid days={activityDays} />
       <DemoNotice>
         Sample routines only. Check-ins and edits stay in this browser session and do not update saved player stats.
       </DemoNotice>

@@ -3,8 +3,11 @@ import {
   initialQuests,
   type QuestItem,
 } from '../Dashboard/dashboard-data'
-import { ActivityGrid } from './ActivityGrid'
+import { mockActivityYear } from '../../components/activity-data'
+import { GitHubActivityGrid } from '../../components/github-activity-grid'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
+
+const activityDays = mockActivityYear(42)
 
 type QuestFilter = 'all' | QuestItem['category']
 
@@ -69,7 +72,7 @@ export function QuestManagementPage() {
 
   return (
     <div className="feature-page feature-page__content">
-      <ActivityGrid seed={42} />
+      <GitHubActivityGrid days={activityDays} />
       <DemoNotice>
         Quest completion is a preview only. XP calculations and attribute updates are not written to a ledger.
       </DemoNotice>
