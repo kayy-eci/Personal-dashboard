@@ -6,6 +6,8 @@ import './PlayerStatusCard.css'
 
 export interface PlayerStatusCardProps {
   status: PlayerStatus
+  completedHabits: number
+  totalHabits: number
 }
 
 /**
@@ -15,7 +17,11 @@ export interface PlayerStatusCardProps {
  * The name is user-owned and editable. Health, XP and level are NOT — they are
  * calculated from real activity (PRD §2), so they render read-only here.
  */
-export function PlayerStatusCard({ status }: PlayerStatusCardProps) {
+export function PlayerStatusCard({
+  status,
+  completedHabits,
+  totalHabits,
+}: PlayerStatusCardProps) {
   const { profileWithAvatar, setName, selectAvatarFile, clearAvatar, avatarError } =
     usePlayerProfile()
 
@@ -24,78 +30,91 @@ export function PlayerStatusCard({ status }: PlayerStatusCardProps) {
 
   return (
     <section className="status-card" aria-labelledby="status-card-heading">
-      <h2 id="status-card-heading" className="sr-only">
-        Player status
-      </h2>
-
-      <Avatar
-        src={profileWithAvatar.avatarSrc}
-        name={profileWithAvatar.name}
-        selectFile={selectAvatarFile}
-        clear={clearAvatar}
-        error={avatarError}
-      />
-
-      <div className="status-card__identity">
-        <label className="sr-only" htmlFor="player-name">
-          Your name
-        </label>
-        <input
-          id="player-name"
-          className="status-card__name"
-          value={profileWithAvatar.name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Put your name"
-          maxLength={40}
-          autoComplete="off"
+      <div className="status-card__overview">
+        <Avatar
+          src={profileWithAvatar.avatarSrc}
+          name={profileWithAvatar.name}
+          selectFile={selectAvatarFile}
+          clear={clearAvatar}
+          error={avatarError}
         />
+
+        <div className="status-card__identity">
+          <div className="status-card__identity-meta">
+            <label className="sr-only" htmlFor="player-name">
+              Character name
+            </label>
+            <input
+              id="player-name"
+              className="status-card__name"
+              value={profileWithAvatar.name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Put your name"
+              maxLength={40}
+              autoComplete="off"
+            />
+            <span className="status-card__rank">Level {status.level}</span>
+          </div>
+          <h2 id="status-card-heading" className="status-card__heading">
+            Your player profile
+          </h2>
+          <p className="status-card__online">
+            <span aria-hidden="true" />
+            Sample data · changes are temporary
+          </p>
+          <p className="status-card__streak">
+            {status.currentStreak} day{status.currentStreak === 1 ? '' : 's'} active streak
+          </p>
+        </div>
       </div>
 
       <dl className="status-card__stats">
-        <div className="status-card__level">
-          <dt className="sr-only">Level</dt>
-          <dd className="status-card__level-value">Level {status.level}</dd>
+        <div className="status-card__stat status-card__stat--health">
+          <div className="status-card__stat-heading">
+            <dt>Vitality</dt>
+            <dd>{status.health} / {status.maxHealth} HP</dd>
+          </div>
+          <ProgressBar
+            label="Vitality"
+            value={status.health}
+            max={status.maxHealth}
+            valueText={`${status.health} of ${status.maxHealth} health (${Math.round(hpPercent)}%)`}
+            tone="health"
+          />
+          <span className="status-card__stat-note">{Math.round(hpPercent)}% available</span>
         </div>
 
-        <div className="status-card__stat">
-          <dt className="status-card__stat-label">Health</dt>
-          <dd className="status-card__stat-body">
-            <ProgressBar
-              label="Health"
-              value={status.health}
-              max={status.maxHealth}
-              valueText={`${status.health} of ${status.maxHealth} health`}
-              tone="health"
-            />
-            <span className="status-card__stat-value">
-              {status.health} / {status.maxHealth} HP ({Math.round(hpPercent)}%)
-            </span>
-          </dd>
+        <div className="status-card__stat status-card__stat--xp">
+          <div className="status-card__stat-heading">
+            <dt>XP progress</dt>
+            <dd>{status.totalXp.toLocaleString()} XP</dd>
+          </div>
+          <ProgressBar
+            label="Experience to next level"
+            value={status.xpIntoLevel}
+            max={status.xpForNextLevel}
+            valueText={`${status.xpIntoLevel} of ${status.xpForNextLevel} XP to next level`}
+            tone="xp"
+          />
+          <span className="status-card__stat-note">
+            {Math.round(xpPercentIntoLevel)}% to level {status.level + 1}
+          </span>
         </div>
 
-        <div className="status-card__stat">
-          <dt className="status-card__stat-label">Experience</dt>
-          <dd className="status-card__stat-body">
-            <ProgressBar
-              label="Experience to next level"
-              value={status.xpIntoLevel}
-              max={status.xpForNextLevel}
-              valueText={`${status.xpIntoLevel} of ${status.xpForNextLevel} XP to next level`}
-              tone="xp"
-            />
-            <span className="status-card__stat-value">
-              {status.xpIntoLevel} / {status.xpForNextLevel} XP ({Math.round(xpPercentIntoLevel)}%)
-            </span>
-          </dd>
-        </div>
-
-        <div className="status-card__stat">
-          <dt className="status-card__stat-label">Streak</dt>
-          <dd className="status-card__stat-body">
-            <span className="status-card__stat-value">
-              {status.currentStreak} day{status.currentStreak === 1 ? '' : 's'}
-            </span>
-          </dd>
+        <div className="status-card__stat status-card__stat--daily">
+          <div className="status-card__stat-heading">
+            <dt>Daily habits</dt>
+            <dd>{completedHabits} / {totalHabits} done</dd>
+          </div>
+          <ProgressBar
+            label="Daily habits completed"
+            value={completedHabits}
+            max={totalHabits}
+            valueText={`${completedHabits} of ${totalHabits} daily habits completed`}
+          />
+          <span className="status-card__stat-note">
+            {totalHabits - completedHabits} remaining today
+          </span>
         </div>
       </dl>
     </section>

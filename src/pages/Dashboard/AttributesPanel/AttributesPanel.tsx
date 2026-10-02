@@ -16,10 +16,15 @@ export function AttributesPanel({ status }: AttributesPanelProps) {
   return (
     <section className="attributes" aria-labelledby="attributes-heading">
       <div className="attributes__header">
-        <h2 id="attributes-heading" className="attributes__title">
-          Attributes
-        </h2>
-        <p className="attributes__hint">Calculated from your activity</p>
+        <div>
+          <h2 id="attributes-heading" className="attributes__title">
+            Core attributes
+          </h2>
+          <p className="attributes__hint">
+            System-computed from your completed activities
+          </p>
+        </div>
+        <span className="attributes__source">Read only</span>
       </div>
 
       <ul className="attributes__list" role="list">
@@ -27,12 +32,16 @@ export function AttributesPanel({ status }: AttributesPanelProps) {
           const percent = xpPercent(attribute.xp, attribute.xpToNextLevel)
 
           return (
-            <li key={attribute.key} className="attributes__item">
-              <div className="attributes__meta">
+            <li
+              key={attribute.key}
+              className="attributes__item"
+              data-attribute={attribute.key}
+            >
+              <div className="attributes__item-heading">
                 <span className="attributes__key">{attribute.key}</span>
-                <span className="attributes__label">{attribute.label}</span>
-                <span className="attributes__level">Lv. {attribute.level}</span>
+                <span className="attributes__level">LV {attribute.level}</span>
               </div>
+              <h3 className="attributes__label">{attribute.label}</h3>
 
               <ProgressBar
                 label={`${attribute.label} experience`}
@@ -43,7 +52,8 @@ export function AttributesPanel({ status }: AttributesPanelProps) {
               />
 
               <span className="attributes__xp">
-                {attribute.xp} / {attribute.xpToNextLevel} XP ({Math.round(percent)}%)
+                {attribute.xp.toLocaleString()} XP
+                <span>{Math.round(percent)}% to next level</span>
               </span>
             </li>
           )

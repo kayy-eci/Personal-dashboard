@@ -1,35 +1,70 @@
-/* PlayerStatusCard — portrait, name, and the system-determined HUD bars. */
+/* PlayerStatusCard — player identity and system-determined HUD. */
 
 .status-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
+  --status-primary: #630ed4;
+  --status-subtle: #f8fafc;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
   padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   box-shadow: var(--shadow-xs);
 }
 
+.status-card__overview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.status-card .avatar {
+  flex: 0 0 auto;
+}
+
+.status-card .avatar__frame {
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 2px solid rgba(99, 14, 212, 0.2);
+  border-radius: 12px;
+}
+
+.status-card .avatar__initial {
+  font-size: 1.75rem;
+}
+
+.status-card .avatar__label {
+  font-size: 0.65rem;
+}
+
+.status-card .avatar__actions {
+  opacity: 1;
+}
+
 .status-card__identity {
-  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+
+.status-card__identity-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .status-card__name {
-  width: 100%;
-  padding: var(--space-1) var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border: 0;
   color: var(--text);
-  font-size: var(--text-lg);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  text-align: center;
-  transition:
-    background-color var(--motion-fast) var(--easing),
-    border-color var(--motion-fast) var(--easing);
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
 }
 
 .status-card__name::placeholder {
@@ -37,63 +72,127 @@
   font-weight: 500;
 }
 
-.status-card__name:hover {
-  background: var(--surface-sunken);
-}
-
 .status-card__name:focus {
-  background: var(--surface-sunken);
-  border-color: var(--border-strong);
   outline: none;
 }
 
 .status-card__name:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.status-card__rank {
+  padding: 0.2rem 0.5rem;
+  color: var(--status-primary);
+  background: #f5efff;
+  border: 1px solid #e2d1ff;
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-card__heading {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.status-card__online,
+.status-card__streak {
+  margin-top: var(--space-1);
+  color: var(--text-faint);
+  font-size: var(--text-xs);
+}
+
+.status-card__online {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status-card__online span {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #059669;
+  border-radius: 50%;
 }
 
 .status-card__stats {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--space-3);
   width: 100%;
   margin: 0;
 }
 
-.status-card__level {
+.status-card__stat {
   display: flex;
-  justify-content: center;
-  padding-bottom: var(--space-1);
-  border-bottom: 1px solid var(--border);
-}
-
-.status-card__level-value {
-  margin: 0;
-  font-size: var(--text-md);
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: 0.01em;
-}
-
-.status-card__stat-label {
-  display: block;
-  margin-bottom: var(--space-1);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.status-card__stat-body {
-  display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: var(--space-1);
-  margin: 0;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--status-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
-.status-card__stat-value {
+.status-card__stat-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.status-card__stat-heading dt {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-card__stat-heading dd {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.status-card__stat-note {
   font-size: var(--text-xs);
   color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
+}
+
+.status-card__stat--health .progress__fill {
+  background: #dc2626;
+}
+
+.status-card__stat--daily .progress__fill {
+  background: #059669;
+}
+
+@media (min-width: 560px) {
+  .status-card {
+    grid-template-columns: minmax(13rem, 0.8fr) minmax(0, 1.6fr);
+    align-items: center;
+    padding: var(--space-5);
+  }
+
+  .status-card__stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .status-card__overview {
+    align-items: flex-start;
+  }
+
+  .status-card .avatar__frame {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
 }
