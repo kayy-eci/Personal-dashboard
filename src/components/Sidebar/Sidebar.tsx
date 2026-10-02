@@ -1,3 +1,4 @@
+import { usePlayerProfile } from '../../features/player/usePlayerProfile'
 import { ChevronDownIcon, CloseIcon } from '../icons/Icons'
 import { navItems } from './nav-items'
 import './Sidebar.css'
@@ -20,6 +21,9 @@ export interface SidebarProps {
  * absent until those features exist.
  */
 export function Sidebar({ isOpen, onSelect, onClose }: SidebarProps) {
+  const { profileWithAvatar } = usePlayerProfile()
+  const initial = profileWithAvatar.name.trim().charAt(0).toUpperCase() || '?'
+
   return (
     <aside
       id="app-sidebar"
@@ -81,10 +85,18 @@ export function Sidebar({ isOpen, onSelect, onClose }: SidebarProps) {
 
       <div className="sidebar__footer">
         <div className="sidebar__account">
-          <span className="sidebar__avatar" aria-hidden="true">
-            P
-          </span>
-          <span className="sidebar__account-name">Player</span>
+          {profileWithAvatar.avatarSrc ? (
+            <img
+              className="sidebar__avatar-image"
+              src={profileWithAvatar.avatarSrc}
+              alt=""
+            />
+          ) : (
+            <span className="sidebar__avatar" aria-hidden="true">
+              {initial}
+            </span>
+          )}
+          <span className="sidebar__account-name">{profileWithAvatar.name}</span>
           <ChevronDownIcon className="sidebar__account-chevron" />
         </div>
       </div>

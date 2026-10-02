@@ -1,0 +1,165 @@
+/* Page header — cover image / GIF slot plus the page title.
+   Rendered by every page via the AppShell page frame. */
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  background: var(--surface);
+}
+
+/* -------------------------------------------------------------- cover */
+
+.page-header__cover {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: clamp(7rem, 22vw, 12rem);
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header__cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Empty slot — the resting state before a cover is chosen. */
+.page-header__cover-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  width: 100%;
+  height: 100%;
+  padding: var(--space-3);
+  background: none;
+  border: 0;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: color var(--motion-fast) var(--easing);
+}
+
+.page-header__cover-empty:hover {
+  color: var(--text-muted);
+}
+
+.page-header__cover-empty-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-bottom: var(--space-1);
+}
+
+.page-header__cover-empty-title {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.page-header__cover-empty-hint {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+/* Cover actions — revealed on hover, but always reachable by keyboard. */
+.page-header__cover-actions {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  display: flex;
+  gap: var(--space-2);
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--easing);
+}
+
+.page-header__cover:hover .page-header__cover-actions,
+.page-header__cover:focus-within .page-header__cover-actions {
+  opacity: 1;
+}
+
+.page-header__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  color: var(--text);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--easing),
+    border-color var(--motion-fast) var(--easing);
+}
+
+.page-header__action:hover {
+  background: var(--surface-sunken);
+  border-color: var(--text-faint);
+}
+
+.page-header__action-icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------- body */
+
+.page-header__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5) var(--space-2);
+}
+
+.page-header__title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.page-header__subtitle {
+  font-size: var(--text-md);
+  color: var(--text-muted);
+}
+
+/* -------------------------------------------------------------- error */
+
+.page-header__error {
+  padding: var(--space-2) var(--space-5) var(--space-3);
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 768px) {
+  .page-header__cover {
+    height: clamp(6rem, 26vw, 8rem);
+  }
+
+  .page-header__body {
+    padding: var(--space-3) var(--space-4) var(--space-2);
+  }
+
+  .page-header__error {
+    padding: var(--space-2) var(--space-4) var(--space-3);
+  }
+
+  /* No hover on touch — keep the controls permanently visible. */
+  .page-header__cover-actions {
+    opacity: 1;
+  }
+
+  .page-header__action span {
+    display: none;
+  }
+
+  .page-header__action {
+    padding: var(--space-2);
+  }
+}

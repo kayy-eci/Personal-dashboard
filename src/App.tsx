@@ -3,7 +3,7 @@ import { Dashboard } from './pages/Dashboard/Dashboard'
 
 function App() {
   return (
-    <AppShell>
+    <AppShell page={{ pageId: 'dashboard', title: 'Dashboard' }}>
       <Dashboard />
     </AppShell>
   )

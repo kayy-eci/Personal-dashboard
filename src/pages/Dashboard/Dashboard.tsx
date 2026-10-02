@@ -1,19 +1,25 @@
 /**
- * Dashboard — first page of the LifeOS RPG dashboard.
+ * Dashboard — player status overview.
  *
- * Structure only at this stage: the sidebar shell is live and the Dashboard
- * nav entry is active, but no HUD content (level, XP, health, streaks,
- * attributes, timeline) is filled in yet — see PRD §3.2 for the target
- * feature set.
+ * Layout follows the reference template: status card on the left, attribute
+ * overview beside it. The cover image / GIF slot and page title come from the
+ * AppShell page header (src/components/PageHeader), which every page receives.
+ *
+ * Status numbers come from usePlayerStatus() and are placeholders until the
+ * backend lands (PRD §8).
  */
+import { usePlayerStatus } from '../../features/player/usePlayerStatus'
+import { AttributesPanel } from './AttributesPanel/AttributesPanel'
+import { PlayerStatusCard } from './PlayerStatusCard/PlayerStatusCard'
 import './Dashboard.css'
 
 export function Dashboard() {
+  const status = usePlayerStatus()
+
   return (
     <div className="dashboard">
-      <header className="dashboard__header">
-        <h1 className="dashboard__title">Dashboard</h1>
-      </header>
+      <PlayerStatusCard status={status} />
+      <AttributesPanel status={status} />
     </div>
   )
 }

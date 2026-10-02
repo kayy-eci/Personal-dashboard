@@ -1,20 +1,32 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { PageHeader } from '../PageHeader/PageHeader'
 import { Sidebar } from '../Sidebar/Sidebar'
 import { MenuIcon } from '../icons/Icons'
 import './AppShell.css'
 
 export interface AppShellProps {
-  /** Page rendered inside the content region. */
+  /**
+   * Identity of the page being rendered. The shell owns the header so every
+   * page is guaranteed a cover image / GIF slot — a page cannot ship without
+   * one. `pageId` keys that page's stored cover.
+   */
+  page: {
+    pageId: string
+    title: string
+    subtitle?: string
+  }
+  /** Page body, rendered below the header. */
   children: ReactNode
 }
 
 /**
- * Two-region application frame: workspace sidebar + content canvas.
+ * Three-region application frame: workspace sidebar, page header (cover +
+ * title), and the scrolling content canvas.
  *
  * Above 768px the sidebar is a static column. At 768px and below it becomes
  * an off-canvas drawer with a scrim, driven by the top bar toggle.
  */
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ page, children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), [])
@@ -80,7 +92,12 @@ export function AppShell({ children }: AppShellProps) {
       )}
 
       <main id="main-content" className="app-shell__main" tabIndex={-1}>
-        {children}
+        <PageHeader
+          pageId={page.pageId}
+          title={page.title}
+          subtitle={page.subtitle}
+        />
+        <div className="app-shell__content">{children}</div>
       </main>
     </div>
   )

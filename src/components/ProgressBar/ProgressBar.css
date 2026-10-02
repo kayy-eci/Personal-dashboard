@@ -1,0 +1,30 @@
+/* ProgressBar — thin HUD-style meters.
+   Colour is paired with text by the parent, never used alone. */
+
+.progress {
+  position: relative;
+  width: 100%;
+  height: 0.5rem;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width var(--motion-base) var(--easing);
+}
+
+.progress--health .progress__fill {
+  background: linear-gradient(90deg, #4a9d5b, #63b26f);
+}
+
+.progress--xp .progress__fill {
+  background: linear-gradient(90deg, var(--accent), #5aa9ea);
+}
+
+.progress--neutral .progress__fill {
+  background: var(--text-faint);
+}
