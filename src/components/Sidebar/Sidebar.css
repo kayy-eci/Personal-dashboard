@@ -1,4 +1,4 @@
-/* Sidebar — dark workspace rail from design/image.png.
+/* Sidebar — light workspace rail matching the LifeOS canvas.
    Desktop: static column. ≤768px: off-canvas drawer driven by AppShell. */
 
 .sidebar {
@@ -139,7 +139,7 @@
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 .sidebar__nav-list {
@@ -160,7 +160,7 @@
   color: var(--sidebar-text);
   font-size: var(--text-md);
   text-align: left;
-  cursor: pointer;
+  text-decoration: none;
   transition:
     background-color var(--motion-fast) var(--easing),
     color var(--motion-fast) var(--easing);

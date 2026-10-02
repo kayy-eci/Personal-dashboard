@@ -4,6 +4,7 @@ import { navItems } from './nav-items'
 import './Sidebar.css'
 
 export interface SidebarProps {
+  activePageId: string
   /** True while the sidebar is shown as an overlay drawer (small screens). */
   isOpen: boolean
   /** Called after activating a nav item — used to dismiss the mobile drawer. */
@@ -13,14 +14,9 @@ export interface SidebarProps {
 }
 
 /**
- * Workspace sidebar, modelled on the reference design (design/image.png):
- * dark canvas, quiet type, generous spacing, hairline separators.
- *
- * MVP exposes a single destination — Dashboard. Everything else in the
- * reference (Recents, Favorites, Agents, Upcoming events) is intentionally
- * absent until those features exist.
+ * Light workspace sidebar with active states derived from the current route.
  */
-export function Sidebar({ isOpen, onSelect, onClose }: SidebarProps) {
+export function Sidebar({ activePageId, isOpen, onSelect, onClose }: SidebarProps) {
   const { profileWithAvatar } = usePlayerProfile()
   const initial = profileWithAvatar.name.trim().charAt(0).toUpperCase() || '?'
 
@@ -66,17 +62,17 @@ export function Sidebar({ isOpen, onSelect, onClose }: SidebarProps) {
             const Icon = item.icon
             return (
               <li key={item.id}>
-                <button
-                  type="button"
+                <a
+                  href={`#/${item.id}`}
                   className={`sidebar__nav-item${
-                    item.isActive ? ' sidebar__nav-item--active' : ''
+                    activePageId === item.id ? ' sidebar__nav-item--active' : ''
                   }`}
-                  aria-current={item.isActive ? 'page' : undefined}
+                  aria-current={activePageId === item.id ? 'page' : undefined}
                   onClick={onSelect}
                 >
                   <Icon className="sidebar__nav-icon" />
                   <span className="sidebar__nav-label">{item.label}</span>
-                </button>
+                </a>
               </li>
             )
           })}

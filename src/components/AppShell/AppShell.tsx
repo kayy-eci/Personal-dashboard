@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { PageHeader } from '../PageHeader/PageHeader'
 import { Sidebar } from '../Sidebar/Sidebar'
 import { MenuIcon } from '../icons/Icons'
 import './AppShell.css'
 
 export interface AppShellProps {
+  activePageId: string
   /**
    * Identity of the page being rendered. The shell owns the header so every
    * page is guaranteed a cover image / GIF slot — a page cannot ship without
@@ -26,8 +27,9 @@ export interface AppShellProps {
  * Above 768px the sidebar is a static column. At 768px and below it becomes
  * an off-canvas drawer with a scrim, driven by the top bar toggle.
  */
-export function AppShell({ page, children }: AppShellProps) {
+export function AppShell({ page, activePageId, children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const mainRef = useRef<HTMLElement>(null)
 
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), [])
 
@@ -61,6 +63,10 @@ export function AppShell({ page, children }: AppShellProps) {
     return () => query.removeEventListener('change', onChange)
   }, [closeSidebar])
 
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 })
+  }, [activePageId])
+
   return (
     <div className={`app-shell${isSidebarOpen ? ' app-shell--drawer-open' : ''}`}>
       <a className="skip-link" href="#main-content">
@@ -78,10 +84,11 @@ export function AppShell({ page, children }: AppShellProps) {
           <MenuIcon className="app-shell__menu-icon" />
           <span className="sr-only">Toggle sidebar</span>
         </button>
-        <span className="app-shell__topbar-title">LifeOS</span>
+        <span className="app-shell__topbar-title">{page.title}</span>
       </div>
 
       <Sidebar
+        activePageId={activePageId}
         isOpen={isSidebarOpen}
         onSelect={closeSidebar}
         onClose={closeSidebar}
@@ -91,7 +98,7 @@ export function AppShell({ page, children }: AppShellProps) {
         <div className="app-shell__scrim" onClick={closeSidebar} aria-hidden="true" />
       )}
 
-      <main id="main-content" className="app-shell__main" tabIndex={-1}>
+      <main ref={mainRef} id="main-content" className="app-shell__main" tabIndex={-1}>
         <PageHeader
           pageId={page.pageId}
           title={page.title}
