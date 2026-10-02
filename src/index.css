@@ -32,17 +32,17 @@
   --radius-lg: 8px;
   --radius-pill: 999px;
 
-  /* ------------------------------------------- sidebar (dark, reference) */
+  /* ------------------------------------------------------ sidebar (light) */
   --sidebar-width: 15rem;
-  --sidebar-bg: #202020;
-  --sidebar-bg-elevated: #2c2c2c;
-  --sidebar-surface-hover: rgba(255, 255, 255, 0.055);
-  --sidebar-surface-active: rgba(255, 255, 255, 0.08);
-  --sidebar-text: rgba(255, 255, 255, 0.81);
-  --sidebar-text-strong: #ffffff;
-  --sidebar-text-muted: rgba(255, 255, 255, 0.46);
-  --sidebar-border: rgba(255, 255, 255, 0.094);
-  --sidebar-field-bg: rgba(255, 255, 255, 0.055);
+  --sidebar-bg: #ffffff;
+  --sidebar-bg-elevated: #f1f5f9;
+  --sidebar-surface-hover: #f8fafc;
+  --sidebar-surface-active: #f5efff;
+  --sidebar-text: #475569;
+  --sidebar-text-strong: #0f172a;
+  --sidebar-text-muted: #64748b;
+  --sidebar-border: #e2e8f0;
+  --sidebar-field-bg: #f8fafc;
 
   /* ------------------------------------------------ content (light) UI */
   --surface: #ffffff;
@@ -54,9 +54,9 @@
   --text-faint: #9b9a97;
 
   /* ------------------------------------------------------------ accent */
-  --accent: #2383e2;
-  --accent-hover: #1a73c8;
-  --accent-subtle: rgba(35, 131, 226, 0.12);
+  --accent: #630ed4;
+  --accent-hover: #4f0eaa;
+  --accent-subtle: rgba(99, 14, 212, 0.12);
   --danger: #d44c47;
 
   /* ------------------------------------------------------------ shadow */
@@ -147,7 +147,7 @@ svg {
 }
 
 .sidebar :focus-visible {
-  outline-color: #7ab6f5;
+  outline-color: var(--accent);
 }
 
 ::selection {
@@ -177,4 +177,3 @@ svg {
     scroll-behavior: auto !important;
   }
 }
-
