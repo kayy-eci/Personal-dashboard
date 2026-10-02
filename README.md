@@ -1,78 +1,49 @@
-# React + TypeScript + Vite
+# Life Dashboard (LifeOS RPG)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal web dashboard that turns real-life habits, goals, and tasks into an RPG-style progression system. Your character's stats, XP, level, and health are calculated automatically from what you actually get done.
 
-Currently, two official plugins are available:
+> **Status:** In planning. No stable version has been released yet.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Why
 
-## React Compiler
+Habits, tasks, and goals usually live in separate tools, and none of them show how daily behavior adds up over time. Life Dashboard puts them in one place and makes progress visible, without turning the tool into a distraction.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+**Core principle:** real productivity data is the source of truth. Game mechanics are calculated from it, not the other way around.
 
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
+## Planned Features
 
-## Expanding the ESLint configuration
+**First version**
+- **Dashboard:** level, XP, health, streak, today's habits, active quests, deadlines, and goal progress
+- **Habits:** daily and weekly routines with streaks and consistency tracking
+- **Quests:** one-time objectives with difficulty, effort, impact, and deadlines
+- **Goals & milestones:** break big ambitions into steps, with automatic progress
+- **Attributes:** six character stats (STR, INT, DISC, CREAT, FOCUS, SOC) that grow automatically from completed activities
+- **XP & levels:** rewards based on difficulty, effort, impact, and consistency, with every gain explained
+- **Health:** a simple health bar that reflects how consistently you complete your daily routines
+- **Timeline:** one chronological feed of everything that happened: completions, level-ups, achievements
+- **Achievements & basic analytics**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+**Later**
+- Skill tree, calendar, mood and wellbeing tracking, notifications
+- AI-assisted quest suggestions, seasons, integrations, offline support
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Design Direction
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- A game-like HUD (XP bar, health bar, level badge) kept at **Notion-level** polish: clean layout, quiet typography, generous spacing
+- Game elements stay restrained so productivity information is always the focus
+- Desktop-first, responsive on mobile
+- Rewards are always explainable and never guilt-based
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Tech Stack
 
-```
+- Frontend: [Vite](https://vite.dev)
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+More will be added as the project takes shape.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Getting Started
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Setup instructions will be added once the first version is ready.
 
-```
+## License
+
+To be decided.
