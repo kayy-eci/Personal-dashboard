@@ -36,7 +36,6 @@ function App() {
     attributes: { title: 'Character', subtitle: 'Review the capabilities growing through your activity' },
     timeline: { title: 'Timeline', subtitle: 'A chronological record of your activity' },
     analytics: { title: 'Analytics', subtitle: 'Understand your consistency, progress, and focus' },
-    calendar: { title: 'Calendar', subtitle: 'Keep the week and month in view' },
     settings: { title: 'Settings', subtitle: 'Configure the app and your rules' },
   }
   const page = pageTitles[activePage.id]

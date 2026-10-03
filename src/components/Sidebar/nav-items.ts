@@ -25,7 +25,6 @@ export type PageId =
   | 'attributes'
   | 'timeline'
   | 'analytics'
-  | 'calendar'
   | 'settings'
 
 /** Primary LifeOS destinations, ordered by the product's daily workflow. */
@@ -37,6 +36,5 @@ export const navItems: NavItem[] = [
   { id: 'attributes', label: 'Character', icon: AttributesIcon },
   { id: 'timeline', label: 'Timeline', icon: TimelineIcon },
   { id: 'analytics', label: 'Analytics', icon: AnalyticsIcon },
-  { id: 'calendar', label: 'Calendar', icon: DashboardIcon },
   { id: 'settings', label: 'Settings', icon: AttributesIcon },
 ]
