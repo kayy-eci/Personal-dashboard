@@ -224,7 +224,7 @@ export function GitHubActivityGrid({
                       onBlur={() => setHoveredDay(null)}
                       aria-label={`${day.count} ${pluralize(activityType, day.count)} on ${formatDate(day.date)}${todaySuffix}`}
                       aria-current={isToday ? 'date' : undefined}
-                      style={{ width: fittedCellSize, height: fittedCellSize }}
+                      style={{ width: fittedCellSize, height: fittedCellSize, backgroundColor: levelColor(level) }}
                     />
                   )
                 })}
