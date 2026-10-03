@@ -7,15 +7,55 @@
     <meta name="color-scheme" content="light dark" />
     <title>LifeOS Dashboard</title>
     <script>
-      // Anti-flicker: apply stored theme before first paint (default light).
-      try {
-        var t = localStorage.getItem('lifeos-theme');
-        if (t !== 'light' && t !== 'dark') t = 'light';
-        document.documentElement.dataset.theme = t;
-        document.documentElement.style.colorScheme = t;
-      } catch (e) {
-        document.documentElement.dataset.theme = 'light';
-      }
+      // Anti-flicker: apply the cached appearance preferences before the first
+      // paint so the app never renders in the wrong theme, accent, density or
+      // text size. Mirrors src/preferences/apply.ts — keep the two in sync.
+      (function () {
+        var root = document.documentElement
+        var read = function (key, fallback) {
+          try {
+            var raw = localStorage.getItem('lifeos:' + key)
+            if (raw === null) return fallback
+            var value = JSON.parse(raw)
+            return value === undefined ? fallback : value
+          } catch (e) {
+            return fallback
+          }
+        }
+        var dark = false
+        try {
+          dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        } catch (e) {}
+        var prefersReduced = false
+        try {
+          prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        } catch (e) {}
+
+        var theme = read('pref:appearance.theme', 'system')
+        if (theme !== 'light' && theme !== 'dark' && theme !== 'system') theme = 'system'
+        var resolved = theme === 'system' ? (dark ? 'dark' : 'light') : theme
+
+        var accent = read('pref:appearance.accent', 'violet')
+        if (['violet', 'blue', 'teal', 'green', 'rose', 'slate'].indexOf(accent) === -1) {
+          accent = 'violet'
+        }
+        var density = read('pref:appearance.density', 'comfortable')
+        if (density !== 'comfortable' && density !== 'compact') density = 'comfortable'
+        var textSize = read('pref:appearance.textSize', 'default')
+        if (['small', 'default', 'large'].indexOf(textSize) === -1) textSize = 'default'
+        var reduceMotion = read('pref:appearance.reduceMotion', 'system')
+        if (['system', 'on', 'off'].indexOf(reduceMotion) === -1) reduceMotion = 'system'
+        var focusMode = read('pref:focusMode', false)
+
+        root.dataset.theme = resolved
+        root.dataset.accent = accent
+        root.dataset.density = density
+        root.dataset.textSize = textSize
+        root.dataset.motion =
+          reduceMotion === 'on' || (reduceMotion === 'system' && prefersReduced) ? 'reduce' : 'full'
+        root.dataset.focusMode = focusMode ? 'true' : 'false'
+        root.style.colorScheme = resolved
+      })()
     </script>
   </head>
   <body>

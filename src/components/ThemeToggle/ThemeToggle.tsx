@@ -1,11 +1,13 @@
-import { useTheme } from '../../hooks/useTheme'
+import { resolveTheme } from '../../preferences/apply'
+import { usePreferences } from '../../preferences/usePreferences'
+import { animateAppearanceChange } from '../../preferences/themeSwitch'
 
 /**
  * Compact light/dark switch used in the sidebar footer and mobile topbar.
  * Full label for AT, icon + short label visually.
  *
- * Passes the click point as the transition origin so the theme reveal
- * expands outward from where the user clicked (View Transitions API).
+ * The switch writes the `appearance.theme` preference (Light ⇄ Dark); System
+ * is chosen in Settings → Display. The click point becomes the reveal origin.
  */
 export function ThemeToggle({
   compact = false,
@@ -14,7 +16,8 @@ export function ThemeToggle({
   compact?: boolean
   inSidebar?: boolean
 }) {
-  const { theme, toggleTheme, isDark } = useTheme()
+  const { preferences, setPreference } = usePreferences()
+  const isDark = resolveTheme(preferences.theme) === 'dark'
 
   const base =
     'inline-flex items-center gap-2 min-h-8 px-2 text-xs font-semibold border rounded-md bg-transparent cursor-pointer transition-colors duration-120'
@@ -23,11 +26,19 @@ export function ThemeToggle({
     : 'border-border text-text-muted hover:bg-surface-sunken hover:text-text hover:border-border-strong'
   const compactCls = compact ? 'w-8 h-8 justify-center p-0 border-transparent' : 'w-full justify-start'
 
+  const switchTheme = (event: React.MouseEvent<HTMLButtonElement>) => {
+    animateAppearanceChange(
+      () => setPreference('theme', isDark ? 'light' : 'dark'),
+      event,
+      preferences.reduceMotion,
+    )
+  }
+
   return (
     <button
       type="button"
       className={`${base} ${colors} ${compactCls}`}
-      onClick={(event) => toggleTheme(event)}
+      onClick={switchTheme}
       aria-pressed={isDark}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -50,7 +61,7 @@ export function ThemeToggle({
       {!compact && (
         <span className="inline-flex items-center w-7 h-4 p-0.5 rounded-pill bg-sidebar-bg-elevated" aria-hidden="true">
           <span
-            className={`w-3 h-3 rounded-full bg-sidebar-text-muted transition-transform duration-300 ${theme === 'dark' ? 'translate-x-3 !bg-brand' : ''}`}
+            className={`w-3 h-3 rounded-full bg-sidebar-text-muted transition-transform duration-300 ${isDark ? 'translate-x-3 !bg-brand' : ''}`}
           />
         </span>
       )}
