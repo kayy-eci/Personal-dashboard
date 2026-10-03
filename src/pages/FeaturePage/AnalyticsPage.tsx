@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useMemo } from 'react'
 import { usePlayerStatus } from '../../features/player/usePlayerStatus'
 import { initialHabits } from '../Dashboard/dashboard-data'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
+import { usePersistentState, readStoredValue } from '../../lib/storage'
+import { usePreferences } from '../../preferences/usePreferences'
+import type { ActivityEntry } from '../Dashboard/dashboard-data'
 
 const analytics = {
   '7d': {
@@ -26,18 +29,61 @@ const analytics = {
 
 type Period = keyof typeof analytics
 
+interface AnalyticsPeriod {
+  labels: readonly string[]
+  activity: readonly number[]
+  completion: readonly number[]
+  xp: string
+}
+
+/** Sample data is authored Monday-first; Sunday-first weeks rotate it once. */
+function rotateToFirst<T>(items: readonly T[]): T[] {
+  return [items[items.length - 1], ...items.slice(0, -1)]
+}
+
 export function AnalyticsPage() {
   const status = usePlayerStatus()
-  const [period, setPeriod] = useState<Period>('7d')
-  const data = analytics[period]
+  const [period, setPeriod] = usePersistentState<Period>('analytics:period', '7d')
+  const { preferences } = usePreferences()
+  const data: AnalyticsPeriod = useMemo(() => {
+    const source = analytics[period]
+    if (period !== '7d' || preferences.weekStart === 'monday') return source
+    return {
+      labels: rotateToFirst(source.labels),
+      activity: rotateToFirst(source.activity),
+      completion: rotateToFirst(source.completion),
+      xp: source.xp,
+    }
+  }, [period, preferences.weekStart])
+  const completedQuestIds = readStoredValue<string[]>('quests-page:completed', [])
+  const activityFeed = readStoredValue<ActivityEntry[]>('activity-feed', [])
+  const totalFeedXp = activityFeed.reduce((sum, entry) => {
+    const match = /\+(\d[\d,]*)\s*XP/i.exec(entry.reward ?? '')
+    return match ? sum + Number(match[1].replace(/,/g, '')) : sum
+  }, 0)
   const averageConsistency = Math.round(
     initialHabits.reduce((sum, habit) => sum + (habit.consistency ?? 100), 0) /
       initialHabits.length,
   )
   const topAttribute = [...status.attributes].sort((a, b) => b.xp - a.xp)[0]
 
+  const exportCsv = () => {
+    const rows = [['label', 'activity', 'completion']]
+    data.labels.forEach((label, index) => {
+      rows.push([label, String(data.activity[index]), String(data.completion[index])])
+    })
+    const csv = rows.map((row) => row.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `analytics-${period}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
-    <div className="flex w-full max-w-[100rem] mx-auto flex-col gap-4 p-4 min-[769px]:p-5 min-[769px]:pb-7">
+    <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-3 p-3 pb-5 min-[769px]:p-4 min-[769px]:pb-6">
       <DemoNotice>
         Analytics are visual previews based on sample activity and do not represent a verified personal history.
       </DemoNotice>
@@ -67,10 +113,25 @@ export function AnalyticsPage() {
           { label: 'Top attribute', value: topAttribute.key, note: `${topAttribute.xp.toLocaleString()} ${topAttribute.label} XP`, tone: 'sky' },
         ]}
       />
+      <SummaryGrid
+        items={[
+          { label: 'Quests completed', value: String(completedQuestIds.length), note: 'From saved quest board', tone: 'emerald' },
+          { label: 'Total XP', value: totalFeedXp.toLocaleString(), note: 'Summed from saved activity feed', tone: 'gold' },
+        ]}
+      />
+      <div className="flex justify-end">
+        <button
+          type="button"
+          className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60"
+          onClick={exportCsv}
+        >
+          Export CSV
+        </button>
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 min-[1100px]:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 min-[1100px]:grid-cols-2">
         <FeaturePanel title="Activity by day" description="Relative sample completion volume.">
-          <div className="flex min-h-[13rem] items-end justify-around gap-2 border-b border-border-strong bg-[length:100%_25%] bg-[linear-gradient(to_bottom,transparent_calc(25%_-_1px),var(--border)_25%,transparent_calc(25%_+_1px),transparent_calc(50%_-_1px),var(--border)_50%,transparent_calc(50%_+_1px),transparent_calc(75%_-_1px),var(--border)_75%,transparent_calc(75%_+_1px))] px-2 pt-4" role="img" aria-label={`${period} activity chart`}>
+          <div className="flex min-h-[10rem] items-end justify-around gap-1.5 border-b border-border-strong bg-[length:100%_25%] bg-[linear-gradient(to_bottom,transparent_calc(25%_-_1px),var(--border)_25%,transparent_calc(25%_+_1px),transparent_calc(50%_-_1px),var(--border)_50%,transparent_calc(50%_+_1px),transparent_calc(75%_-_1px),var(--border)_75%,transparent_calc(75%_+_1px))] px-2 pt-3" role="img" aria-label={`${period} activity chart`}>
             {data.labels.map((label, index) => (
               <div className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2" key={label}>
                 <span className="font-mono text-[0.625rem] tabular-nums text-text-muted">{data.activity[index]}</span>
@@ -101,7 +162,7 @@ export function AnalyticsPage() {
         </FeaturePanel>
 
         <FeaturePanel title="Weekly completion rate" description="Sample completion percentage over time.">
-          <div className="flex min-h-[13rem] items-end justify-around gap-2 border-b border-border-strong bg-[length:100%_25%] bg-[linear-gradient(to_bottom,transparent_calc(25%_-_1px),var(--border)_25%,transparent_calc(25%_+_1px),transparent_calc(50%_-_1px),var(--border)_50%,transparent_calc(50%_+_1px),transparent_calc(75%_-_1px),var(--border)_75%,transparent_calc(75%_+_1px))] px-2 pt-4 [&_.bar]:bg-[#0284c7]" role="img" aria-label={`${period} completion rate chart`}>
+          <div className="flex min-h-[10rem] items-end justify-around gap-1.5 border-b border-border-strong bg-[length:100%_25%] bg-[linear-gradient(to_bottom,transparent_calc(25%_-_1px),var(--border)_25%,transparent_calc(25%_+_1px),transparent_calc(50%_-_1px),var(--border)_50%,transparent_calc(50%_+_1px),transparent_calc(75%_-_1px),var(--border)_75%,transparent_calc(75%_+_1px))] px-2 pt-3 [&_.bar]:bg-[#0284c7]" role="img" aria-label={`${period} completion rate chart`}>
             {data.labels.map((label, index) => (
               <div className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2" key={label}>
                 <span className="font-mono text-[0.625rem] tabular-nums text-text-muted">{data.completion[index]}%</span>

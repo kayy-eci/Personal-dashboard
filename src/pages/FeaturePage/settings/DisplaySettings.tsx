@@ -14,10 +14,16 @@ import { sectionLabel } from '../../../preferences/sections'
 import {
   DASHBOARD_SECTION_OPTIONS,
   DENSITY_OPTIONS,
+  REDUCE_MOTION_OPTIONS,
+  TEXT_SIZE_OPTIONS,
   THEME_OPTIONS,
+  WEEK_START_OPTIONS,
   type DashboardSectionId,
   type Density,
+  type ReduceMotion,
+  type TextSize,
   type ThemePreference,
+  type WeekStart,
 } from '../../../preferences/schema'
 import { usePreferences } from '../../../preferences/usePreferences'
 import { DisplayPreview } from './DisplayPreview'
@@ -31,6 +37,23 @@ const themeLabels: Record<ThemePreference, string> = {
 const densityLabels: Record<Density, string> = {
   comfortable: 'Comfortable',
   compact: 'Compact',
+}
+
+const textSizeLabels: Record<TextSize, string> = {
+  small: 'Small',
+  default: 'Default',
+  large: 'Large',
+}
+
+const reduceMotionLabels: Record<ReduceMotion, string> = {
+  system: 'System',
+  on: 'On',
+  off: 'Off',
+}
+
+const weekStartLabels: Record<WeekStart, string> = {
+  monday: 'Monday',
+  sunday: 'Sunday',
 }
 
 const ghostButton =
@@ -107,6 +130,39 @@ export function DisplaySettings() {
             value={preferences.density}
             options={DENSITY_OPTIONS.map((value) => ({ value, label: densityLabels[value] }))}
             onChange={(value) => setPreference('density', value)}
+          />
+        </SettingRow>
+
+        <SettingRow label="Text size" help="Scales text across the app. Layout follows.">
+          <SegmentedControl
+            name="appearance.textSize"
+            value={preferences.textSize}
+            options={TEXT_SIZE_OPTIONS.map((value) => ({ value, label: textSizeLabels[value] }))}
+            onChange={(value) => setPreference('textSize', value)}
+          />
+        </SettingRow>
+
+        <SettingRow
+          label="Reduce motion"
+          help="Removes count-ups, bar fills and panel transitions. System follows your operating system setting."
+        >
+          <SegmentedControl
+            name="appearance.reduceMotion"
+            value={preferences.reduceMotion}
+            options={REDUCE_MOTION_OPTIONS.map((value) => ({ value, label: reduceMotionLabels[value] }))}
+            onChange={(value) => setPreference('reduceMotion', value)}
+          />
+        </SettingRow>
+
+        <SettingRow
+          label="First day of week"
+          help="Used by the calendar and the weekly habit views."
+        >
+          <SegmentedControl
+            name="calendar.weekStart"
+            value={preferences.weekStart}
+            options={WEEK_START_OPTIONS.map((value) => ({ value, label: weekStartLabels[value] }))}
+            onChange={(value) => setPreference('weekStart', value)}
           />
         </SettingRow>
 
