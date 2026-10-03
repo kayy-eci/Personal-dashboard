@@ -104,12 +104,20 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
       )}
 
       <main ref={mainRef} id="main-content" className="flex min-w-0 flex-1 flex-col overflow-y-auto focus:outline-none" tabIndex={-1}>
-        <PageHeader
-          pageId={page.pageId}
-          title={page.title}
-          subtitle={page.subtitle}
-        />
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        {/* Keyed by page so navigation replays the enter motion; the
+            key is stable across theme switches, so the theme reveal
+            never re-triggers it. */}
+        <div
+          key={activePageId}
+          className="flex min-h-0 flex-1 flex-col animate-[page-enter_260ms_cubic-bezier(0.32,0.72,0,1)_both]"
+        >
+          <PageHeader
+            pageId={page.pageId}
+            title={page.title}
+            subtitle={page.subtitle}
+          />
+          <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        </div>
       </main>
     </div>
   )
