@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useGitHubActivity } from '../../hooks/useGitHubActivity'
-import { usePreferences } from '../../preferences/usePreferences'
 import { usePlayerProfile } from '../../features/player/usePlayerProfile'
 import { clearAllStoredValues, usePersistentState, writeStoredValue } from '../../lib/storage'
+import { DisplaySettings } from './settings/DisplaySettings'
 
 type SettingsSection = 'profile' | 'display' | 'health' | 'data' | 'integrations' | 'about'
 
@@ -35,7 +35,6 @@ function clampNumber(value: number, min: number, max: number): number {
 }
 
 export function SettingsPage() {
-  const { preferences, setPreference } = usePreferences()
   const { profile, setName } = usePlayerProfile()
   const {
     username,
@@ -53,7 +52,6 @@ export function SettingsPage() {
   const [tokenDraft, setTokenDraft] = useState('')
   const [tokenSaved, setTokenSaved] = useState(false)
   const [showToken, setShowToken] = useState(false)
-  const focusMode = preferences.focusMode
   const [rules, setRules] = usePersistentState<HealthRules>('settings:health-rules', DEFAULT_RULES)
   const [lastBackup, setLastBackup] = usePersistentState<string | null>('settings:last-backup', null)
   const [confirmReset, setConfirmReset] = useState(false)
@@ -162,45 +160,7 @@ export function SettingsPage() {
             </section>
           )}
 
-          {activeSection === 'display' && (
-            <section className={sectionClass}>
-              <h3 className="text-base font-bold text-text">Display</h3>
-              <div className={`${rowGrid} mt-3`}>
-                <label id="theme-label">Theme</label>
-                <div className="flex flex-wrap items-center gap-2 text-text" role="group" aria-labelledby="theme-label">
-                  <button
-                    type="button"
-                    className={`min-h-9 min-w-[4.5rem] rounded-md border border-border-strong bg-surface-overlay px-3 py-1.5 text-left text-sm text-text-muted${preferences.theme === 'light' ? ' border-brand bg-brand text-brand-contrast' : ''}`}
-                    aria-pressed={preferences.theme === 'light'}
-                    onClick={() => setPreference('theme', 'light')}
-                  >
-                    Light
-                  </button>
-                  <button
-                    type="button"
-                    className={`min-h-9 min-w-[4.5rem] rounded-md border border-border-strong bg-surface-overlay px-3 py-1.5 text-left text-sm text-text-muted${preferences.theme === 'dark' ? ' border-brand bg-brand text-brand-contrast' : ''}`}
-                    aria-pressed={preferences.theme === 'dark'}
-                    onClick={() => setPreference('theme', 'dark')}
-                  >
-                    Dark
-                  </button>
-                </div>
-              </div>
-              <div className={rowGrid}>
-                <label htmlFor="focus-mode">Focus mode</label>
-                <div className="flex items-center gap-2 text-sm text-text-muted">
-                  <input
-                    id="focus-mode"
-                    type="checkbox"
-                    className="h-4 w-4"
-                    checked={focusMode}
-                    onChange={(event) => setPreference('focusMode', event.target.checked)}
-                  />
-                  <span>Hides game visuals. All habits, quests, and deadlines stay visible.</span>
-                </div>
-              </div>
-            </section>
-          )}
+          {activeSection === 'display' && <DisplaySettings />}
 
           {activeSection === 'health' && (
             <section className={sectionClass}>
