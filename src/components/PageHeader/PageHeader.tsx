@@ -1,7 +1,6 @@
 import { useId, useRef } from 'react'
 import { ImageIcon, TrashIcon } from '../icons/Icons'
 import { usePageCover } from './use-page-cover'
-import './PageHeader.css'
 
 export interface PageHeaderProps {
   /** Storage key for this page's cover — must be unique per page. */
@@ -27,44 +26,42 @@ export function PageHeader({ pageId, title, subtitle }: PageHeaderProps) {
   const openFilePicker = () => fileInputRef.current?.click()
 
   return (
-    <header className="page-header">
-      <div className="page-header__cover">
+    <header className="flex flex-col bg-surface">
+      <div className="group relative flex h-[clamp(7rem,22vw,12rem)] items-center justify-center overflow-hidden border-b border-border bg-surface-sunken max-md:h-[clamp(6rem,26vw,8rem)]">
         {coverSrc ? (
           <>
             {/* Decorative banner — the page title carries the meaning. */}
-            <img className="page-header__cover-image" src={coverSrc} alt="" />
+            <img className="h-full w-full object-cover" src={coverSrc} alt="" />
 
-            <div className="page-header__cover-actions">
+            <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 transition-opacity duration-120 group-hover:opacity-100 focus-within:opacity-100 max-md:opacity-100">
               <button
                 type="button"
-                className="page-header__action"
+                className="inline-flex items-center gap-1 rounded-md border border-border-strong bg-surface px-3 py-1 text-sm text-text shadow-xs transition-colors hover:bg-surface-sunken hover:border-text-faint"
                 onClick={openFilePicker}
               >
-                <ImageIcon className="page-header__action-icon" />
-                <span>Change cover</span>
+                <ImageIcon className="h-[0.9375rem] w-[0.9375rem] text-text-muted" />
+                <span className="max-md:hidden">Change cover</span>
               </button>
 
               <button
                 type="button"
-                className="page-header__action"
+                className="inline-flex items-center gap-1 rounded-md border border-border-strong bg-surface px-3 py-1 text-sm text-text shadow-xs transition-colors hover:bg-surface-sunken hover:border-text-faint"
                 onClick={clearCover}
               >
-                <TrashIcon className="page-header__action-icon" />
-                <span>Remove</span>
+                <TrashIcon className="h-[0.9375rem] w-[0.9375rem] text-text-muted" />
+                <span className="max-md:hidden">Remove</span>
               </button>
             </div>
           </>
         ) : (
           <button
             type="button"
-            className="page-header__cover-empty"
+            className="flex h-full w-full flex-col items-center justify-center gap-1 bg-transparent p-3 text-text-faint transition-colors hover:text-text-muted"
             onClick={openFilePicker}
           >
-            <ImageIcon className="page-header__cover-empty-icon" />
-            <span className="page-header__cover-empty-title">Add a cover</span>
-            <span className="page-header__cover-empty-hint">
-              Drop in an image or GIF
-            </span>
+            <ImageIcon className="mb-1 h-6 w-6" />
+            <span className="text-sm font-medium">Add a cover</span>
+            <span className="text-xs text-text-faint">Drop in an image or GIF</span>
           </button>
         )}
 
@@ -83,13 +80,13 @@ export function PageHeader({ pageId, title, subtitle }: PageHeaderProps) {
         />
       </div>
 
-      <div className="page-header__body">
-        <h1 className="page-header__title">{title}</h1>
-        {subtitle && <p className="page-header__subtitle">{subtitle}</p>}
+      <div className="flex flex-col gap-1 px-5 pb-2 pt-4 max-md:px-4 max-md:pb-2 max-md:pt-3">
+        <h1 className="text-2xl font-bold tracking-[-0.02em] text-text">{title}</h1>
+        {subtitle && <p className="text-sm text-text-muted">{subtitle}</p>}
       </div>
 
       {error && (
-        <p className="page-header__error" role="alert">
+        <p className="px-5 pb-3 pt-2 text-sm text-danger max-md:px-4" role="alert">
           {error}
         </p>
       )}

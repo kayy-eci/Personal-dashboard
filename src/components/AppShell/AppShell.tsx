@@ -3,7 +3,6 @@ import { PageHeader } from '../PageHeader/PageHeader'
 import { Sidebar } from '../Sidebar/Sidebar'
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle'
 import { MenuIcon } from '../icons/Icons'
-import './AppShell.css'
 
 export interface AppShellProps {
   activePageId: string
@@ -69,24 +68,27 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
   }, [activePageId])
 
   return (
-    <div className={`app-shell${isSidebarOpen ? ' app-shell--drawer-open' : ''}`}>
-      <a className="skip-link" href="#main-content">
+    <div className={`relative flex min-h-dvh flex-1 flex-col bg-surface min-[769px]:flex-row`}>
+      <a
+        className="absolute left-2 top-2 z-[60] rounded-md border border-border-strong bg-surface px-3 py-2 text-sm text-text no-underline shadow-sm -translate-y-[200%] transition-transform focus-visible:translate-y-0"
+        href="#main-content"
+      >
         Skip to main content
       </a>
 
-      <div className="app-shell__topbar">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-surface px-3 min-[769px]:hidden">
         <button
           type="button"
-          className="app-shell__menu-button"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-sunken hover:text-text"
           onClick={() => setIsSidebarOpen((open) => !open)}
           aria-expanded={isSidebarOpen}
           aria-controls="app-sidebar"
         >
-          <MenuIcon className="app-shell__menu-icon" />
+          <MenuIcon className="h-5 w-5" />
           <span className="sr-only">Toggle sidebar</span>
         </button>
-        <span className="app-shell__topbar-title">{page.title}</span>
-        <span className="app-shell__topbar-spacer" />
+        <span className="text-sm font-semibold text-text">{page.title}</span>
+        <span className="flex-1" />
         <ThemeToggle compact />
       </div>
 
@@ -98,16 +100,16 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
       />
 
       {isSidebarOpen && (
-        <div className="app-shell__scrim" onClick={closeSidebar} aria-hidden="true" />
+        <div className="fixed inset-0 z-30 bg-scrim" onClick={closeSidebar} aria-hidden="true" />
       )}
 
-      <main ref={mainRef} id="main-content" className="app-shell__main" tabIndex={-1}>
+      <main ref={mainRef} id="main-content" className="flex min-w-0 flex-1 flex-col overflow-y-auto focus:outline-none" tabIndex={-1}>
         <PageHeader
           pageId={page.pageId}
           title={page.title}
           subtitle={page.subtitle}
         />
-        <div className="app-shell__content">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
       </main>
     </div>
   )

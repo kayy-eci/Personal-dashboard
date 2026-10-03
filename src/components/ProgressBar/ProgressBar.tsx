@@ -1,5 +1,3 @@
-import './ProgressBar.css'
-
 export type ProgressTone = 'health' | 'xp' | 'neutral'
 
 export interface ProgressBarProps {
@@ -33,9 +31,16 @@ export function ProgressBar({
 }: ProgressBarProps) {
   const percent = percentOf(value, max)
 
+  const fillClass =
+    tone === 'health'
+      ? 'bg-[#4a9d5b]'
+      : tone === 'xp'
+        ? 'bg-brand'
+        : 'bg-text-faint'
+
   return (
     <div
-      className={`progress progress--${tone}`}
+      className="relative w-full h-2 overflow-hidden bg-surface-sunken border border-border rounded-pill"
       role="progressbar"
       aria-label={label}
       aria-valuenow={value}
@@ -43,7 +48,7 @@ export function ProgressBar({
       aria-valuemax={max}
       aria-valuetext={valueText}
     >
-      <div className="progress__fill" style={{ width: `${percent}%` }} />
+      <div className={`h-full rounded-[inherit] transition-[width] duration-200 ${fillClass}`} style={{ width: `${percent}%` }} />
     </div>
   )
 }

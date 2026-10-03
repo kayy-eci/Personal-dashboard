@@ -1,6 +1,5 @@
 import { useId, useRef } from 'react'
 import { ImageIcon, TrashIcon } from '../icons/Icons'
-import './Avatar.css'
 
 export interface AvatarProps {
   /** Data URL of the current picture, or null when the slot is empty. */
@@ -35,42 +34,42 @@ export function Avatar({ src, name, selectFile, clear, error }: AvatarProps) {
   const openFilePicker = () => fileInputRef.current?.click()
 
   return (
-    <div className="avatar">
-      <div className="avatar__frame">
+    <div className="flex flex-col items-center gap-2">
+      <div className="group relative h-40 w-40 overflow-hidden rounded-lg border border-border-strong bg-surface-sunken shadow-xs">
         {src ? (
-          <img className="avatar__image" src={src} alt={`${name}'s profile picture`} />
+          <img className="h-full w-full object-cover" src={src} alt={`${name}'s profile picture`} />
         ) : (
-          <div className="avatar__placeholder" role="img" aria-label="No profile picture set">
-            <span className="avatar__initial" aria-hidden="true">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-surface-sunken to-[#eceae4]" role="img" aria-label="No profile picture set">
+            <span className="text-[2.75rem] font-semibold leading-none text-text-faint" aria-hidden="true">
               {initial}
             </span>
           </div>
         )}
 
-        <div className="avatar__actions">
+        <div className="absolute bottom-1 right-1 flex gap-1 opacity-0 transition-opacity duration-120 max-md:opacity-100 group-hover:opacity-100 focus-within:opacity-100 [:hover]:opacity-100 has-[:focus-visible]:opacity-100">
           <button
             type="button"
-            className="avatar__action"
+            className="inline-flex h-[2.125rem] w-[2.125rem] items-center justify-center rounded-md border border-border-strong bg-surface-overlay/95 text-text shadow-xs transition-colors hover:bg-surface-overlay hover:border-text-faint"
             onClick={openFilePicker}
             aria-label={src ? `Change ${name}'s profile picture` : `Add a profile picture for ${name}`}
           >
-            <ImageIcon className="avatar__action-icon" />
+            <ImageIcon className="h-[1.0625rem] w-[1.0625rem] text-text-muted" />
           </button>
 
           {src && (
             <button
               type="button"
-              className="avatar__action"
+              className="inline-flex h-[2.125rem] w-[2.125rem] items-center justify-center rounded-md border border-border-strong bg-surface-overlay/95 text-text shadow-xs transition-colors hover:bg-surface-overlay hover:border-text-faint"
               onClick={clear}
               aria-label={`Remove ${name}'s profile picture`}
             >
-              <TrashIcon className="avatar__action-icon" />
+              <TrashIcon className="h-[1.0625rem] w-[1.0625rem] text-text-muted" />
             </button>
           )}
         </div>
       </div>
 
-      <label className="avatar__label" htmlFor={fileInputId}>
+      <label className="cursor-pointer text-center text-xs text-text-muted hover:text-text hover:underline" htmlFor={fileInputId}>
         {src ? 'Change picture' : 'Add picture'}
       </label>
       <input
@@ -88,7 +87,7 @@ export function Avatar({ src, name, selectFile, clear, error }: AvatarProps) {
       />
 
       {error && (
-        <p className="avatar__error" role="alert">
+        <p className="max-w-[14rem] text-center text-xs text-danger" role="alert">
           {error}
         </p>
       )}
