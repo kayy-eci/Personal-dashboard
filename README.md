@@ -1,4 +1,7 @@
 # Life Dashboard (LifeOS RPG)
+<p align="center">
+<img width="1917" height="981" alt="image" src="https://github.com/user-attachments/assets/1db4d86b-f042-4111-98c6-8de6ffead9f4" />
+</p>
 
 A personal web dashboard that turns real-life habits, goals, and tasks into an RPG-style progression system. Your character's stats, XP, level, and health are calculated automatically from what you actually get done.
 
