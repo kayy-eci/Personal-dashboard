@@ -136,7 +136,7 @@ export function AnalyticsPage() {
               <div className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2" key={label}>
                 <span className="font-mono text-[0.625rem] tabular-nums text-text-muted">{data.activity[index]}</span>
                 <span
-                  className="bar w-[min(2.4rem,80%)] min-h-1 rounded-t-[5px] bg-[#b45309] transition-[height] duration-200"
+                  className="bar w-[min(2.4rem,80%)] min-h-1 rounded-t-[5px] bg-[var(--warning-soft)] transition-[height] duration-200"
                   style={{ height: `${data.activity[index]}%` }}
                 />
                 <span className="whitespace-nowrap py-[0.35rem] font-mono text-[0.625rem] text-text-faint">{label}</span>
@@ -153,8 +153,8 @@ export function AnalyticsPage() {
                   <span>{habit.name}</span>
                   <strong className="font-mono text-[0.6875rem] text-text">{habit.consistency ?? 100}%</strong>
                 </div>
-                <div className="h-[0.45rem] overflow-hidden rounded-pill bg-[#e2e8f0]" role="progressbar" aria-label={`${habit.name} consistency`} aria-valuenow={habit.consistency ?? 100} aria-valuemin={0} aria-valuemax={100}>
-                  <span className="block h-full rounded-[inherit] bg-[#059669]" style={{ width: `${habit.consistency ?? 100}%` }} />
+                <div className="h-[0.45rem] overflow-hidden rounded-pill bg-[var(--attr-soft)]" role="progressbar" aria-label={`${habit.name} consistency`} aria-valuenow={habit.consistency ?? 100} aria-valuemin={0} aria-valuemax={100}>
+                  <span className="block h-full rounded-[inherit] bg-[var(--success)]" style={{ width: `${habit.consistency ?? 100}%` }} />
                 </div>
               </div>
             ))}
@@ -162,12 +162,12 @@ export function AnalyticsPage() {
         </FeaturePanel>
 
         <FeaturePanel title="Weekly completion rate" description="Sample completion percentage over time.">
-          <div className="flex min-h-[10rem] items-end justify-around gap-1.5 border-b border-border-strong bg-[length:100%_25%] bg-[linear-gradient(to_bottom,transparent_calc(25%_-_1px),var(--border)_25%,transparent_calc(25%_+_1px),transparent_calc(50%_-_1px),var(--border)_50%,transparent_calc(50%_+_1px),transparent_calc(75%_-_1px),var(--border)_75%,transparent_calc(75%_+_1px))] px-2 pt-3 [&_.bar]:bg-[#0284c7]" role="img" aria-label={`${period} completion rate chart`}>
+          <div className="flex min-h-[10rem] items-end justify-around gap-1.5 border-b border-border-strong bg-[length:100%_25%] bg-[linear-gradient(to_bottom,transparent_calc(25%_-_1px),var(--border)_25%,transparent_calc(25%_+_1px),transparent_calc(50%_-_1px),var(--border)_50%,transparent_calc(50%_+_1px),transparent_calc(75%_-_1px),var(--border)_75%,transparent_calc(75%_+_1px))] px-2 pt-3 [&_.bar]:bg-[var(--info-soft)]" role="img" aria-label={`${period} completion rate chart`}>
             {data.labels.map((label, index) => (
               <div className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2" key={label}>
                 <span className="font-mono text-[0.625rem] tabular-nums text-text-muted">{data.completion[index]}%</span>
                 <span
-                  className="bar w-[min(2.4rem,80%)] min-h-1 rounded-t-[5px] bg-[#b45309] transition-[height] duration-200"
+                  className="bar w-[min(2.4rem,80%)] min-h-1 rounded-t-[5px] bg-[var(--warning-soft)] transition-[height] duration-200"
                   style={{ height: `${data.completion[index]}%` }}
                 />
                 <span className="whitespace-nowrap py-[0.35rem] font-mono text-[0.625rem] text-text-faint">{label}</span>
@@ -177,8 +177,8 @@ export function AnalyticsPage() {
         </FeaturePanel>
 
         <FeaturePanel title="Focus opportunities" description="A neutral prompt for reviewing neglected routines.">
-          <div className="mt-4 flex items-start gap-3 rounded-lg border border-[#fde68a] bg-[#fffbeb] p-3">
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#fde68a] bg-[#fffbeb] text-[#b45309]">↗</span>
+          <div className="mt-4 flex items-start gap-3 rounded-lg border border-[var(--warning-border)] bg-[var(--warning-soft)] p-3">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[var(--warning-border)] bg-[var(--warning-soft)] text-[var(--warning-text)]">↗</span>
             <div>
               <h3>Review the least consistent routine</h3>
               <p>

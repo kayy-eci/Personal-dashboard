@@ -54,21 +54,21 @@ export function PlayerStatusCard({
               maxLength={40}
               autoComplete="off"
             />
-            <span className="whitespace-nowrap rounded-md border border-[#efdcb0] bg-[#fdf6e8] px-2 py-0.5 font-mono text-xs font-bold text-brand-text">Level {status.level}</span>
+            <span className="game-visual whitespace-nowrap rounded-md border border-[var(--warning-border)] bg-[var(--warning-soft)] px-2 py-0.5 font-mono text-xs font-bold text-brand-text">Level {status.level}</span>
           </div>
           <h2 id="status-card-heading" className="mt-1 text-sm font-medium text-text-muted">
             Your player profile
           </h2>
           <p className="mt-0.5 flex items-center gap-2 text-xs text-text-faint">
-            <span className="h-2 w-2 rounded-full bg-[#059669]" aria-hidden="true" />
+            <span className="h-2 w-2 rounded-full bg-[var(--success)]" aria-hidden="true" />
             Sample data · changes are temporary
           </p>
-          <p className="mt-1 text-xs text-text-faint">
+          <p className="game-visual mt-1 text-xs text-text-faint">
             {status.currentStreak} day{status.currentStreak === 1 ? '' : 's'} active streak
           </p>
           {status.currentStreak >= 7 && (
-            <p className="mt-1">
-              <span className="whitespace-nowrap rounded-md border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 font-mono text-xs font-bold text-[#b45309]">
+            <p className="game-visual mt-1">
+              <span className="whitespace-nowrap rounded-md border border-[var(--warning-border)] bg-[var(--warning-soft)] px-2 py-0.5 font-mono text-xs font-bold text-[var(--warning-text)]">
                 {status.currentStreak >= 100 ? '100-day' : status.currentStreak >= 30 ? '30-day' : '7-day'} milestone
               </span>
             </p>
@@ -76,8 +76,8 @@ export function PlayerStatusCard({
         </div>
       </div>
 
-      <dl className="grid w-full grid-cols-1 gap-2 min-[560px]:grid-cols-3">
-        <div className="flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-2.5">
+      <dl className="grid w-full grid-cols-1 gap-[var(--stack-gap-sm)] min-[560px]:grid-cols-3">
+        <div className="flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-[var(--pad-x)]">
           <div className="flex justify-between gap-2 font-mono text-xs font-semibold text-text-muted [&_dt]:uppercase [&_dt]:tracking-[0.04em] [&_dd]:whitespace-nowrap [&_dd]:text-text">
             <dt>Vitality</dt>
             <dd>{status.health} / {status.maxHealth} HP</dd>
@@ -92,7 +92,7 @@ export function PlayerStatusCard({
           <span className="text-xs text-text-muted">{Math.round(hpPercent)}% available</span>
         </div>
 
-        <div className="flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-2.5">
+        <div className="game-visual flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-[var(--pad-x)]">
           <div className="flex justify-between gap-2 font-mono text-xs font-semibold text-text-muted [&_dt]:uppercase [&_dt]:tracking-[0.04em] [&_dd]:whitespace-nowrap [&_dd]:text-text">
             <dt>XP progress</dt>
             <dd>{status.totalXp.toLocaleString()} XP</dd>
@@ -112,7 +112,7 @@ export function PlayerStatusCard({
           </span>
         </div>
 
-        <div className="flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-2.5">
+        <div className="flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-[var(--pad-x)]">
           <div className="flex justify-between gap-2 font-mono text-xs font-semibold text-text-muted [&_dt]:uppercase [&_dt]:tracking-[0.04em] [&_dd]:whitespace-nowrap [&_dd]:text-text">
             <dt>Daily habits</dt>
             <dd>{completedHabits} / {totalHabits} done</dd>

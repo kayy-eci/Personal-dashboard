@@ -33,10 +33,10 @@ const categoryLabels: Record<QuestItem['category'], string> = {
 
 function questCategoryTag(category: QuestItem['category']) {
   switch (category) {
-    case 'main': return 'text-[#be123c] bg-[#fff1f2] border-[#fecdd3]'
-    case 'side': return 'text-[#0369a1] bg-[#f0f9ff] border-[#bae6fd]'
-    case 'challenge': return 'text-[#b45309] bg-[#fffbeb] border-[#fde68a]'
-    case 'recovery': return 'text-[#0f766e] bg-[#f0fdfa] border-[#99f6e4]'
+    case 'main': return 'text-[var(--danger-text)] bg-[var(--danger-soft)] border-[var(--danger-border)]'
+    case 'side': return 'text-[var(--info-text)] bg-[var(--info-soft)] border-[var(--info-border)]'
+    case 'challenge': return 'text-[var(--warning-text)] bg-[var(--warning-soft)] border-[var(--warning-border)]'
+    case 'recovery': return 'text-[var(--attr-focus)] bg-[var(--success-soft)] border-[var(--success-border)]'
   }
 }
 
@@ -87,7 +87,7 @@ export function QuestSection({
     <section className="group/section min-w-0 rounded-xl border border-border bg-surface p-[var(--section-pad)] shadow-xs scroll-mt-4" id="quests" aria-labelledby={headingId}>
       <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border pb-2.5">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#bae6fd] bg-[#f0f9ff] text-[#0369a1]">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--info-border)] bg-[var(--info-soft)] text-[var(--info-text)]">
             <QuestsIcon className="h-[1.1rem] w-[1.1rem]" />
           </span>
           <div>
@@ -126,7 +126,7 @@ export function QuestSection({
 
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <input
-          className="min-h-9 flex-1 max-w-[20rem] rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint"
+          className="min-h-[var(--control-h)] flex-1 max-w-[20rem] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text placeholder:text-text-faint"
           type="search"
           placeholder="Search quests"
           aria-label="Search quests"
@@ -136,7 +136,7 @@ export function QuestSection({
         <label className="flex items-center gap-1.5 text-xs font-semibold text-text-muted">
           Sort
           <select
-            className="min-h-9 rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text"
+            className="min-h-[var(--control-h)] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text"
             value={sortId}
             onChange={(event) => setSortId(event.target.value)}
           >
@@ -147,7 +147,7 @@ export function QuestSection({
         </label>
         <button
           type="button"
-          className={`min-h-9 rounded-md border px-2.5 py-1.5 text-xs font-bold uppercase tracking-[0.035em] transition-colors ${hideCompleted ? 'border-brand bg-brand text-brand-contrast' : 'border-border-strong bg-surface text-text-muted hover:bg-surface-sunken hover:text-text'}`}
+          className={`min-h-[var(--control-h)] rounded-md border px-[var(--pad-x)] py-[var(--pad-y)] text-xs font-bold uppercase tracking-[0.035em] transition-colors ${hideCompleted ? 'border-brand bg-brand text-brand-contrast' : 'border-border-strong bg-surface text-text-muted hover:bg-surface-sunken hover:text-text'}`}
           aria-pressed={hideCompleted}
           onClick={() => setHideCompleted((current) => !current)}
         >
@@ -163,7 +163,7 @@ export function QuestSection({
 
           return (
             <article
-              className={`min-w-0 rounded-[10px] border border-border bg-surface-sunken p-2.5 transition-colors hover:border-[#e9c88f] ${quest.category === 'recovery' ? 'border-l-4 border-l-[#0ea5e9]' : ''}`}
+              className={`min-w-0 rounded-[10px] border border-border bg-surface-sunken p-2.5 transition-colors hover:border-[var(--warning-border)] ${quest.category === 'recovery' ? 'border-l-4 border-l-[var(--info)]' : ''}`}
               key={quest.id}
               id={quest.category === 'recovery' ? 'recovery-quest' : undefined}
             >
@@ -173,10 +173,10 @@ export function QuestSection({
                     <span className={`inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold leading-[1.3] ${questCategoryTag(quest.category)}`}>
                       {categoryLabels[quest.category]}
                     </span>
-                    {quest.linkedGoal && <span className="inline-flex items-center rounded border border-[#e2e8f0] bg-[#f8fafc] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[#475569]">Linked: {quest.linkedGoal}</span>}
-                    {quest.deadline && <span className="inline-flex items-center rounded border border-[#e2e8f0] bg-[#f8fafc] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[#475569]">{quest.deadline}</span>}
+                    {quest.linkedGoal && <span className="inline-flex items-center rounded border border-[var(--attr-border)] bg-[var(--attr-soft)] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[var(--text-muted)]">Linked: {quest.linkedGoal}</span>}
+                    {quest.deadline && <span className="inline-flex items-center rounded border border-[var(--attr-border)] bg-[var(--attr-soft)] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[var(--text-muted)]">{quest.deadline}</span>}
                     {quest.category === 'recovery' && (
-                      <span className="inline-flex items-center rounded border border-[#fde68a] bg-[#fffbeb] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[#92400e]">Daily limit: {recoveryClaimed ? '2/2' : '1/2'} used</span>
+                      <span className="inline-flex items-center rounded border border-[var(--warning-border)] bg-[var(--warning-soft)] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[var(--warning-text)]">Daily limit: {recoveryClaimed ? '2/2' : '1/2'} used</span>
                     )}
                   </div>
                   <h3 className="text-sm font-bold leading-[1.4] text-text">{quest.title}</h3>
@@ -186,7 +186,7 @@ export function QuestSection({
                 {quest.category === 'recovery' ? (
                   <button
                     type="button"
-                    className="min-h-9 shrink-0 rounded-md border border-[#99f6e4] bg-[#f0fdfa] px-[0.7rem] py-2 text-[0.65rem] font-bold uppercase tracking-[0.03em] text-[#0f766e] transition-colors hover:bg-[#ccfbf1] disabled:cursor-default disabled:border-[#a7f3d0] disabled:bg-[#ecfdf5] disabled:text-[#047857] max-[600px]:self-start"
+                    className="min-h-[var(--control-h)] shrink-0 rounded-md border border-[var(--success-border)] bg-[var(--success-soft)] px-[0.7rem] py-2 text-[0.65rem] font-bold uppercase tracking-[0.03em] text-[var(--attr-focus)] transition-colors hover:bg-[var(--success-soft)] disabled:cursor-default disabled:border-[var(--success-border)] disabled:bg-[var(--success-soft)] disabled:text-[var(--success-text)] max-[600px]:self-start"
                     onClick={() => onClaimRecovery(quest)}
                     disabled={recoveryClaimed}
                   >
@@ -195,7 +195,7 @@ export function QuestSection({
                 ) : (
                   <button
                     type="button"
-                    className={`min-h-9 shrink-0 rounded-md border px-[0.7rem] py-2 text-[0.65rem] font-bold uppercase tracking-[0.03em] transition-colors max-[600px]:self-start ${isComplete ? 'cursor-default border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]' : 'border-brand bg-brand text-brand-contrast hover:bg-brand-hover hover:border-brand-hover'}`}
+                    className={`min-h-[var(--control-h)] shrink-0 rounded-md border px-[0.7rem] py-2 text-[0.65rem] font-bold uppercase tracking-[0.03em] transition-colors max-[600px]:self-start ${isComplete ? 'cursor-default border-[var(--success-border)] bg-[var(--success-soft)] text-[var(--success-text)]' : 'border-brand bg-brand text-brand-contrast hover:bg-brand-hover hover:border-brand-hover'}`}
                     onClick={() => onComplete(quest)}
                     disabled={isComplete}
                   >
@@ -205,7 +205,7 @@ export function QuestSection({
               </div>
 
               {quest.category === 'recovery' ? (
-                <div className="mt-2.5 flex flex-wrap justify-between gap-2 border-t border-border pt-2.5 text-xs font-semibold text-[#0f766e] [&>span]:font-normal [&>span]:text-text-faint">
+                <div className="mt-2.5 flex flex-wrap justify-between gap-2 border-t border-border pt-2.5 text-xs font-semibold text-[var(--attr-focus)] [&>span]:font-normal [&>span]:text-text-faint">
                   Restores {quest.reward} vitality points <span>Cooldown resets at 00:00</span>
                 </div>
               ) : (
@@ -218,11 +218,11 @@ export function QuestSection({
                     <span>Effort: {quest.effort}</span>
                     <span aria-hidden="true">×</span>
                     <span>Impact: {quest.impact ?? 1}</span>
-                    <strong className="text-[#047857]">= +{quest.reward} XP</strong>
+                    <strong className="text-[var(--success-text)]">= +{quest.reward} XP</strong>
                   </div>
                   <div className="flex flex-wrap items-center gap-[0.35rem]">
                     {quest.attributeRewards.map((reward) => (
-                      <span className="inline-flex items-center rounded border border-[#bfdbfe] bg-[#eff6ff] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[#1d4ed8]" key={reward}>{reward}</span>
+                      <span className="inline-flex items-center rounded border border-[var(--info-border)] bg-[var(--info-soft)] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold text-[var(--info-text)]" key={reward}>{reward}</span>
                     ))}
                   </div>
                 </div>

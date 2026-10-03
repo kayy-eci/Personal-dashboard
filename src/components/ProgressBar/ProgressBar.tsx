@@ -31,11 +31,13 @@ export function ProgressBar({
 }: ProgressBarProps) {
   const percent = percentOf(value, max)
 
+  // Vitality and XP keep their own colours: they are game data, and must not
+  // follow the user's accent.
   const fillClass =
     tone === 'health'
-      ? 'bg-brand'
+      ? 'bg-vitality'
       : tone === 'xp'
-        ? 'bg-brand'
+        ? 'bg-xp'
         : 'bg-text-faint'
 
   return (

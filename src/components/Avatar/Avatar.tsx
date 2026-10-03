@@ -39,7 +39,7 @@ export function Avatar({ src, name, selectFile, clear, error }: AvatarProps) {
         {src ? (
           <img className="h-full w-full object-cover" src={src} alt={`${name}'s profile picture`} />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-surface-sunken to-[#eceae4]" role="img" aria-label="No profile picture set">
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-surface-sunken to-[var(--surface-secondary)]" role="img" aria-label="No profile picture set">
             <span className="text-[2.75rem] font-semibold leading-none text-text-faint" aria-hidden="true">
               {initial}
             </span>

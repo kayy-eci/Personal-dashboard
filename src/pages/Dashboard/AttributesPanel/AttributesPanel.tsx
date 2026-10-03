@@ -9,15 +9,16 @@ export interface AttributesPanelProps {
   menu?: ReactNode
 }
 
+/** Attribute identity colours — fixed per attribute, never accent-derived. */
 function attributeColors(key: string): [string, string] {
   switch (key) {
-    case 'STR': return ['#e11d48', '#fff1f2']
-    case 'INT': return ['#2563eb', '#eff6ff']
-    case 'DISC': return ['#65a30d', '#f7fee7']
-    case 'CREAT': return ['#ea580c', '#fff3ea']
-    case 'FOCUS': return ['#0d9488', '#f0fdfa']
-    case 'SOC': return ['#059669', '#ecfdf5']
-    default: return ['#73726e', '#f7f7f5']
+    case 'STR': return ['var(--attr-str)', 'var(--danger-soft)']
+    case 'INT': return ['var(--attr-int)', 'var(--info-soft)']
+    case 'DISC': return ['var(--attr-disc)', 'var(--warning-soft)']
+    case 'CREAT': return ['var(--attr-creat)', 'var(--warning-soft)']
+    case 'FOCUS': return ['var(--attr-focus)', 'var(--success-soft)']
+    case 'SOC': return ['var(--attr-soc)', 'var(--success-soft)']
+    default: return ['var(--text-muted)', 'var(--attr-soft)']
   }
 }
 

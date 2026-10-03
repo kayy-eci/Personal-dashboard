@@ -97,10 +97,10 @@ export function SettingsPage() {
   }
 
   const sectionButtonClass = (id: SettingsSection) =>
-    `min-h-9 rounded-md border border-border-strong bg-transparent px-2.5 py-1.5 text-left text-sm text-text-muted${activeSection === id ? ' border-brand bg-brand text-brand-contrast' : ''}`
+    `min-h-[var(--control-h)] rounded-md border border-border-strong bg-transparent px-[var(--pad-x)] py-[var(--pad-y)] text-left text-sm text-text-muted${activeSection === id ? ' border-brand bg-brand text-brand-contrast' : ''}`
 
   const inputClass =
-    'min-h-9 w-full max-w-[18rem] rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text'
+    'min-h-[var(--control-h)] w-full max-w-[18rem] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text'
   const primaryButton =
     'inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs font-bold transition-colors disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover'
   const ghostButton =
@@ -211,7 +211,7 @@ export function SettingsPage() {
               </div>
               <div className={rowGrid}>
                 <label>Last backup</label>
-                <span className={lastBackup ? 'font-semibold text-text' : 'font-semibold text-[#b45309]'}>
+                <span className={lastBackup ? 'font-semibold text-text' : 'font-semibold text-[var(--warning-text)]'}>
                   {lastBackup ? new Date(lastBackup).toLocaleString() : 'Never'}
                 </span>
               </div>
@@ -260,7 +260,7 @@ export function SettingsPage() {
                             : `Connecting to @${username}…`}
                   </span>
                   {githubError && (
-                    <span className="font-semibold text-[#b45309]" role="alert">
+                    <span className="font-semibold text-[var(--warning-text)]" role="alert">
                       {githubError}
                     </span>
                   )}

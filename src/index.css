@@ -114,6 +114,13 @@ html {
   --success-text: #0b5c40;
   --success-soft: #e2f5ec;
   --success-border: #a7e3c8;
+  --success-weak: #6fc7a6;
+  /* GitHub-style activity scale (data encoding, not a status colour). */
+  --gh-0: #ebedf0;
+  --gh-1: #d1e8dc;
+  --gh-2: #7ad7b5;
+  --gh-3: #3ebd8c;
+  --gh-4: #2c9b75;
   --warning: #b45309;
   --warning-text: #92400e;
   --warning-soft: #fdf3e3;
@@ -182,6 +189,12 @@ html {
   --success-text: #86efac;
   --success-soft: #14291f;
   --success-border: #23543c;
+  --success-weak: #2f7a5c;
+  --gh-0: #23262b;
+  --gh-1: #17352a;
+  --gh-2: #1f5a45;
+  --gh-3: #2c8a63;
+  --gh-4: #4ade9c;
   --warning: #fbbf24;
   --warning-text: #fcd34d;
   --warning-soft: #2c2413;
@@ -336,6 +349,12 @@ html {
   --color-success-text: var(--success-text);
   --color-success-soft: var(--success-soft);
   --color-success-border: var(--success-border);
+  --color-success-weak: var(--success-weak);
+  --color-gh-0: var(--gh-0);
+  --color-gh-1: var(--gh-1);
+  --color-gh-2: var(--gh-2);
+  --color-gh-3: var(--gh-3);
+  --color-gh-4: var(--gh-4);
   --color-warning: var(--warning);
   --color-warning-text: var(--warning-text);
   --color-warning-soft: var(--warning-soft);

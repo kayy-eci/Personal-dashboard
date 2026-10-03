@@ -17,11 +17,11 @@ const weekLevels = ['full', 'full', 'full', 'full', 'partial', 'full', 'today']
 
 function tagTone(attribute: string) {
   switch (attribute.toLowerCase()) {
-    case 'str': return 'text-[#be123c] bg-[#fff1f2] border-[#fecdd3]'
-    case 'int': return 'text-[#1d4ed8] bg-[#eff6ff] border-[#bfdbfe]'
-    case 'disc': return 'text-[#b45309] bg-[#fffbeb] border-[#fde68a]'
-    case 'focus': return 'text-[#0f766e] bg-[#f0fdfa] border-[#99f6e4]'
-    default: return 'text-[#475569] bg-[#f8fafc] border-[#e2e8f0]'
+    case 'str': return 'text-[var(--danger-text)] bg-[var(--danger-soft)] border-[var(--danger-border)]'
+    case 'int': return 'text-[var(--info-text)] bg-[var(--info-soft)] border-[var(--info-border)]'
+    case 'disc': return 'text-[var(--warning-text)] bg-[var(--warning-soft)] border-[var(--warning-border)]'
+    case 'focus': return 'text-[var(--attr-focus)] bg-[var(--success-soft)] border-[var(--success-border)]'
+    default: return 'text-[var(--text-muted)] bg-[var(--attr-soft)] border-[var(--attr-border)]'
   }
 }
 
@@ -68,7 +68,7 @@ export function HabitsSection({ habits, onToggle, selectedAttribute, menu }: Hab
     <section className="group/section min-w-0 rounded-xl border border-border bg-surface p-[var(--section-pad)] shadow-xs scroll-mt-4" id="habits" aria-labelledby={headingId}>
       <div className="flex items-center justify-between gap-2.5 border-b border-border pb-2.5 max-[600px]:items-start">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#d5e8a0] bg-[#f4f8e8] text-brand-text">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[var(--brand-outline)] bg-[var(--brand-tint)] text-brand-text">
             <HabitsIcon className="h-[1.1rem] w-[1.1rem]" />
           </span>
           <div>
@@ -91,7 +91,7 @@ export function HabitsSection({ habits, onToggle, selectedAttribute, menu }: Hab
           {week.map(({ day, level }) => (
             <span
               key={day}
-              className={`h-3 w-3 rounded-[3px] ${level === 'full' ? 'bg-[#10b981]' : level === 'partial' ? 'bg-[#6ee7b7]' : 'bg-[#0ea5e9] outline outline-2 outline-[#bae6fd] outline-offset-1'}`}
+              className={`h-3 w-3 rounded-[3px] ${level === 'full' ? 'bg-[var(--success)]' : level === 'partial' ? 'bg-[var(--success-weak)]' : 'bg-[var(--info)] outline outline-2 outline-[var(--info-border)] outline-offset-1'}`}
               title={`${day}: ${level === 'today' ? 'In progress' : level === 'partial' ? '75%' : '100%'}`}
               aria-hidden="true"
             />
@@ -102,7 +102,7 @@ export function HabitsSection({ habits, onToggle, selectedAttribute, menu }: Hab
 
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <input
-          className="min-h-9 flex-1 max-w-[20rem] rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint"
+          className="min-h-[var(--control-h)] flex-1 max-w-[20rem] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text placeholder:text-text-faint"
           type="search"
           placeholder="Search habits"
           aria-label="Search habits"
@@ -112,7 +112,7 @@ export function HabitsSection({ habits, onToggle, selectedAttribute, menu }: Hab
         <label className="flex items-center gap-1.5 text-xs font-semibold text-text-muted">
           Sort
           <select
-            className="min-h-9 rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text"
+            className="min-h-[var(--control-h)] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text"
             value={sortId}
             onChange={(event) => setSortId(event.target.value)}
           >
@@ -123,7 +123,7 @@ export function HabitsSection({ habits, onToggle, selectedAttribute, menu }: Hab
         </label>
         <button
           type="button"
-          className={`min-h-9 rounded-md border px-2.5 py-1.5 text-xs font-bold uppercase tracking-[0.035em] transition-colors ${hideCompleted ? 'border-brand bg-brand text-brand-contrast' : 'border-border-strong bg-surface text-text-muted hover:bg-surface-sunken hover:text-text'}`}
+          className={`min-h-[var(--control-h)] rounded-md border px-[var(--pad-x)] py-[var(--pad-y)] text-xs font-bold uppercase tracking-[0.035em] transition-colors ${hideCompleted ? 'border-brand bg-brand text-brand-contrast' : 'border-border-strong bg-surface text-text-muted hover:bg-surface-sunken hover:text-text'}`}
           aria-pressed={hideCompleted}
           onClick={() => setHideCompleted((current) => !current)}
         >
@@ -172,12 +172,12 @@ export function HabitsSection({ habits, onToggle, selectedAttribute, menu }: Hab
       <ul className="mt-2.5 flex flex-col gap-1.5" role="list">
         {visibleHabits.map((habit) => (
           <li
-            className={`grid min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2 rounded-[10px] border border-border p-2.5 transition-colors max-[600px]:grid-cols-[1.25rem_minmax(0,1fr)] max-[600px]:gap-1.5 ${habit.done ? 'bg-surface-sunken' : 'bg-surface hover:bg-[#fafbfc] hover:border-border-strong'}`}
+            className={`grid min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2 rounded-[10px] border border-border p-2.5 transition-colors max-[600px]:grid-cols-[1.25rem_minmax(0,1fr)] max-[600px]:gap-1.5 ${habit.done ? 'bg-surface-sunken' : 'bg-surface hover:bg-[var(--surface-secondary)] hover:border-border-strong'}`}
             key={habit.id}
           >
             <button
               type="button"
-              className={`inline-flex h-5 w-5 items-center justify-center rounded-[5px] border text-[0.8rem] font-bold leading-none transition-colors max-[600px]:row-span-2 ${habit.done ? 'border-brand bg-brand text-brand-contrast' : 'border-[#cbd5e1] bg-surface text-transparent hover:border-[#dc2626] hover:text-[#dc2626]'}`}
+              className={`inline-flex h-5 w-5 items-center justify-center rounded-[5px] border text-[0.8rem] font-bold leading-none transition-colors max-[600px]:row-span-2 ${habit.done ? 'border-brand bg-brand text-brand-contrast' : 'border-[var(--border-strong)] bg-surface text-transparent hover:border-[var(--danger-border)] hover:text-[var(--danger)]'}`}
               aria-pressed={habit.done}
               aria-label={`${habit.done ? 'Undo completion of' : 'Mark complete'} ${habit.name}`}
               onClick={() => onToggle(habit)}
@@ -196,18 +196,18 @@ export function HabitsSection({ habits, onToggle, selectedAttribute, menu }: Hab
                     {attribute}
                   </span>
                 ))}
-                <span className="inline-flex max-w-full items-center rounded border border-[#e2e8f0] bg-[#f8fafc] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold leading-[1.3] text-[#475569]">{habit.difficulty}</span>
+                <span className="inline-flex max-w-full items-center rounded border border-[var(--attr-border)] bg-[var(--attr-soft)] px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold leading-[1.3] text-[var(--text-muted)]">{habit.difficulty}</span>
               </div>
-              <div className="mt-1 flex flex-wrap gap-1.5 font-mono text-[0.65rem] text-text-faint [&>span+span::before]:mr-1.5 [&>span+span::before]:text-[#cbd5e1] [&>span+span::before]:content-['·']">
+              <div className="mt-1 flex flex-wrap gap-1.5 font-mono text-[0.65rem] text-text-faint [&>span+span::before]:mr-1.5 [&>span+span::before]:text-[var(--border-strong)] [&>span+span::before]:content-['·']">
                 <span>{habit.streak}d streak</span>
                 {habit.consistency !== null && (
                   <span>{habit.consistency}% consistency</span>
                 )}
-                {habit.recovery && <span className="text-[#047857]">Restores vitality</span>}
+                {habit.recovery && <span className="text-[var(--success-text)]">Restores vitality</span>}
               </div>
             </div>
 
-            <span className={`whitespace-nowrap rounded-[5px] border px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold max-[600px]:col-start-2 max-[600px]:justify-self-start ${habit.done ? 'border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]' : 'border-[#d5e8a0] bg-[#f4f8e8] text-brand-text'}`}>
+            <span className={`whitespace-nowrap rounded-[5px] border px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold max-[600px]:col-start-2 max-[600px]:justify-self-start ${habit.done ? 'border-[var(--success-border)] bg-[var(--success-soft)] text-[var(--success-text)]' : 'border-[var(--brand-outline)] bg-[var(--brand-tint)] text-brand-text'}`}>
               {habit.done ? 'Earned ' : '+'}
               {habit.reward} {habit.rewardType}
             </span>

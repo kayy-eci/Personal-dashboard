@@ -143,7 +143,7 @@ export function GitHubActivityGrid({
 
   return (
     <div
-      className={`relative isolate w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-surface/90 p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)] ${className ?? ''}`}
+      className={`relative isolate w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-surface/90 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)] ${className ?? ''}`}
       ref={containerRef}
       onPointerLeave={() => setHoveredDay(null)}
     >
@@ -263,11 +263,11 @@ export function GitHubActivityGrid({
 
 function levelColor(level: number) {
   switch (level) {
-    case 1: return '#d8f1e4'
-    case 2: return '#7ad7b5'
-    case 3: return '#3ebd8c'
-    case 4: return '#2c9b75'
-    default: return '#ebedf0'
+    case 1: return 'var(--gh-1)'
+    case 2: return 'var(--gh-2)'
+    case 3: return 'var(--gh-3)'
+    case 4: return 'var(--gh-4)'
+    default: return 'var(--gh-0)'
   }
 }
 

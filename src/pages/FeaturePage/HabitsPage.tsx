@@ -4,6 +4,8 @@ import { useGitHubActivity } from '../../hooks/useGitHubActivity'
 import { getActivityCopy } from './github-activity-copy'
 import type { HabitItem } from '../Dashboard/dashboard-data'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
+import { usePersistentState } from '../../lib/storage'
+import { applySort, type SortOption } from '../../hooks/useListControls'
 
 type ManagedHabit = HabitItem & {
   done: boolean
@@ -12,6 +14,13 @@ type ManagedHabit = HabitItem & {
 }
 
 type HabitFilter = 'all' | 'today' | 'weekly' | 'archived'
+
+const habitSortOptions: SortOption<ManagedHabit>[] = [
+  { id: 'streak', label: 'Streak (desc)', compare: (a, b) => b.streak - a.streak },
+  { id: 'consistency', label: 'Consistency (desc)', compare: (a, b) => (b.consistency ?? -1) - (a.consistency ?? -1) },
+  { id: 'reward', label: 'Reward (desc)', compare: (a, b) => b.reward - a.reward },
+  { id: 'name', label: 'Name (A–Z)', compare: (a, b) => a.name.localeCompare(b.name) },
+]
 
 const startingHabits: ManagedHabit[] = [
   {
@@ -81,16 +90,29 @@ export function HabitsPage() {
     source: activitySource,
     hasToken,
   } = useGitHubActivity()
-  const [habits, setHabits] = useState(startingHabits)
+  const [habits, setHabits] = usePersistentState('habits-page:habits', startingHabits)
   const [filter, setFilter] = useState<HabitFilter>('all')
   const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('streak')
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [frequency, setFrequency] = useState<'Daily' | 'Weekly'>('Daily')
+  const [difficulty, setDifficulty] = useState<'Easy' | 'Med' | 'Hard'>('Easy')
+  const [reward, setReward] = useState(20)
 
   const activeHabits = habits.filter((habit) => !habit.archived)
   const todayHabits = activeHabits.filter((habit) => habit.frequency === 'Daily')
   const completedToday = todayHabits.filter((habit) => habit.done).length
+  const consistencyValues = activeHabits
+    .map((habit) => habit.consistency)
+    .filter((value): value is number => value !== null)
+  const averageConsistency = consistencyValues.length
+    ? Math.round(consistencyValues.reduce((sum, value) => sum + value, 0) / consistencyValues.length)
+    : 0
+  const longestStreakHabit = activeHabits.reduce<ManagedHabit | null>(
+    (best, habit) => (best === null || habit.streak > best.streak ? habit : best),
+    null,
+  )
   const visibleHabits = useMemo(
     () =>
       habits.filter((habit) => {
@@ -106,6 +128,10 @@ export function HabitsPage() {
       }),
     [filter, habits, search],
   )
+  const sortedVisibleHabits = useMemo(
+    () => applySort(visibleHabits, sort, habitSortOptions),
+    [sort, visibleHabits],
+  )
 
   const submitHabit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -116,10 +142,10 @@ export function HabitsPage() {
         id: `habit-${Date.now()}`,
         name: trimmedName,
         attributes: ['FOCUS'],
-        difficulty: 'Easy',
+        difficulty,
         streak: 0,
         consistency: null,
-        reward: 20,
+        reward,
         rewardType: 'XP',
         initialDone: false,
         done: false,
@@ -130,6 +156,8 @@ export function HabitsPage() {
     ])
     setName('')
     setFrequency('Daily')
+    setDifficulty('Easy')
+    setReward(20)
     setFilter(frequency === 'Daily' ? 'today' : 'weekly')
     setShowForm(false)
   }
@@ -144,7 +172,7 @@ export function HabitsPage() {
   const activityCopy = getActivityCopy(username, activityStatus, activitySource, hasToken)
 
   return (
-    <div className="flex w-full max-w-[100rem] mx-auto flex-col gap-4 p-4 min-[769px]:p-5 min-[769px]:pb-7">
+    <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-3 p-3 pb-5 min-[769px]:p-4 min-[769px]:pb-6">
       <GitHubActivityGrid
         days={activityDays}
         activityType="contribution"
@@ -158,8 +186,8 @@ export function HabitsPage() {
         items={[
           { label: 'Active routines', value: String(activeHabits.length), note: `${todayHabits.length} scheduled today`, tone: 'gold' },
           { label: 'Daily completion', value: `${completedToday}/${todayHabits.length}`, note: 'Temporary check-ins', tone: 'emerald' },
-          { label: 'Average consistency', value: '89%', note: 'Across tracked routines', tone: 'sky' },
-          { label: 'Longest streak', value: '14 days', note: 'Morning Deep Work', tone: 'ember' },
+          { label: 'Average consistency', value: `${averageConsistency}%`, note: 'Across tracked routines', tone: 'sky' },
+          { label: 'Longest streak', value: longestStreakHabit ? `${longestStreakHabit.streak} days` : '0 days', note: longestStreakHabit ? longestStreakHabit.name : 'No active habits', tone: 'ember' },
         ]}
       />
 
@@ -180,7 +208,7 @@ export function HabitsPage() {
       >
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <input
-            className="min-h-10 flex-1 max-w-[24rem] rounded-md border border-border-strong bg-surface-overlay px-[0.7rem] py-2 text-sm text-text placeholder:text-text-faint"
+            className="min-h-[var(--control-h)] flex-1 max-w-[24rem] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text placeholder:text-text-faint"
             type="search"
             placeholder="Search habits"
             aria-label="Search habits"
@@ -199,6 +227,19 @@ export function HabitsPage() {
               </button>
             ))}
           </div>
+          <label className="flex items-center gap-2 text-xs font-semibold text-text-muted">
+            Sort
+            <select
+              className="min-h-[var(--control-h)] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text"
+              aria-label="Sort habits"
+              value={sort}
+              onChange={(event) => setSort(event.target.value)}
+            >
+              {habitSortOptions.map((option) => (
+                <option value={option.id} key={option.id}>{option.label}</option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {showForm && (
@@ -206,7 +247,7 @@ export function HabitsPage() {
             <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-text-muted col-span-full">
               Habit name
               <input
-                className="min-h-10 rounded-md border border-border-strong bg-surface-overlay px-[0.7rem] py-2 text-sm text-text"
+              className="min-h-[var(--control-h)] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text focus-visible:outline-2 focus-visible:outline-brand"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 maxLength={80}
@@ -217,13 +258,36 @@ export function HabitsPage() {
             <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-text-muted">
               Schedule
               <select
-                className="min-h-10 min-w-32 rounded-md border border-border-strong bg-surface-overlay px-[0.7rem] py-2 text-sm text-text"
+                className="min-h-[var(--control-h)] min-w-32 rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text"
                 value={frequency}
                 onChange={(event) => setFrequency(event.target.value as 'Daily' | 'Weekly')}
               >
                 <option>Daily</option>
                 <option>Weekly</option>
               </select>
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-text-muted">
+              Difficulty
+              <select
+                className="min-h-[var(--control-h)] min-w-32 rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text focus-visible:outline-2 focus-visible:outline-brand"
+                value={difficulty}
+                onChange={(event) => setDifficulty(event.target.value as 'Easy' | 'Med' | 'Hard')}
+              >
+                <option>Easy</option>
+                <option>Med</option>
+                <option>Hard</option>
+              </select>
+            </label>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-text-muted">
+              Reward (XP)
+              <input
+                className="min-h-[var(--control-h)] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text focus-visible:outline-2 focus-visible:outline-brand"
+                type="number"
+                min={0}
+                max={1000}
+                value={reward}
+                onChange={(event) => setReward(Math.max(0, Number(event.target.value) || 0))}
+              />
             </label>
             <div className="col-span-full flex flex-wrap gap-2">
               <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover" type="submit">
@@ -234,18 +298,18 @@ export function HabitsPage() {
         )}
 
         {visibleHabits.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken p-5 text-center text-sm text-text-muted" role="status">
+          <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken p-3 text-center text-sm text-text-muted" role="status">
             No habits match this view. Try another filter or add a routine.
           </div>
         ) : (
           <ul className="mt-3 flex flex-col gap-2" role="list">
-            {visibleHabits.map((habit) => (
+            {sortedVisibleHabits.map((habit) => (
               <li className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-overlay p-3 max-[480px]:items-start" key={habit.id}>
                 <div className="flex min-w-0 items-center gap-3">
                   {filter !== 'archived' && (
                     <button
                       type="button"
-                      className="inline-flex h-5 w-5 items-center justify-center rounded-[5px] border border-[#cbd5e1] bg-surface-overlay text-[0.8rem] font-bold leading-none text-transparent transition-colors hover:border-[#dc2626] hover:text-[#dc2626] aria-pressed:border-[#059669] aria-pressed:bg-[#059669] aria-pressed:text-white"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-[5px] border border-[var(--border-strong)] bg-surface-overlay text-[0.8rem] font-bold leading-none text-transparent transition-colors hover:border-[var(--danger-border)] hover:text-[var(--danger)] aria-pressed:border-[var(--success-border)] aria-pressed:bg-[var(--success)] aria-pressed:text-white"
                       aria-pressed={habit.done}
                       aria-label={`${habit.done ? 'Undo' : 'Check in'} ${habit.name}`}
                       onClick={() =>
@@ -271,7 +335,7 @@ export function HabitsPage() {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 max-[480px]:flex-col max-[480px]:items-end">
-                  <span className={`${habit.done ? 'inline-flex items-center whitespace-nowrap rounded-[5px] border border-[#a7f3d0] bg-[#ecfdf5] px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold text-[#047857]' : 'inline-flex items-center whitespace-nowrap rounded-[5px] border border-[#d5e8a0] bg-[#f4f8e8] px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold text-brand-text'}`}>
+                  <span className={`${habit.done ? 'inline-flex items-center whitespace-nowrap rounded-[5px] border border-[var(--success-border)] bg-[var(--success-soft)] px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold text-[var(--success-text)]' : 'inline-flex items-center whitespace-nowrap rounded-[5px] border border-[var(--brand-outline)] bg-[var(--brand-tint)] px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold text-brand-text'}`}>
                     {habit.done ? 'Checked in' : `+${habit.reward} ${habit.rewardType}`}
                   </span>
                   <button
@@ -295,12 +359,19 @@ export function HabitsPage() {
       </FeaturePanel>
 
       <FeaturePanel title="Weekly consistency" description="A sample view of recent routine follow-through.">
-        <div className="flex items-center gap-[0.3rem] rounded-md border border-border bg-surface-sunken px-2 py-1.5" role="img" aria-label="Weekly consistency: Monday through Thursday 100 percent, Friday 75 percent, Saturday 100 percent, Sunday in progress">
+        <div className="flex items-center gap-[0.3rem] rounded-md border border-border bg-surface-sunken px-2 py-1.5" role="img" aria-label="Weekly consistency: sample follow-through Mon–Sun, today highlighted">
           <span className="mr-[0.15rem] font-mono text-[0.65rem] font-bold text-text-muted">MON–SUN</span>
-          {['full', 'full', 'full', 'full', 'partial', 'full', 'today'].map((level, index) => (
-            <span key={index} className={`${level === 'full' ? 'h-3 w-3 rounded-[3px] bg-[#10b981]' : level === 'partial' ? 'h-3 w-3 rounded-[3px] bg-[#6ee7b7]' : 'h-3 w-3 rounded-[3px] bg-[#0ea5e9] outline outline-2 outline-[#bae6fd] outline-offset-1'}`} aria-hidden="true" />
-          ))}
+          {['full', 'full', 'full', 'full', 'partial', 'full', 'full'].map((level, index) => {
+            const todayIndex = (new Date().getDay() + 6) % 7
+            const resolved = index === todayIndex ? 'today' : level
+            return (
+              <span key={index} className={`${resolved === 'full' ? 'h-3 w-3 rounded-[3px] bg-[var(--success)]' : resolved === 'partial' ? 'h-3 w-3 rounded-[3px] bg-[var(--success-weak)]' : 'h-3 w-3 rounded-[3px] bg-[var(--info)] outline outline-2 outline-[var(--info-border)] outline-offset-1'}`} aria-hidden="true" />
+            )
+          })}
         </div>
+        <p className="mt-2 text-xs text-text-muted">
+          Best streak this week: {longestStreakHabit ? `${longestStreakHabit.name} — ${longestStreakHabit.streak} days` : 'No active habits'}
+        </p>
       </FeaturePanel>
     </div>
   )

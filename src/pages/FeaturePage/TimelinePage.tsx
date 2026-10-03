@@ -95,7 +95,7 @@ export function TimelinePage() {
       >
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <input
-            className="min-h-9 flex-1 max-w-[24rem] rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint"
+            className="min-h-[var(--control-h)] flex-1 max-w-[24rem] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text placeholder:text-text-faint"
             type="search"
             placeholder="Search activity"
             aria-label="Search timeline events"
@@ -131,7 +131,7 @@ export function TimelinePage() {
           <label className="flex items-center gap-2 text-xs font-semibold text-text-muted">
             Sort
             <select
-              className="min-h-9 rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text focus-visible:outline-2 focus-visible:outline-brand"
+              className="min-h-[var(--control-h)] rounded-md border border-border-strong bg-surface-overlay px-[var(--pad-x)] py-[var(--pad-y)] text-sm text-text focus-visible:outline-2 focus-visible:outline-brand"
               aria-label="Sort timeline events"
               value={sort}
               onChange={(event) => setPrefs((current) => ({ ...current, sort: event.target.value as TimelineSort }))}
@@ -151,12 +151,12 @@ export function TimelinePage() {
           <ol className="relative mt-3 flex flex-col gap-3 pl-[1.25rem] before:absolute before:bottom-[0.5rem] before:left-[0.3rem] before:top-[0.5rem] before:w-0.5 before:bg-border-strong before:content-['']">
             {entries.map((entry) => (
               <li
-                className={`${entry.tone === 'health' ? 'relative flex flex-col gap-1.5 rounded-lg border border-border bg-surface-sunken p-2.5 before:absolute before:left-[-1.3rem] before:top-4 before:h-[0.7rem] before:w-[0.7rem] before:rounded-full before:border-2 before:border-[#ffe4e6] before:bg-[#dc2626] before:content-[""]' : 'relative flex flex-col gap-1.5 rounded-lg border border-border bg-surface-sunken p-2.5 before:absolute before:left-[-1.3rem] before:top-4 before:h-[0.7rem] before:w-[0.7rem] before:rounded-full before:border-2 before:border-[#fdf3e0] before:bg-brand before:content-[""]'}`}
+                className={`${entry.tone === 'health' ? 'relative flex flex-col gap-1.5 rounded-lg border border-border bg-surface-sunken p-2.5 before:absolute before:left-[-1.3rem] before:top-4 before:h-[0.7rem] before:w-[0.7rem] before:rounded-full before:border-2 before:border-[var(--danger-border)] before:bg-[var(--danger)] before:content-[""]' : 'relative flex flex-col gap-1.5 rounded-lg border border-border bg-surface-sunken p-2.5 before:absolute before:left-[-1.3rem] before:top-4 before:h-[0.7rem] before:w-[0.7rem] before:rounded-full before:border-2 before:border-[var(--warning-border)] before:bg-brand before:content-[""]'}`}
                 key={entry.id}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[0.6875rem] text-text-faint">
                   <time>{entry.time}</time>
-                  <span className={`${entry.tone === 'health' ? 'whitespace-nowrap rounded border border-[#fecdd3] bg-[#fff1f2] px-1.5 py-0.5 font-bold text-[#be123c]' : 'whitespace-nowrap rounded border border-[#a7f3d0] bg-[#ecfdf5] px-1.5 py-0.5 font-bold text-[#047857]'}`}>{entry.reward}</span>
+                  <span className={`${entry.tone === 'health' ? 'whitespace-nowrap rounded border border-[var(--danger-border)] bg-[var(--danger-soft)] px-1.5 py-0.5 font-bold text-[var(--danger-text)]' : 'whitespace-nowrap rounded border border-[var(--success-border)] bg-[var(--success-soft)] px-1.5 py-0.5 font-bold text-[var(--success-text)]'}`}>{entry.reward}</span>
                 </div>
                 <h3 className="text-sm font-bold text-text">{entry.title}</h3>
                 <p className="text-sm leading-[1.5] text-text-muted">{entry.detail}</p>
