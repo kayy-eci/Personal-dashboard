@@ -253,11 +253,11 @@ export function EventManager({
   }
 
   return (
-    <div className={cn("flex flex-col gap-4", className)}>
+    <div className={cn("flex flex-col gap-3", className)}>
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <h2 className="text-xl font-semibold sm:text-2xl">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+          <h2 className="text-lg font-semibold sm:text-xl">
             {view === "month" &&
               currentDate.toLocaleDateString("en-US", {
                 month: "long",
@@ -759,7 +759,7 @@ export function EventManager({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time</Label>
                 <Input
@@ -821,7 +821,7 @@ export function EventManager({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
                 <Select
@@ -1072,7 +1072,7 @@ function EventCard({
       </div>
       {isHovered && (
         <div className="absolute left-0 top-full z-50 mt-1 w-72 animate-in fade-in slide-in-from-top-2 duration-200">
-          <Card className="border-2 p-4 shadow-xl">
+          <Card className="border-2 p-3 shadow-xl">
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <h4 className="font-semibold leading-tight">{event.title}</h4>
@@ -1438,7 +1438,7 @@ function ListView({
   )
 
   return (
-    <Card className="p-3 sm:p-4">
+    <Card className="p-3">
       <div className="space-y-6">
         {Object.entries(groupedEvents).map(([date, dateEvents]) => (
           <div key={date} className="space-y-3">
@@ -1450,7 +1450,7 @@ function ListView({
                   <div
                     key={event.id}
                     onClick={() => onEventClick(event)}
-                    className="group cursor-pointer rounded-lg border bg-card p-3 transition-all hover:shadow-md hover:scale-[1.01] animate-in fade-in slide-in-from-bottom-2 duration-300 sm:p-4"
+                    className="group cursor-pointer rounded-lg border bg-card p-3 transition-all hover:shadow-md hover:scale-[1.01] animate-in fade-in slide-in-from-bottom-2 duration-300"
                   >
                     <div className="flex items-start gap-2 sm:gap-3">
                       <div className={cn("mt-1 h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3", colorClasses.bg)} />

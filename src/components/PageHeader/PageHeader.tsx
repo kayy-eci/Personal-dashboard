@@ -27,7 +27,7 @@ export function PageHeader({ pageId, title, subtitle }: PageHeaderProps) {
 
   return (
     <header className="flex flex-col bg-surface">
-      <div className="group relative flex h-[clamp(7rem,22vw,12rem)] items-center justify-center overflow-hidden border-b border-border bg-surface-sunken max-md:h-[clamp(6rem,26vw,8rem)]">
+      <div className="group relative flex h-75 items-center justify-center overflow-hidden border-b border-border bg-surface-sunken max-md:h-[clamp(4.5rem,20vw,6.5rem)]">
         {coverSrc ? (
           <>
             {/* Decorative banner — the page title carries the meaning. */}
@@ -80,13 +80,13 @@ export function PageHeader({ pageId, title, subtitle }: PageHeaderProps) {
         />
       </div>
 
-      <div className="flex flex-col gap-1 px-5 pb-2 pt-4 max-md:px-4 max-md:pb-2 max-md:pt-3">
-        <h1 className="text-2xl font-bold tracking-[-0.02em] text-text">{title}</h1>
+      <div className="flex flex-col gap-0.5 px-4 pb-1.5 pt-3 max-md:px-3 max-md:pb-1.5 max-md:pt-2.5">
+        <h1 className="text-xl font-bold tracking-[-0.02em] text-text">{title}</h1>
         {subtitle && <p className="text-sm text-text-muted">{subtitle}</p>}
       </div>
 
       {error && (
-        <p className="px-5 pb-3 pt-2 text-sm text-danger max-md:px-4" role="alert">
+        <p className="px-4 pb-2 pt-1.5 text-sm text-danger max-md:px-3" role="alert">
           {error}
         </p>
       )}

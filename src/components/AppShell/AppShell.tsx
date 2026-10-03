@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { GlobalSearch } from '../GlobalSearch/GlobalSearch'
 import { PageHeader } from '../PageHeader/PageHeader'
 import { Sidebar } from '../Sidebar/Sidebar'
 import { ThemeToggle } from '../ThemeToggle/ThemeToggle'
@@ -30,6 +31,8 @@ export interface AppShellProps {
 export function AppShell({ page, activePageId, children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
+  const supportsViewTransitions =
+    typeof document !== 'undefined' && typeof document.startViewTransition === 'function'
 
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), [])
 
@@ -76,7 +79,7 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
         Skip to main content
       </a>
 
-      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-surface px-3 min-[769px]:hidden">
+      <div className="flex h-11 shrink-0 items-center gap-1.5 border-b border-border bg-surface px-2.5 min-[769px]:hidden">
         <button
           type="button"
           className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-sunken hover:text-text"
@@ -89,6 +92,14 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
         </button>
         <span className="text-sm font-semibold text-text">{page.title}</span>
         <span className="flex-1" />
+        <button
+          type="button"
+          className="inline-flex h-8 items-center rounded-md px-2 text-xs text-text-muted transition-colors hover:bg-surface-sunken hover:text-text"
+          onClick={() => window.dispatchEvent(new Event('lifeos:open-search'))}
+          aria-label="Search"
+        >
+          Search
+        </button>
         <ThemeToggle compact />
       </div>
 
@@ -102,14 +113,12 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
       {isSidebarOpen && (
         <div className="fixed inset-0 z-30 bg-scrim" onClick={closeSidebar} aria-hidden="true" />
       )}
+      <GlobalSearch />
 
       <main ref={mainRef} id="main-content" className="flex min-w-0 flex-1 flex-col overflow-y-auto focus:outline-none" tabIndex={-1}>
-        {/* Keyed by page so navigation replays the enter motion; the
-            key is stable across theme switches, so the theme reveal
-            never re-triggers it. */}
         <div
           key={activePageId}
-          className="flex min-h-0 flex-1 flex-col animate-[page-enter_260ms_cubic-bezier(0.32,0.72,0,1)_both]"
+          className={`flex min-h-0 flex-1 flex-col ${supportsViewTransitions ? 'page-transition' : 'animate-[page-enter_320ms_cubic-bezier(0.32,0.72,0,1)_both]'}`}
         >
           <PageHeader
             pageId={page.pageId}
