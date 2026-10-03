@@ -1,0 +1,59 @@
+/* ==========================================================================
+   LifeOS — smooth light/dark theme transition (high quality)
+   - Primary: View Transitions API circular reveal from the toggle point
+     (driven from useTheme via WAAPI on ::view-transition-new(root)).
+   - Fallback (Firefox / older browsers / no click origin): a temporary
+     `html.theme-animating` class cross-fades themed colors app-wide.
+   - Respects prefers-reduced-motion: transitions collapse to instant.
+   ========================================================================== */
+
+/* Kill the default View Transition cross-fade so only our clip reveal runs. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2147483646;
+}
+
+/* Cross-fade the root color-scheme so scrollbars / form controls blend. */
+html {
+  transition: color-scheme 0.45s ease;
+}
+
+/* Fallback path: while `theme-animating` is set, every element eases between
+   themed colors instead of snapping. Transform/opacity are preserved so
+   existing micro-interactions (e.g. the toggle thumb slide) keep working. */
+html.theme-animating *,
+html.theme-animating *::before,
+html.theme-animating *::after {
+  transition:
+    background-color 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    color 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    fill 0.45s ease,
+    stroke 0.45s ease,
+    box-shadow 0.45s ease,
+    outline-color 0.45s ease,
+    transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.3s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-animating *,
+  html.theme-animating *::before,
+  html.theme-animating *::after {
+    transition: none !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

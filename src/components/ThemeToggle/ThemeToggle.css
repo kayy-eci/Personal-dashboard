@@ -1,0 +1,103 @@
+/* ThemeToggle — small light/dark switch. Uses sidebar tokens when inside
+   .sidebar, content tokens elsewhere. */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2rem;
+  padding: 0.35rem 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  transition:
+    background-color var(--motion-fast) var(--easing),
+    color var(--motion-fast) var(--easing),
+    border-color var(--motion-fast) var(--easing);
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+  background: var(--surface-sunken);
+  border-color: var(--border-strong);
+}
+
+.sidebar .theme-toggle {
+  width: 100%;
+  justify-content: flex-start;
+  border-color: var(--sidebar-border);
+  color: var(--sidebar-text-muted);
+}
+
+.sidebar .theme-toggle:hover {
+  background: var(--sidebar-surface-hover);
+  color: var(--sidebar-text-strong);
+}
+
+.theme-toggle__icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.theme-toggle__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Icon cross-fade + rotate on theme switch for a high-quality toggle feel. */
+.theme-toggle__icon-swap {
+  display: inline-flex;
+  animation: theme-toggle-icon-in 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes theme-toggle-icon-in {
+  from {
+    opacity: 0;
+    transform: rotate(-60deg) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.theme-toggle__label {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.theme-toggle__track {
+  display: inline-flex;
+  align-items: center;
+  width: 1.75rem;
+  height: 1rem;
+  padding: 0.125rem;
+  background: var(--sidebar-bg-elevated, var(--surface-sunken));
+  border-radius: var(--radius-pill);
+}
+
+.theme-toggle__thumb {
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--sidebar-text-muted, var(--text-muted));
+  border-radius: 50%;
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.theme-toggle__thumb[data-theme-state='dark'] {
+  transform: translateX(0.75rem);
+  background: var(--accent);
+}
+
+.theme-toggle--compact {
+  width: 2rem;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  border-color: transparent;
+}
