@@ -1,10 +1,12 @@
 /* ==========================================================================
    LifeOS — smooth light/dark theme transition (high quality)
    - Primary: View Transitions API circular reveal from the toggle point
-     (driven from useTheme via WAAPI on ::view-transition-new(root)).
+     (driven from animateAppearanceChange via WAAPI on
+     ::view-transition-new(root)).
    - Fallback (Firefox / older browsers / no click origin): a temporary
      `html.theme-animating` class cross-fades themed colors app-wide.
-   - Respects prefers-reduced-motion: transitions collapse to instant.
+   - Respects prefers-reduced-motion and the Reduce motion preference
+     (`data-motion="reduce"`): transitions collapse to instant.
    ========================================================================== */
 
 /* Kill the default View Transition cross-fade so only our clip reveal runs. */
@@ -48,8 +50,16 @@ html.theme-animating *::after {
     transition: none !important;
   }
 
+
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none !important;
   }
+}
+
+/* Reduce motion set from Settings → Display (OS may still allow motion). */
+[data-motion='reduce'] ::view-transition-group(*),
+[data-motion='reduce'] ::view-transition-old(*),
+[data-motion='reduce'] ::view-transition-new(*) {
+  animation: none !important;
 }

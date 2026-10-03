@@ -1,67 +1,91 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-/* shadcn/ui theme tokens (neutral base). */
+/* ==========================================================================
+   LifeOS design tokens
+   --------------------------------------------------------------------------
+   Every look-and-feel preference is applied as a root attribute, never as a
+   conditional class in JS:
+
+     data-theme      light | dark     resolved from appearance.theme
+     data-accent     violet … slate   appearance.accent
+     data-density    comfortable | compact
+     data-text-size  small | default | large
+     data-motion     full | reduce
+     data-focus-mode true | false
+
+   The accent only paints primary buttons, the selected sidebar item, the
+   level chip, focus rings and links. Attributes, vitality, XP and the
+   semantic colours below are defined independently and never change with it.
+   ========================================================================== */
+
+/* shadcn/ui surface tokens (neutral base) — mapped onto the LifeOS palette. */
 :root {
-  --background: #fafaf7;
-  --foreground: #1c1c1a;
-  --card: #ffffff;
-  --card-foreground: #1c1c1a;
-  --popover: #ffffff;
-  --popover-foreground: #1c1c1a;
-  --primary: #d8f56b;
-  --primary-foreground: #1c1c1a;
-  --secondary: #f5f5f0;
-  --secondary-foreground: #1c1c1a;
-  --muted: #f5f5f0;
-  --muted-foreground: #5f625d;
-  --accent: #f1f6df;
-  --accent-foreground: #1c1c1a;
-  --destructive: #d44c47;
-  --border: #e5e5df;
-  --input: #d5d6ce;
-  --ring: #526516;
+  --background: var(--page-bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface-overlay);
+  --popover-foreground: var(--text);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-contrast);
+  --secondary: var(--surface-secondary);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-secondary);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--surface-secondary);
+  --accent-foreground: var(--text);
+  --destructive: var(--danger);
+  --border: var(--border);
+  --input: var(--border-strong);
+  --ring: var(--brand-text);
   --radius: 0.625rem;
+
+  /* Density — rem based so text size scales rows with the type. */
+  --control-h: 2.25rem;
+  --row-h: 2.5rem;
+  --pad-x: 0.625rem;
+  --pad-y: 0.375rem;
+  --section-pad: 0.75rem;
+  --stack-gap: 0.75rem;
+  --stack-gap-sm: 0.5rem;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+[data-density='compact'] {
+  --control-h: 2rem;
+  --row-h: 2rem;
+  --pad-x: 0.5rem;
+  --pad-y: 0.25rem;
+  --section-pad: 0.625rem;
+  --stack-gap: 0.5rem;
+  --stack-gap-sm: 0.375rem;
 }
 
-/* LifeOS palette — light defaults, overridden for dark below. */
-:root {
+html {
+  font-size: 100%;
+}
+
+[data-text-size='small'] {
+  font-size: 93.75%;
+}
+
+[data-text-size='large'] {
+  font-size: 108%;
+}
+
+/* LifeOS palette — light defaults. */
+:root,
+[data-theme='light'] {
   --page-bg: #fafaf7;
   --surface: #ffffff;
   --surface-secondary: #f5f5f0;
   --surface-sunken: var(--surface-secondary);
   --surface-overlay: #ffffff;
   --border: #e5e5df;
-  --border-strong: #d5d6ce;
+  --border-strong: #cfd0c8;
   --text: #1c1c1a;
   --text-muted: #5f625d;
-  --text-faint: #858981;
-  --brand: #d8f56b;
-  --brand-hover: #c9e85a;
-  --brand-contrast: #1c1c1a;
-  --brand-text: #526516;
-  --brand-subtle: rgba(177, 211, 73, 0.2);
+  --text-faint: #6f736c;
   --progress-track: #e8e9e3;
   --danger: #d44c47;
   --scrim: rgba(15, 15, 15, 0.4);
@@ -72,63 +96,186 @@
   --sidebar-bg: #ffffff;
   --sidebar-bg-elevated: #f5f5f0;
   --sidebar-surface-hover: #f5f5f0;
-  --sidebar-surface-active: rgba(177, 211, 73, 0.2);
   --sidebar-text: #5f625d;
   --sidebar-text-strong: #1c1c1a;
-  --sidebar-text-muted: #858981;
+  --sidebar-text-muted: #6f736c;
   --sidebar-border: #e5e5df;
   --sidebar-field-bg: #f5f5f0;
+  --sidebar-surface-active: var(--brand-subtle);
+
+  /* Progress semantics — never accent-derived. */
+  --vitality: #0f7a55;
+  --vitality-soft: #e2f5ec;
+  --xp: #6b7f12;
+  --xp-soft: #f1f6e3;
+
+  /* Status colours (success / warning / info / danger). */
+  --success: #0f7a55;
+  --success-text: #0b5c40;
+  --success-soft: #e2f5ec;
+  --success-border: #a7e3c8;
+  --warning: #b45309;
+  --warning-text: #92400e;
+  --warning-soft: #fdf3e3;
+  --warning-border: #fde3ab;
+  --info: #0369a1;
+  --info-text: #075985;
+  --info-soft: #e8f4fd;
+  --info-border: #bae6fd;
+  --danger-text: #b42318;
+  --danger-soft: #fdeceb;
+  --danger-border: #f6c9c5;
+
+  /* Attribute identities — fixed, never accent-derived. */
+  --attr-str: #be123c;
+  --attr-int: #1d4ed8;
+  --attr-disc: #b45309;
+  --attr-creat: #c2410c;
+  --attr-focus: #0f766e;
+  --attr-soc: #047857;
+  --attr-soft: #f5f5f2;
+  --attr-border: #e2e2da;
+
+  /* Goal tones. */
+  --goal-gold: #a16207;
+  --goal-rose: #be123c;
+  --goal-blue: #1d4ed8;
+  --goal-soft: #f2f2ee;
 }
 
+/* Desaturated neutral dark surfaces — same hierarchy as light, borders over
+   shadows, no pure black. */
 [data-theme='dark'] {
-  --background: #151715;
-  --foreground: #f1f2ed;
-  --card: #1d201c;
-  --card-foreground: #f1f2ed;
-  --popover: #252922;
-  --popover-foreground: #f1f2ed;
-  --primary: #d8f56b;
-  --primary-foreground: #1c1c1a;
-  --secondary: #22251f;
-  --secondary-foreground: #f1f2ed;
-  --muted: #22251f;
-  --muted-foreground: #b3b8ad;
-  --accent: #303727;
-  --accent-foreground: #f1f2ed;
-  --destructive: #f87171;
-  --input: #454a42;
-  --ring: #d8f56b;
-  --page-bg: #151715;
-  --surface: #191c18;
-  --surface-secondary: #22251f;
-  --surface-sunken: var(--surface-secondary);
-  --surface-overlay: #252922;
-  --border: #343830;
-  --border-strong: #454a42;
-  --text: #f1f2ed;
-  --text-muted: #b3b8ad;
-  --text-faint: #8b9186;
-  --brand: #d8f56b;
-  --brand-hover: #e2ff7b;
-  --brand-contrast: #1c1c1a;
-  --brand-text: #d8f56b;
-  --brand-subtle: rgba(216, 245, 107, 0.18);
-  --progress-track: #343830;
+  --page-bg: #16171a;
+  --surface: #1c1e22;
+  --surface-secondary: #232529;
+  --surface-sunken: #212327;
+  --surface-overlay: #26282d;
+  --border: #2f3238;
+  --border-strong: #43474f;
+  --text: #edeef0;
+  --text-muted: #b0b4bc;
+  --text-faint: #9aa0a9;
+  --progress-track: #2f3238;
   --danger: #f87171;
   --scrim: rgba(0, 0, 0, 0.6);
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.45);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
 
-  --sidebar-bg: #191c18;
-  --sidebar-bg-elevated: #252922;
-  --sidebar-surface-hover: #252922;
-  --sidebar-surface-active: rgba(216, 245, 107, 0.14);
-  --sidebar-text: #b3b8ad;
-  --sidebar-text-strong: #f1f2ed;
-  --sidebar-text-muted: #8b9186;
-  --sidebar-border: #343830;
-  --sidebar-field-bg: #22251f;
+  --sidebar-bg: #1c1e22;
+  --sidebar-bg-elevated: #232529;
+  --sidebar-surface-hover: #26282d;
+  --sidebar-text: #b0b4bc;
+  --sidebar-text-strong: #edeef0;
+  --sidebar-text-muted: #9aa0a9;
+  --sidebar-border: #2f3238;
+  --sidebar-field-bg: #232529;
+  --sidebar-surface-active: var(--brand-subtle);
+
+  --vitality: #4ade9c;
+  --vitality-soft: #14291f;
+  --xp: #c3e04a;
+  --xp-soft: #262b16;
+
+  --success: #4ade9c;
+  --success-text: #86efac;
+  --success-soft: #14291f;
+  --success-border: #23543c;
+  --warning: #fbbf24;
+  --warning-text: #fcd34d;
+  --warning-soft: #2c2413;
+  --warning-border: #55431d;
+  --info: #7dd3fc;
+  --info-text: #bae6fd;
+  --info-soft: #14242f;
+  --info-border: #1f4b63;
+  --danger-text: #fca5a5;
+  --danger-soft: #2e1a1a;
+  --danger-border: #5b2b2b;
+
+  --attr-str: #fda4af;
+  --attr-int: #93c5fd;
+  --attr-disc: #fcd34d;
+  --attr-creat: #fdba74;
+  --attr-focus: #5eead4;
+  --attr-soc: #6ee7b7;
+  --attr-soft: #24262b;
+  --attr-border: #34373d;
+
+  --goal-gold: #fcd34d;
+  --goal-rose: #fda4af;
+  --goal-blue: #93c5fd;
+  --goal-soft: #24262b;
+}
+
+/* --------------------------------------------------------------------------
+   Accent presets. Values are mirrored from src/preferences/schema.ts; the
+   measured contrast ratios live in scripts/measure-accents.mjs.
+   Every fill keeps white button text at 4.5:1 or better.
+   -------------------------------------------------------------------------- */
+[data-accent='violet'] {
+  --brand: #6d28d9;
+  --brand-text: #5b21b6;
+  --brand-dark: #7c3aed;
+  --brand-dark-text: #c4b5fd;
+}
+[data-accent='blue'] {
+  --brand: #1d4ed8;
+  --brand-text: #1e40af;
+  --brand-dark: #2563eb;
+  --brand-dark-text: #93c5fd;
+}
+[data-accent='teal'] {
+  --brand: #0f766e;
+  --brand-text: #115e59;
+  --brand-dark: #0f766e;
+  --brand-dark-text: #5eead4;
+}
+[data-accent='green'] {
+  --brand: #15803d;
+  --brand-text: #166534;
+  --brand-dark: #15803d;
+  --brand-dark-text: #86efac;
+}
+[data-accent='rose'] {
+  --brand: #be123c;
+  --brand-text: #9f1239;
+  --brand-dark: #e11d48;
+  --brand-dark-text: #fda4af;
+}
+[data-accent='slate'] {
+  --brand: #475569;
+  --brand-text: #334155;
+  --brand-dark: #64748b;
+  --brand-dark-text: #cbd5e1;
+}
+
+/* Hover, tint and the control outline are derived from the accent, never
+   hand-picked per component. */
+:root,
+[data-theme='light'] {
+  --brand-contrast: #ffffff;
+  --brand-hover: color-mix(in oklab, var(--brand), #000000 14%);
+  --brand-subtle: color-mix(in oklab, var(--brand) 16%, transparent);
+  --brand-tint: color-mix(in oklab, var(--brand) 10%, var(--surface));
+  --brand-outline: var(--brand);
+}
+
+[data-theme='dark'] {
+  --brand-contrast: #ffffff;
+  --brand-hover: color-mix(in oklab, var(--brand), #ffffff 16%);
+  --brand-subtle: color-mix(in oklab, var(--brand) 26%, transparent);
+  --brand-tint: color-mix(in oklab, var(--brand) 18%, var(--surface));
+  --brand-outline: var(--brand-dark-text);
+}
+
+/* In dark theme the filled variant is the tuned one; the text variant always
+   stays legible on the dark surface. Declared after the accent blocks so the
+   theme wins on equal specificity. */
+[data-theme='dark'] {
+  --brand: var(--brand-dark);
+  --brand-text: var(--brand-dark-text);
 }
 
 @theme inline {
@@ -156,9 +303,12 @@
   --color-brand-contrast: var(--brand-contrast);
   --color-brand-text: var(--brand-text);
   --color-brand-subtle: var(--brand-subtle);
+  --color-brand-tint: var(--brand-tint);
+  --color-brand-outline: var(--brand-outline);
   --color-page-bg: var(--page-bg);
   --color-progress-track: var(--progress-track);
   --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
   --color-surface-sunken: var(--surface-sunken);
   --color-surface-overlay: var(--surface-overlay);
   --color-border-strong: var(--border-strong);
@@ -176,6 +326,41 @@
   --color-sidebar-text-muted: var(--sidebar-text-muted);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-field-bg: var(--sidebar-field-bg);
+
+  --color-vitality: var(--vitality);
+  --color-vitality-soft: var(--vitality-soft);
+  --color-xp: var(--xp);
+  --color-xp-soft: var(--xp-soft);
+
+  --color-success: var(--success);
+  --color-success-text: var(--success-text);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-info: var(--info);
+  --color-info-text: var(--info-text);
+  --color-info-soft: var(--info-soft);
+  --color-info-border: var(--info-border);
+  --color-danger-text: var(--danger-text);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+
+  --color-attr-str: var(--attr-str);
+  --color-attr-int: var(--attr-int);
+  --color-attr-disc: var(--attr-disc);
+  --color-attr-creat: var(--attr-creat);
+  --color-attr-focus: var(--attr-focus);
+  --color-attr-soc: var(--attr-soc);
+  --color-attr-soft: var(--attr-soft);
+  --color-attr-border: var(--attr-border);
+
+  --color-goal-gold: var(--goal-gold);
+  --color-goal-rose: var(--goal-rose);
+  --color-goal-blue: var(--goal-blue);
+  --color-goal-soft: var(--goal-soft);
 
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
@@ -198,6 +383,7 @@
   body {
     @apply bg-page-bg text-text text-sm antialiased;
     font-feature-settings: 'tnum' 0;
+    overflow-x: hidden;
   }
   #root {
     @apply flex min-h-dvh flex-col;
@@ -214,8 +400,11 @@
   img, svg {
     @apply block max-w-full;
   }
+  a {
+    color: var(--brand-text);
+  }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-brand;
+    @apply outline-2 outline-offset-2 outline-ring;
   }
   ::selection {
     @apply bg-brand-subtle;
@@ -234,6 +423,21 @@
   border: 0;
 }
 
+/* Focus mode: game chrome is removed, every productivity number stays. */
+[data-focus-mode='true'] .game-visual {
+  display: none;
+}
+
+/* Reduce motion — from the preference or the OS. */
+[data-motion='reduce'] *,
+[data-motion='reduce'] *::before,
+[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
 @keyframes theme-toggle-icon-in {
   from {
     opacity: 0;
@@ -248,12 +452,47 @@
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(0.5rem);
+    transform: translateY(0.35rem);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes page-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-content-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-0.15rem);
+  }
+}
+
+.page-transition {
+  view-transition-name: page-content;
+}
+
+::view-transition-group(page-content) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+::view-transition-old(page-content) {
+  animation: page-content-exit 140ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(page-content) {
+  animation: page-content-enter 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -264,5 +503,11 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(page-content),
+  ::view-transition-old(page-content),
+  ::view-transition-new(page-content) {
+    animation-duration: 0.01ms !important;
   }
 }
