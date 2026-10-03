@@ -15,6 +15,10 @@ export interface GitHubActivityGridProps {
   activityType?: string
   periodLabel?: string
   description?: string
+  /** Render the trailing (today) cell in the accent color. Defaults on. */
+  highlightToday?: boolean
+  /** Extra class applied to the today cell alongside the accent style. */
+  todayClassName?: string
 }
 
 const WEEKDAYS = ['', 'Mon', '', 'Wed', '', 'Fri', '']
@@ -31,6 +35,8 @@ export function GitHubActivityGrid({
   activityType = 'contribution',
   periodLabel = 'in the last year',
   description = 'Illustrative sample activity; not connected to GitHub.',
+  highlightToday = true,
+  todayClassName,
 }: GitHubActivityGridProps) {
   const reduceMotion = useReducedMotion()
   const containerRef = React.useRef<HTMLDivElement>(null)
@@ -115,6 +121,11 @@ export function GitHubActivityGrid({
     () => days.reduce((sum, day) => sum + day.count, 0),
     [days],
   )
+  /** Local YYYY-MM-DD for the trailing cell — the "today" highlight target. */
+  const todayKey = React.useMemo(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  }, [])
   const weekCount = grid.weeks.length
   const baseGridWidth = weekCount * cellSize + Math.max(0, weekCount - 1) * cellGap
   const availableGridWidth = Math.max(
@@ -191,10 +202,12 @@ export function GitHubActivityGrid({
 
                   const ratio = day.count / max
                   const level = day.count <= 0 ? 0 : ratio < 0.25 ? 1 : ratio < 0.5 ? 2 : ratio < 0.75 ? 3 : 4
+                  const isToday = highlightToday && day.date === todayKey
+                  const todaySuffix = isToday ? ' (today)' : ''
                   const fromEnd = days.length - 1 - (weekIndex * 7 + dayIndex)
                   return (
                     <motion.button
-                      className={`github-activity-grid__cell github-activity-grid__cell--level-${level}`}
+                      className={`github-activity-grid__cell github-activity-grid__cell--level-${level}${isToday ? ` github-activity-grid__cell--today${todayClassName ? ` ${todayClassName}` : ''}` : ''}`}
                       key={day.date}
                       type="button"
                       initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
@@ -207,7 +220,8 @@ export function GitHubActivityGrid({
                       onPointerEnter={(event) => showTooltip(event.currentTarget, day)}
                       onFocus={(event) => showTooltip(event.currentTarget, day)}
                       onBlur={() => setHoveredDay(null)}
-                      aria-label={`${day.count} ${pluralize(activityType, day.count)} on ${formatDate(day.date)}`}
+                      aria-label={`${day.count} ${pluralize(activityType, day.count)} on ${formatDate(day.date)}${todaySuffix}`}
+                      aria-current={isToday ? 'date' : undefined}
                       style={{ width: fittedCellSize, height: fittedCellSize }}
                     />
                   )
@@ -233,7 +247,11 @@ export function GitHubActivityGrid({
           <>
             <strong>{hoveredDay.count}</strong>{' '}
             {pluralize(activityType, hoveredDay.count)}
-            <span> · {formatDate(hoveredDay.date)}</span>
+            <span>
+              {' '}
+              · {formatDate(hoveredDay.date)}
+              {highlightToday && hoveredDay.date === todayKey ? ' · today' : ''}
+            </span>
           </>
         )}
       </motion.div>

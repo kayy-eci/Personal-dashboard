@@ -3,11 +3,10 @@ import {
   initialQuests,
   type QuestItem,
 } from '../Dashboard/dashboard-data'
-import { mockActivityYear } from '../../components/activity-data'
 import { GitHubActivityGrid } from '../../components/github-activity-grid'
+import { useGitHubActivity } from '../../hooks/useGitHubActivity'
+import { getActivityCopy } from './github-activity-copy'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
-
-const activityDays = mockActivityYear(42)
 
 type QuestFilter = 'all' | QuestItem['category']
 
@@ -19,6 +18,13 @@ const categoryLabels: Record<QuestItem['category'], string> = {
 }
 
 export function QuestManagementPage() {
+  const {
+    username,
+    days: activityDays,
+    status: activityStatus,
+    source: activitySource,
+    hasToken,
+  } = useGitHubActivity()
   const [quests, setQuests] = useState(initialQuests)
   const [completed, setCompleted] = useState<string[]>([])
   const [filter, setFilter] = useState<QuestFilter>('all')
@@ -72,7 +78,12 @@ export function QuestManagementPage() {
 
   return (
     <div className="feature-page feature-page__content">
-      <GitHubActivityGrid days={activityDays} />
+      <GitHubActivityGrid
+        days={activityDays}
+        activityType="contribution"
+        periodLabel={getActivityCopy(username, activityStatus, activitySource, hasToken).periodLabel}
+        description={getActivityCopy(username, activityStatus, activitySource, hasToken).description}
+      />
       <DemoNotice>
         Quest completion is a preview only. XP calculations and attribute updates are not written to a ledger.
       </DemoNotice>

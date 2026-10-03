@@ -1,10 +1,9 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { mockActivityYear } from '../../components/activity-data'
 import { GitHubActivityGrid } from '../../components/github-activity-grid'
+import { useGitHubActivity } from '../../hooks/useGitHubActivity'
+import { getActivityCopy } from './github-activity-copy'
 import type { HabitItem } from '../Dashboard/dashboard-data'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
-
-const activityDays = mockActivityYear(2026)
 
 type ManagedHabit = HabitItem & {
   done: boolean
@@ -75,6 +74,13 @@ const startingHabits: ManagedHabit[] = [
 ]
 
 export function HabitsPage() {
+  const {
+    username,
+    days: activityDays,
+    status: activityStatus,
+    source: activitySource,
+    hasToken,
+  } = useGitHubActivity()
   const [habits, setHabits] = useState(startingHabits)
   const [filter, setFilter] = useState<HabitFilter>('all')
   const [search, setSearch] = useState('')
@@ -135,9 +141,16 @@ export function HabitsPage() {
     { id: 'archived', label: 'Archived', count: habits.length - activeHabits.length },
   ]
 
+  const activityCopy = getActivityCopy(username, activityStatus, activitySource, hasToken)
+
   return (
     <div className="feature-page feature-page__content">
-      <GitHubActivityGrid days={activityDays} />
+      <GitHubActivityGrid
+        days={activityDays}
+        activityType="contribution"
+        periodLabel={activityCopy.periodLabel}
+        description={activityCopy.description}
+      />
       <DemoNotice>
         Sample routines only. Check-ins and edits stay in this browser session and do not update saved player stats.
       </DemoNotice>

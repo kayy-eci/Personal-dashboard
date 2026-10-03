@@ -1,7 +1,24 @@
+import { useState } from 'react'
+import { useGitHubActivity } from '../../hooks/useGitHubActivity'
 import { useTheme } from '../../hooks/useTheme'
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme()
+  const {
+    username,
+    setUsername,
+    status: githubStatus,
+    error: githubError,
+    source: githubSource,
+    hasToken,
+    setToken,
+    clearToken,
+  } = useGitHubActivity()
+  const [usernameDraft, setUsernameDraft] = useState(username)
+  const [usernameSaved, setUsernameSaved] = useState(false)
+  const [tokenDraft, setTokenDraft] = useState('')
+  const [tokenSaved, setTokenSaved] = useState(false)
+  const [showToken, setShowToken] = useState(false)
   return (
     <div className="feature-page feature-page__content settings-page">
       <div className="settings-layout">
@@ -118,14 +135,121 @@ export function SettingsPage() {
             <div className="settings-row">
               <label htmlFor="github-user">GitHub username</label>
               <div className="settings-row__control">
-                <input id="github-user" type="text" defaultValue="player-dev" />
+                <input
+                  id="github-user"
+                  type="text"
+                  value={usernameDraft}
+                  onChange={(event) => {
+                    setUsernameDraft(event.target.value)
+                    setUsernameSaved(false)
+                  }}
+                  placeholder="kayy-eci"
+                  autoComplete="username"
+                  spellCheck={false}
+                />
               </div>
             </div>
             <div className="settings-row">
-              <label>Token status</label>
+              <label>Connection</label>
               <div className="settings-row__control settings-row__control--stack">
-                <span className="settings-status">Not connected</span>
-                <button type="button" className="feature-button feature-button--primary">Connect</button>
+                <span className="settings-status">
+                  {githubSource === 'graphql' && githubStatus === 'live'
+                    ? `Authenticated as @${username} — exact counts incl. private`
+                    : githubStatus === 'live'
+                      ? `Connected as @${username} (public data)`
+                      : githubStatus === 'cached'
+                        ? `Cached data for @${username} — refreshing…`
+                        : githubStatus === 'fallback'
+                          ? `Using sample data for @${username}`
+                          : `Connecting to @${username}…`}
+                </span>
+                {githubError && (
+                  <span className="settings-warning" role="alert">
+                    {githubError}
+                  </span>
+                )}
+                {usernameSaved && !githubError && (
+                  <span className="settings-status" role="status">
+                    Saved — activity grids now follow @{username}.
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="feature-button feature-button--primary"
+                  onClick={() => {
+                    if (!usernameDraft.trim()) return
+                    setUsername(usernameDraft)
+                    setUsernameSaved(true)
+                  }}
+                >
+                  Connect
+                </button>
+                <span>Hobby path: username only = public data. Add a token below for private contributions.</span>
+              </div>
+            </div>
+            <div className="settings-row">
+              <label htmlFor="github-token">Personal access token</label>
+              <div className="settings-row__control settings-row__control--stack">
+                <div className="settings-row__control">
+                  <input
+                    id="github-token"
+                    type={showToken ? 'text' : 'password'}
+                    value={tokenDraft}
+                    onChange={(event) => {
+                      setTokenDraft(event.target.value)
+                      setTokenSaved(false)
+                    }}
+                    placeholder={hasToken ? 'Token saved — paste a new one to replace' : 'ghp_… or github_pat_…'}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <button
+                    type="button"
+                    className="feature-button"
+                    onClick={() => setShowToken((visible) => !visible)}
+                    aria-pressed={showToken}
+                  >
+                    {showToken ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                <div className="settings-row__control settings-row__control--buttons">
+                  <button
+                    type="button"
+                    className="feature-button feature-button--primary"
+                    disabled={!tokenDraft.trim()}
+                    onClick={() => {
+                      if (!tokenDraft.trim()) return
+                      setToken(tokenDraft)
+                      setTokenDraft('')
+                      setTokenSaved(true)
+                    }}
+                  >
+                    Save token
+                  </button>
+                  {hasToken && (
+                    <button
+                      type="button"
+                      className="feature-button"
+                      onClick={() => {
+                        clearToken()
+                        setTokenDraft('')
+                        setTokenSaved(false)
+                      }}
+                    >
+                      Remove token
+                    </button>
+                  )}
+                </div>
+                {tokenSaved && !githubError && (
+                  <span className="settings-status" role="status">
+                    Token saved — grids now use exact counts incl. private contributions.
+                  </span>
+                )}
+                <span>
+                  Create at github.com/settings/tokens (classic, no scopes needed — or fine-grained with
+                  read-only account access). Stored only in this browser. Anyone with device access could read
+                  it — use a token you can revoke.
+                </span>
               </div>
             </div>
           </section>
