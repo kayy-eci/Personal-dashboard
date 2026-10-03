@@ -6,7 +6,6 @@ import { HabitsPage } from './HabitsPage'
 import { QuestManagementPage } from './QuestManagementPage'
 import { SettingsPage } from './SettingsPage'
 import { TimelinePage } from './TimelinePage'
-import './FeaturePage.css'
 
 export interface FeaturePageProps {
   pageId: Exclude<PageId, 'dashboard'>

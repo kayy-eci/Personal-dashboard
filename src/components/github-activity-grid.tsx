@@ -143,27 +143,28 @@ export function GitHubActivityGrid({
 
   return (
     <div
-      className={`github-activity-grid${className ? ` ${className}` : ''}`}
+      className={`relative isolate w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-surface/90 p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)] ${className ?? ''}`}
       ref={containerRef}
       onPointerLeave={() => setHoveredDay(null)}
     >
-      <div className="github-activity-grid__header">
-        <p>
-          <strong>{totalActivities.toLocaleString()}</strong>
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <p className="m-0 flex flex-wrap items-baseline gap-[0.35rem] text-[0.88rem] leading-[1.35] text-text-muted">
+          <strong className="text-[clamp(1.4rem,1.9vw,2.1rem)] font-bold tracking-[-0.04em] text-text tabular-nums">{totalActivities.toLocaleString()}</strong>
           <span>{` ${pluralize(activityType, totalActivities)} ${periodLabel}`}</span>
         </p>
         <Legend />
       </div>
-      <p className="github-activity-grid__description">{description}</p>
+      <p className="m-0 mb-3 text-[0.72rem] leading-[1.5] text-text-muted">{description}</p>
 
-      <div className="github-activity-grid__viewport" ref={gridViewportRef}>
+      <div className="w-full min-w-0 overflow-hidden py-[0.1rem] pb-[0.2rem]" ref={gridViewportRef}>
         <div
-          className="github-activity-grid__months"
+          className="relative h-4 text-[0.64rem] leading-none text-text-muted"
           style={{ width: fittedGridWidth, marginLeft: WEEKDAY_LABEL_WIDTH + WEEKDAY_LABEL_GAP }}
         >
           {grid.monthLabels.map((month) => (
             <span
               key={`${month.col}-${month.label}`}
+              className="absolute top-0"
               style={{ left: month.col * (fittedCellSize + fittedCellGap) }}
             >
               {month.label}
@@ -171,21 +172,22 @@ export function GitHubActivityGrid({
           ))}
         </div>
 
-        <div className="github-activity-grid__body">
-          <div className="github-activity-grid__weekdays" style={{ gap: fittedCellGap }}>
+        <div className="flex">
+          <div className="flex shrink-0 flex-col justify-between text-[0.57rem] leading-none text-text-muted" style={{ gap: fittedCellGap }}>
             {WEEKDAYS.map((weekday, index) => (
               <span
                 key={index}
+                className="flex items-center"
                 style={{ height: fittedCellSize, width: WEEKDAY_LABEL_WIDTH }}
               >
                 {weekday}
               </span>
             ))}
           </div>
-          <div className="github-activity-grid__weeks" style={{ gap: fittedCellGap }}>
+          <div className="flex" style={{ gap: fittedCellGap }}>
             {grid.weeks.map((week, weekIndex) => (
               <div
-                className="github-activity-grid__week"
+                className="flex shrink-0 flex-col"
                 key={weekIndex}
                 style={{ gap: fittedCellGap }}
               >
@@ -193,8 +195,8 @@ export function GitHubActivityGrid({
                   if (!day) {
                     return (
                       <span
-                        className="github-activity-grid__empty-cell"
                         key={`empty-${weekIndex}-${dayIndex}`}
+                        className="block shrink-0 rounded border-0 p-0"
                         style={{ width: fittedCellSize, height: fittedCellSize }}
                       />
                     )
@@ -207,7 +209,7 @@ export function GitHubActivityGrid({
                   const fromEnd = days.length - 1 - (weekIndex * 7 + dayIndex)
                   return (
                     <motion.button
-                      className={`github-activity-grid__cell github-activity-grid__cell--level-${level}${isToday ? ` github-activity-grid__cell--today${todayClassName ? ` ${todayClassName}` : ''}` : ''}`}
+                      className={`block shrink-0 rounded border-0 p-0 cursor-pointer ${isToday ? todayClassName ?? '' : ''}`}
                       key={day.date}
                       type="button"
                       initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
@@ -233,7 +235,7 @@ export function GitHubActivityGrid({
       </div>
 
       <motion.div
-        className="github-activity-grid__tooltip"
+        className="pointer-events-none absolute left-0 top-0 z-10 whitespace-nowrap rounded-md border border-border bg-surface-overlay px-2 py-1 text-[0.6875rem] text-text shadow-sm [&_span]:text-text-muted"
         aria-hidden={!hoveredDay}
         style={{
           x: springX,
@@ -259,14 +261,25 @@ export function GitHubActivityGrid({
   )
 }
 
+function levelColor(level: number) {
+  switch (level) {
+    case 1: return '#d8f1e4'
+    case 2: return '#7ad7b5'
+    case 3: return '#3ebd8c'
+    case 4: return '#2c9b75'
+    default: return '#ebedf0'
+  }
+}
+
 function Legend() {
   return (
-    <div className="github-activity-grid__legend" aria-label="Activity level: less to more">
+    <div className="flex shrink-0 items-center gap-[0.35rem] text-[0.69rem] leading-none text-text-muted" aria-label="Activity level: less to more">
       <span>Less</span>
       {[0, 1, 2, 3, 4].map((level) => (
         <span
-          className={`github-activity-grid__cell github-activity-grid__cell--level-${level}`}
+          className="block h-[0.7rem] w-[0.7rem] rounded-[0.2rem]"
           key={level}
+          style={{ backgroundColor: levelColor(level) }}
           aria-hidden="true"
         />
       ))}

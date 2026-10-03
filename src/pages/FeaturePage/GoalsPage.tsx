@@ -154,7 +154,7 @@ export function GoalsPage() {
   }
 
   return (
-    <div className="feature-page feature-page__content">
+    <div className="flex w-full max-w-[100rem] mx-auto flex-col gap-4 p-4 min-[769px]:p-5 min-[769px]:pb-7">
       <DemoNotice>
         Goal progress here is illustrative. Toggling milestones changes only this temporary view.
       </DemoNotice>
@@ -173,7 +173,7 @@ export function GoalsPage() {
         action={
           <button
             type="button"
-            className="feature-button feature-button--primary"
+            className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover"
             onClick={() => setShowForm((visible) => !visible)}
             aria-expanded={showForm}
             aria-controls="create-goal-form"
@@ -183,22 +183,22 @@ export function GoalsPage() {
         }
       >
         {showForm && (
-          <form className="feature-form" id="create-goal-form" onSubmit={submitGoal}>
-            <label className="feature-form__field feature-form__field--wide">
+          <form className="mt-3 grid grid-cols-2 gap-3 rounded-lg border border-border bg-surface-sunken p-3 min-[600px]:grid-cols-3 max-[480px]:grid-cols-1" id="create-goal-form" onSubmit={submitGoal}>
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-text-muted col-span-full">
               Goal title
-              <input className="feature-input" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} required autoFocus />
+              <input className="min-h-10 rounded-md border border-border-strong bg-surface-overlay px-[0.7rem] py-2 text-sm text-text" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} required autoFocus />
             </label>
-            <label className="feature-form__field">
+            <label className="flex min-w-0 flex-col gap-1 text-xs font-semibold text-text-muted">
               Goal deadline
               <input
-                className="feature-input"
+                className="min-h-10 rounded-md border border-border-strong bg-surface-overlay px-[0.7rem] py-2 text-sm text-text"
                 type="date"
                 value={targetDate}
                 onChange={(event) => setTargetDate(event.target.value)}
               />
             </label>
-            <div className="feature-form__actions">
-              <button className="feature-button feature-button--primary" type="submit">Add sample goal</button>
+            <div className="col-span-full flex flex-wrap gap-2">
+              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover" type="submit">Add sample goal</button>
             </div>
           </form>
         )}
@@ -206,11 +206,11 @@ export function GoalsPage() {
         <EventManager events={goalEvents} categories={['Goal', 'Milestone']} />
 
         {goals.length === 0 ? (
-          <div className="feature-empty" role="status">
+          <div className="rounded-lg border border-dashed border-border-strong bg-surface-sunken p-5 text-center text-sm text-text-muted" role="status">
             No goals yet. Add an outcome you would like to work toward.
           </div>
         ) : (
-          <div className="feature-goal-list">
+          <div className="mt-3 flex flex-col gap-3">
             {goals.map((goal) => {
               const doneCount = goal.milestones.filter((milestone) => milestone.done).length
               const percent = goal.milestones.length
@@ -219,16 +219,16 @@ export function GoalsPage() {
               const isExpanded = expandedGoalIds.has(goal.id)
               const checklistId = `goal-checklist-${goal.id}`
               return (
-                <article className={`feature-goal feature-goal--${goal.tone}`} key={goal.id}>
-                  <div className="feature-goal__row">
-                    <div className="feature-goal__summary">
+                <article className={`${goal.tone === 'violet' ? 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#7c3aed] bg-surface-overlay' : goal.tone === 'rose' ? 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#e11d48] bg-surface-overlay' : 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#0284c7] bg-surface-overlay'}`} key={goal.id}>
+                  <div className="flex min-h-14 min-w-0 items-center justify-between gap-2 p-2 px-3 max-[480px]:gap-1 max-[480px]:p-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-3 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-[0.1rem] [&>h3]:flex-1 [&>h3]:truncate [&>h3]:text-sm [&>h3]:font-bold [&>h3]:text-text [&>span]:whitespace-nowrap [&>span]:text-xs [&>span]:text-text-muted">
                       <h3>{goal.title}</h3>
                       <span>{formatTargetDate(goal.targetDate)}</span>
                     </div>
-                    <span className="feature-goal__count">{doneCount}/{goal.milestones.length} checklist</span>
-                    <span className="feature-goal__percent">{percent}%</span>
+                    <span className="whitespace-nowrap text-xs text-text-muted max-[480px]:text-[0.625rem]">{doneCount}/{goal.milestones.length} checklist</span>
+                    <span className="min-w-10 text-right font-mono text-sm font-bold text-brand">{percent}%</span>
                     <button
-                      className="feature-goal__toggle"
+                      className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-sunken hover:text-text"
                       type="button"
                       aria-label={`${isExpanded ? 'Hide' : 'Show'} checklist for ${goal.title}`}
                       aria-expanded={isExpanded}
@@ -246,16 +246,16 @@ export function GoalsPage() {
                     </button>
                   </div>
                     <div
-                      className="feature-goal__details"
+                      className="flex flex-col gap-3 border-t border-border bg-surface-sunken p-3 [[hidden]]:hidden"
                       id={checklistId}
                       hidden={!isExpanded}
                     >
-                      <div className="feature-goal__details-header">
+                      <div className="flex items-center justify-between gap-3 max-[480px]:flex-col max-[480px]:items-start">
                         <ProgressTrack label={`${goal.title} progress`} value={percent} />
-                        <label className="feature-goal__deadline">
+                        <label className="flex items-center gap-2 text-xs text-text-muted max-[480px]:flex-col max-[480px]:items-start">
                           Goal deadline
                           <input
-                            className="feature-input"
+                            className="min-h-10 rounded-md border border-border-strong bg-surface-overlay px-[0.7rem] py-2 text-sm text-text"
                             type="date"
                             aria-label={`Goal deadline for ${goal.title}`}
                             value={goal.targetDate}
@@ -271,7 +271,7 @@ export function GoalsPage() {
                           />
                         </label>
                       </div>
-                      <ul className="feature-milestones" role="list">
+                      <ul className="flex flex-col border-t border-border" role="list">
                         {goal.milestones.map((milestone, index) => (
                           <li key={`${goal.id}-${index}`}>
                             <label>
@@ -295,12 +295,12 @@ export function GoalsPage() {
                                   )
                                 }
                               />
-                              <span className={milestone.done ? 'is-complete' : ''}>
+                              <span className={milestone.done ? 'text-text-muted line-through' : ''}>
                                 {milestone.title}
                               </span>
                             </label>
                             <input
-                              className="feature-milestone-date"
+                              className="w-[9.5rem] min-w-0 rounded border border-border bg-surface-overlay p-[0.35rem] text-xs text-text-muted max-[480px]:ml-6 max-[480px]:w-[8.5rem]"
                               type="date"
                               aria-label={`Due date for ${milestone.title} in ${goal.title}`}
                               value={milestone.dueDate}
