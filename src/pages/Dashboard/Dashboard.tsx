@@ -15,8 +15,6 @@ import {
   type HabitItem,
   type QuestItem,
 } from './dashboard-data'
-import './Dashboard.css'
-import './DashboardSections.css'
 
 const MAX_ACTIVITY_ITEMS = 10
 
@@ -110,22 +108,22 @@ export function Dashboard() {
   }
 
   return (
-    <div className="dashboard">
+    <div className="flex w-full max-w-[100rem] flex-col gap-5 p-4 min-[769px]:p-5 min-[769px]:pb-7 mx-auto">
       <PlayerStatusCard
         status={status}
         completedHabits={completedHabits}
         totalHabits={habits.length}
       />
-      <nav className="dashboard__quick-actions" aria-label="Quick actions">
-        <a className="dashboard-action dashboard-action--primary" href="#quests">
+      <nav className="flex flex-wrap gap-2 border-b border-border pb-4" aria-label="Quick actions">
+        <a className="inline-flex min-h-10 items-center gap-2 rounded-md border border-brand bg-brand px-3 py-2 text-xs font-bold uppercase tracking-[0.035em] text-brand-contrast no-underline transition-colors hover:bg-brand-hover hover:border-brand-hover [&_svg]:h-4 [&_svg]:w-4" href="#quests">
           <QuestsIcon /> New quest
         </a>
-        <a className="dashboard-action" href="#habits">
+        <a className="inline-flex min-h-10 items-center gap-2 rounded-md border border-border-strong bg-surface px-3 py-2 text-xs font-bold uppercase tracking-[0.035em] text-text-muted no-underline transition-colors hover:bg-surface-sunken hover:text-text [&_svg]:h-4 [&_svg]:w-4" href="#habits">
           <HabitsIcon /> Check-in habit
         </a>
         <button
           type="button"
-          className="dashboard-action dashboard-action--recovery"
+          className="inline-flex min-h-10 items-center gap-2 rounded-md border border-[#bae6fd] bg-[#f0f9ff] px-3 py-2 text-xs font-bold uppercase tracking-[0.035em] text-[#0369a1] transition-colors hover:bg-[#e0f2fe] hover:text-[#075985] disabled:cursor-default disabled:border-[#a7f3d0] disabled:bg-[#ecfdf5] disabled:text-[#047857] [&_svg]:h-4 [&_svg]:w-4"
           onClick={() => handleRecoveryClaim(initialRecoveryQuest)}
           disabled={recoveryClaimed}
         >
@@ -133,8 +131,8 @@ export function Dashboard() {
         </button>
       </nav>
       <AttributesPanel status={status} />
-      <div className="dashboard__operations">
-        <div className="dashboard__main-column">
+      <div className="grid items-start gap-4 min-[1200px]:grid-cols-[minmax(0,2fr)_minmax(19rem,1fr)]">
+        <div className="flex min-w-0 flex-col gap-4">
           <HabitsSection habits={habits} onToggle={handleHabitToggle} />
           <QuestSection
             quests={initialQuests}
@@ -147,11 +145,11 @@ export function Dashboard() {
         <GoalsAndTimeline activity={activity} />
       </div>
       {toast && (
-        <div className="dashboard-toast" role="status" aria-live="polite">
-          <span className="dashboard-toast__mark" aria-hidden="true">✓</span>
+        <div className="fixed bottom-4 right-4 z-[70] flex max-w-[min(24rem,calc(100vw-2rem))] items-center gap-3 rounded-[10px] border border-border bg-surface-overlay p-4 shadow-md" role="status" aria-live="polite">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[#a7f3d0] bg-[#ecfdf5] font-bold text-[#047857]" aria-hidden="true">✓</span>
           <span>
-            <strong>{toast.title}</strong>
-            <span>{toast.detail}</span>
+            <strong className="block text-sm text-text">{toast.title}</strong>
+            <span className="text-xs leading-[1.4] text-text-muted">{toast.detail}</span>
           </span>
         </div>
       )}
