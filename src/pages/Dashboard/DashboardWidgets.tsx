@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { usePersistentState } from '../../lib/storage'
 import './DashboardWidgets.css'
 
 const FOCUS_MODES = [
@@ -109,6 +110,10 @@ function LocalWeatherCard() {
   const [conditions, setConditions] = useState<WeatherConditions | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [unit, setUnit] = usePersistentState<'C' | 'F'>('weather-unit', 'C')
+
+  const displayTemp = (celsius: number) =>
+    unit === 'C' ? Math.round(celsius) : Math.round((celsius * 9) / 5 + 32)
 
   const loadWeather = () => {
     if (!navigator.geolocation) {
@@ -193,7 +198,7 @@ function LocalWeatherCard() {
           <div className="dashboard-weather__main">
             <div className="dashboard-weather__temperature">
               <WeatherGlyph code={conditions.code} isDay={conditions.isDay} />
-              <span>{Math.round(conditions.temperature)}°C</span>
+              <span>{displayTemp(conditions.temperature)}°{unit}</span>
             </div>
             <strong>{weatherDescription(conditions.code, conditions.isDay)}</strong>
             <p className="dashboard-weather__location">
@@ -203,11 +208,22 @@ function LocalWeatherCard() {
           <dl className="dashboard-weather__details">
             <div><dt>Humidity</dt><dd>{Math.round(conditions.humidity)}%</dd></div>
             <div><dt>Wind</dt><dd>{Math.round(conditions.windSpeed * 10) / 10} km/h</dd></div>
-            <div><dt>Feels like</dt><dd>{Math.round(conditions.feelsLike)}°C</dd></div>
+            <div><dt>Feels like</dt><dd>{displayTemp(conditions.feelsLike)}°{unit}</dd></div>
           </dl>
-          <button className="dashboard-weather__refresh" type="button" onClick={loadWeather} disabled={loading}>
-            {loading ? 'Updating…' : 'Refresh'}
-          </button>
+          <div className="dashboard-weather__actions" style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              className="dashboard-weather__refresh"
+              type="button"
+              onClick={() => setUnit((current) => (current === 'C' ? 'F' : 'C'))}
+              aria-label={`Switch temperature unit, currently degrees ${unit === 'C' ? 'Celsius' : 'Fahrenheit'}`}
+              aria-pressed={unit === 'F'}
+            >
+              °{unit === 'C' ? 'F' : 'C'}
+            </button>
+            <button className="dashboard-weather__refresh" type="button" onClick={loadWeather} disabled={loading}>
+              {loading ? 'Updating…' : 'Refresh'}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="dashboard-weather__empty">
@@ -225,7 +241,7 @@ function LocalWeatherCard() {
 }
 
 function FocusSessionCard() {
-  const [mode, setMode] = useState<FocusModeId>('work')
+  const [mode, setMode] = usePersistentState<FocusModeId>('pomodoro-mode', 'work')
   const selectedMode = FOCUS_MODES.find((item) => item.id === mode) ?? FOCUS_MODES[0]
   const [remainingSeconds, setRemainingSeconds] = useState(selectedMode.duration)
   const [deadline, setDeadline] = useState<number | null>(null)

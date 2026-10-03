@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { HabitsIcon } from '../../components/icons/Icons'
 import { filterAndSort, useSearch, type SortOption } from '../../hooks/useListControls'
 import { weekdayLabels } from '../../lib/dates'
@@ -9,6 +9,8 @@ interface HabitsSectionProps {
   habits: Array<HabitItem & { done: boolean }>
   onToggle: (habit: HabitItem & { done: boolean }) => void
   selectedAttribute?: string | null
+  /** Rendered at the end of the header — the section menu. */
+  menu?: ReactNode
 }
 
 const weekLevels = ['full', 'full', 'full', 'full', 'partial', 'full', 'today']
@@ -23,7 +25,7 @@ function tagTone(attribute: string) {
   }
 }
 
-export function HabitsSection({ habits, onToggle, selectedAttribute }: HabitsSectionProps) {
+export function HabitsSection({ habits, onToggle, selectedAttribute, menu }: HabitsSectionProps) {
   const headingId = useId()
   const { preferences } = usePreferences()
   const week = weekdayLabels(preferences.weekStart).map((day, index) => ({
@@ -63,7 +65,7 @@ export function HabitsSection({ habits, onToggle, selectedAttribute }: HabitsSec
   )
 
   return (
-    <section className="min-w-0 rounded-xl border border-border bg-surface p-3 shadow-xs scroll-mt-4 max-[600px]:p-2.5" id="habits" aria-labelledby={headingId}>
+    <section className="group/section min-w-0 rounded-xl border border-border bg-surface p-[var(--section-pad)] shadow-xs scroll-mt-4" id="habits" aria-labelledby={headingId}>
       <div className="flex items-center justify-between gap-2.5 border-b border-border pb-2.5 max-[600px]:items-start">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#d5e8a0] bg-[#f4f8e8] text-brand-text">
@@ -95,6 +97,7 @@ export function HabitsSection({ habits, onToggle, selectedAttribute }: HabitsSec
             />
           ))}
         </div>
+        {menu}
       </div>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-2">

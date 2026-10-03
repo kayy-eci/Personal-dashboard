@@ -1,5 +1,6 @@
-import { useId, useState } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { QuestsIcon } from '../../components/icons/Icons'
+import { filterAndSort, useSearch, type SortOption } from '../../hooks/useListControls'
 import type { QuestItem } from './dashboard-data'
 
 type QuestFilter = 'all' | QuestItem['category']
@@ -10,6 +11,9 @@ interface QuestSectionProps {
   recoveryClaimed: boolean
   onComplete: (quest: QuestItem) => void
   onClaimRecovery: (quest: QuestItem) => void
+  selectedAttribute?: string | null
+  /** Rendered at the end of the header — the section menu. */
+  menu?: ReactNode
 }
 
 const filterLabels: Record<QuestFilter, string> = {
@@ -42,19 +46,48 @@ export function QuestSection({
   recoveryClaimed,
   onComplete,
   onClaimRecovery,
+  selectedAttribute,
+  menu,
 }: QuestSectionProps) {
   const headingId = useId()
   const [filter, setFilter] = useState<QuestFilter>('all')
+  const { query, setQuery } = useSearch()
+  const [sortId, setSortId] = useState('reward-desc')
+  const [hideCompleted, setHideCompleted] = useState(false)
   const activeCount = quests.filter(
     (quest) => !completedIds.includes(quest.id) && !(quest.category === 'recovery' && recoveryClaimed),
   ).length
-  const visibleQuests = quests.filter((quest) => filter === 'all' || quest.category === filter)
+
+  const questSortOptions: SortOption<QuestItem>[] = [
+    { id: 'reward-desc', label: 'Reward (high to low)', compare: (a, b) => b.reward - a.reward },
+    { id: 'reward-asc', label: 'Reward (low to high)', compare: (a, b) => a.reward - b.reward },
+    { id: 'deadline', label: 'Deadline', compare: (a, b) => (a.deadline ?? '￿').localeCompare(b.deadline ?? '￿') },
+
+    { id: 'difficulty', label: 'Difficulty', compare: (a, b) => (b.difficulty ?? 0) - (a.difficulty ?? 0) },
+    { id: 'alpha', label: 'Alphabetical', compare: (a, b) => a.title.localeCompare(b.title) },
+    { id: 'category', label: 'Category', compare: (a, b) => a.category.localeCompare(b.category) },
+  ]
+
+  const visibleQuests = filterAndSort(
+    quests,
+    query,
+    (quest) => [quest.title, quest.description, quest.category, quest.linkedGoal],
+    [
+      (quest) => filter === 'all' || quest.category === filter,
+      (quest) => !hideCompleted || !(completedIds.includes(quest.id) || (quest.category === 'recovery' && recoveryClaimed)),
+      (quest) =>
+        !selectedAttribute ||
+        quest.attributeRewards.some((reward) => reward.toUpperCase().includes(selectedAttribute.toUpperCase())),
+    ],
+    sortId,
+    questSortOptions,
+  )
 
   return (
-    <section className="min-w-0 rounded-xl border border-border bg-surface p-4 shadow-xs scroll-mt-4 max-[600px]:p-3" id="quests" aria-labelledby={headingId}>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#bae6fd] bg-[#f0f9ff] text-[#0369a1]">
+    <section className="group/section min-w-0 rounded-xl border border-border bg-surface p-[var(--section-pad)] shadow-xs scroll-mt-4" id="quests" aria-labelledby={headingId}>
+      <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border pb-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-[#bae6fd] bg-[#f0f9ff] text-[#0369a1]">
             <QuestsIcon className="h-[1.1rem] w-[1.1rem]" />
           </span>
           <div>
@@ -67,9 +100,10 @@ export function QuestSection({
           </div>
         </div>
         <span className="shrink-0 rounded-md bg-surface-sunken px-2 py-0.5 font-mono text-[0.6875rem] font-semibold text-text-muted">{activeCount} active</span>
+        {menu}
       </div>
 
-      <div className="mt-3 flex w-fit max-w-full flex-wrap gap-1 rounded-md border border-border bg-surface-sunken p-[0.2rem]" role="group" aria-label="Filter quests">
+      <div className="mt-2.5 flex w-fit max-w-full flex-wrap gap-1 rounded-md border border-border bg-surface-sunken p-[0.2rem]" role="group" aria-label="Filter quests">
         {(Object.keys(filterLabels) as QuestFilter[]).map((category) => {
           const count =
             category === 'all'
@@ -80,7 +114,7 @@ export function QuestSection({
             <button
               type="button"
               key={category}
-              className={`rounded border px-[0.55rem] py-[0.35rem] text-xs font-semibold transition-colors ${filter === category ? 'border-border bg-surface text-text shadow-xs' : 'border-transparent bg-transparent text-text-muted hover:text-text'}`}
+              className={`rounded border px-2 py-[0.3rem] text-xs font-semibold transition-colors ${filter === category ? 'border-border bg-surface text-text shadow-xs' : 'border-transparent bg-transparent text-text-muted hover:text-text'}`}
               aria-pressed={filter === category}
               onClick={() => setFilter(category)}
             >
@@ -90,7 +124,38 @@ export function QuestSection({
         })}
       </div>
 
-      <div className="mt-3 flex flex-col gap-3">
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        <input
+          className="min-h-9 flex-1 max-w-[20rem] rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint"
+          type="search"
+          placeholder="Search quests"
+          aria-label="Search quests"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <label className="flex items-center gap-1.5 text-xs font-semibold text-text-muted">
+          Sort
+          <select
+            className="min-h-9 rounded-md border border-border-strong bg-surface-overlay px-2.5 py-1.5 text-sm text-text"
+            value={sortId}
+            onChange={(event) => setSortId(event.target.value)}
+          >
+            {questSortOptions.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          className={`min-h-9 rounded-md border px-2.5 py-1.5 text-xs font-bold uppercase tracking-[0.035em] transition-colors ${hideCompleted ? 'border-brand bg-brand text-brand-contrast' : 'border-border-strong bg-surface text-text-muted hover:bg-surface-sunken hover:text-text'}`}
+          aria-pressed={hideCompleted}
+          onClick={() => setHideCompleted((current) => !current)}
+        >
+          Hide completed
+        </button>
+      </div>
+
+      <div className="mt-2.5 flex flex-col gap-2.5">
         {visibleQuests.map((quest) => {
           const isComplete =
             completedIds.includes(quest.id) ||
@@ -98,13 +163,13 @@ export function QuestSection({
 
           return (
             <article
-              className={`min-w-0 rounded-[10px] border border-border bg-surface-sunken p-3 transition-colors hover:border-[#e9c88f] ${quest.category === 'recovery' ? 'border-l-4 border-l-[#0ea5e9]' : ''}`}
+              className={`min-w-0 rounded-[10px] border border-border bg-surface-sunken p-2.5 transition-colors hover:border-[#e9c88f] ${quest.category === 'recovery' ? 'border-l-4 border-l-[#0ea5e9]' : ''}`}
               key={quest.id}
               id={quest.category === 'recovery' ? 'recovery-quest' : undefined}
             >
-              <div className="flex items-start justify-between gap-3 max-[600px]:flex-col">
+              <div className="flex items-start justify-between gap-2 max-[600px]:flex-col">
                 <div className="min-w-0">
-                  <div className="mb-2 flex flex-wrap items-center gap-[0.35rem]">
+                  <div className="mb-1.5 flex flex-wrap items-center gap-[0.35rem]">
                     <span className={`inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[0.625rem] font-semibold leading-[1.3] ${questCategoryTag(quest.category)}`}>
                       {categoryLabels[quest.category]}
                     </span>
@@ -140,11 +205,11 @@ export function QuestSection({
               </div>
 
               {quest.category === 'recovery' ? (
-                <div className="mt-3 flex flex-wrap justify-between gap-2 border-t border-border pt-3 text-xs font-semibold text-[#0f766e] [&>span]:font-normal [&>span]:text-text-faint">
+                <div className="mt-2.5 flex flex-wrap justify-between gap-2 border-t border-border pt-2.5 text-xs font-semibold text-[#0f766e] [&>span]:font-normal [&>span]:text-text-faint">
                   Restores {quest.reward} vitality points <span>Cooldown resets at 00:00</span>
                 </div>
               ) : (
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2.5">
                   <div className="flex flex-wrap items-center gap-[0.35rem] font-mono text-[0.65rem] text-text-faint [&>span]:rounded border [&>span]:border-border [&>span]:bg-surface [&>span]:px-1.5 [&>span]:py-0.5 [&>span]:text-text-muted">
                     <span>Base: {quest.baseReward}</span>
                     <span aria-hidden="true">×</span>
@@ -165,6 +230,9 @@ export function QuestSection({
             </article>
           )
         })}
+        {visibleQuests.length === 0 && (
+          <p className="text-xs text-text-muted">No quests match the current filters.</p>
+        )}
       </div>
     </section>
   )

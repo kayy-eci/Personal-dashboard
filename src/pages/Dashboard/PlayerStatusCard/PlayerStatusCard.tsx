@@ -28,9 +28,9 @@ export function PlayerStatusCard({
   const xpPercentIntoLevel = xpPercent(status.xpIntoLevel, status.xpForNextLevel)
 
   return (
-    <section className="grid grid-cols-1 gap-5 rounded-xl border border-border bg-surface p-4 shadow-xs min-[560px]:grid-cols-[minmax(13rem,0.8fr)_minmax(0,1.6fr)] min-[560px]:items-center min-[560px]:p-5" aria-labelledby="status-card-heading">
-      <div className="flex min-w-0 items-center gap-4 max-[420px]:items-start">
-        <div className="shrink-0 [&>div:first-child]:h-[4.5rem] [&>div:first-child]:w-[4.5rem] [&>div:first-child]:rounded-xl">
+    <section className="grid grid-cols-1 gap-3 rounded-xl border border-border bg-surface p-3 shadow-xs min-[560px]:grid-cols-[minmax(12rem,0.8fr)_minmax(0,1.6fr)] min-[560px]:items-center min-[560px]:p-4" aria-labelledby="status-card-heading">
+      <div className="flex min-w-0 items-center gap-3 max-[420px]:items-start">
+        <div className="shrink-0 [&>div>div:first-child]:h-16 [&>div>div:first-child]:w-16 [&>div>div:first-child]:rounded-xl">
           <Avatar
             src={profileWithAvatar.avatarSrc}
             name={profileWithAvatar.name}
@@ -41,7 +41,7 @@ export function PlayerStatusCard({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             <label className="sr-only" htmlFor="player-name">
               Character name
             </label>
@@ -59,18 +59,25 @@ export function PlayerStatusCard({
           <h2 id="status-card-heading" className="mt-1 text-sm font-medium text-text-muted">
             Your player profile
           </h2>
-          <p className="mt-1 flex items-center gap-2 text-xs text-text-faint">
+          <p className="mt-0.5 flex items-center gap-2 text-xs text-text-faint">
             <span className="h-2 w-2 rounded-full bg-[#059669]" aria-hidden="true" />
             Sample data · changes are temporary
           </p>
           <p className="mt-1 text-xs text-text-faint">
             {status.currentStreak} day{status.currentStreak === 1 ? '' : 's'} active streak
           </p>
+          {status.currentStreak >= 7 && (
+            <p className="mt-1">
+              <span className="whitespace-nowrap rounded-md border border-[#fde68a] bg-[#fffbeb] px-2 py-0.5 font-mono text-xs font-bold text-[#b45309]">
+                {status.currentStreak >= 100 ? '100-day' : status.currentStreak >= 30 ? '30-day' : '7-day'} milestone
+              </span>
+            </p>
+          )}
         </div>
       </div>
 
-      <dl className="grid w-full grid-cols-1 gap-3 min-[560px]:grid-cols-3">
-        <div className="flex min-w-0 flex-col justify-between gap-3 rounded-lg border border-border bg-surface-sunken p-3">
+      <dl className="grid w-full grid-cols-1 gap-2 min-[560px]:grid-cols-3">
+        <div className="flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-2.5">
           <div className="flex justify-between gap-2 font-mono text-xs font-semibold text-text-muted [&_dt]:uppercase [&_dt]:tracking-[0.04em] [&_dd]:whitespace-nowrap [&_dd]:text-text">
             <dt>Vitality</dt>
             <dd>{status.health} / {status.maxHealth} HP</dd>
@@ -85,7 +92,7 @@ export function PlayerStatusCard({
           <span className="text-xs text-text-muted">{Math.round(hpPercent)}% available</span>
         </div>
 
-        <div className="flex min-w-0 flex-col justify-between gap-3 rounded-lg border border-border bg-surface-sunken p-3">
+        <div className="flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-2.5">
           <div className="flex justify-between gap-2 font-mono text-xs font-semibold text-text-muted [&_dt]:uppercase [&_dt]:tracking-[0.04em] [&_dd]:whitespace-nowrap [&_dd]:text-text">
             <dt>XP progress</dt>
             <dd>{status.totalXp.toLocaleString()} XP</dd>
@@ -100,9 +107,12 @@ export function PlayerStatusCard({
           <span className="text-xs text-text-muted">
             {Math.round(xpPercentIntoLevel)}% to level {status.level + 1}
           </span>
+          <span className="text-xs text-text-muted">
+            {Math.max(0, status.xpForNextLevel - status.xpIntoLevel).toLocaleString()} XP to next level
+          </span>
         </div>
 
-        <div className="flex min-w-0 flex-col justify-between gap-3 rounded-lg border border-border bg-surface-sunken p-3">
+        <div className="flex min-w-0 flex-col justify-between gap-2 rounded-lg border border-border bg-surface-sunken p-2.5">
           <div className="flex justify-between gap-2 font-mono text-xs font-semibold text-text-muted [&_dt]:uppercase [&_dt]:tracking-[0.04em] [&_dd]:whitespace-nowrap [&_dd]:text-text">
             <dt>Daily habits</dt>
             <dd>{completedHabits} / {totalHabits} done</dd>
