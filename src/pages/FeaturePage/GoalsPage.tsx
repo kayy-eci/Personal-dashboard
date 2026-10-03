@@ -7,7 +7,7 @@ interface Goal {
   id: string
   title: string
   targetDate: string
-  tone: 'violet' | 'rose' | 'sky'
+  tone: 'gold' | 'rose' | 'sky'
   milestones: Array<{ title: string; done: boolean; dueDate: string }>
 }
 
@@ -92,7 +92,7 @@ export function GoalsPage() {
               description: goal.title,
               startTime: new Date(`${goal.targetDate}T09:00:00`),
               endTime: new Date(`${goal.targetDate}T10:00:00`),
-              color: goal.tone === 'violet' ? 'purple' : goal.tone === 'sky' ? 'blue' : 'pink',
+              color: goal.tone === 'gold' ? 'gold' : goal.tone === 'sky' ? 'blue' : 'pink',
               category: 'Goal',
               tags: [],
             }]
@@ -105,7 +105,7 @@ export function GoalsPage() {
                 description: goal.title,
                 startTime: new Date(`${milestone.dueDate}T09:00:00`),
                 endTime: new Date(`${milestone.dueDate}T10:00:00`),
-                color: goal.tone === 'violet' ? 'purple' : goal.tone === 'sky' ? 'blue' : 'pink',
+                color: goal.tone === 'gold' ? 'gold' : goal.tone === 'sky' ? 'blue' : 'pink',
                 category: 'Milestone',
                 tags: [],
               }]
@@ -140,7 +140,7 @@ export function GoalsPage() {
         id: `goal-${Date.now()}`,
         title: trimmedTitle,
         targetDate,
-        tone: 'violet',
+        tone: 'gold',
         milestones: [
           { title: 'Define the next concrete step', done: false, dueDate: '' },
           { title: 'Review progress and adjust', done: false, dueDate: '' },
@@ -160,10 +160,10 @@ export function GoalsPage() {
       </DemoNotice>
       <SummaryGrid
         items={[
-          { label: 'Active goals', value: String(goals.length - completedGoals), note: 'Across personal projects', tone: 'violet' },
+          { label: 'Active goals', value: String(goals.length - completedGoals), note: 'Across personal projects', tone: 'gold' },
           { label: 'Average progress', value: `${averageProgress}%`, note: 'Based on milestones', tone: 'sky' },
           { label: 'Milestones complete', value: `${goals.reduce((sum, goal) => sum + goal.milestones.filter((item) => item.done).length, 0)}/${goals.reduce((sum, goal) => sum + goal.milestones.length, 0)}`, note: 'Sample goal data', tone: 'emerald' },
-          { label: 'Goals completed', value: String(completedGoals), note: 'All milestones complete', tone: 'amber' },
+          { label: 'Goals completed', value: String(completedGoals), note: 'All milestones complete', tone: 'ember' },
         ]}
       />
 
@@ -219,7 +219,7 @@ export function GoalsPage() {
               const isExpanded = expandedGoalIds.has(goal.id)
               const checklistId = `goal-checklist-${goal.id}`
               return (
-                <article className={`${goal.tone === 'violet' ? 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#7c3aed] bg-surface-overlay' : goal.tone === 'rose' ? 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#e11d48] bg-surface-overlay' : 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#0284c7] bg-surface-overlay'}`} key={goal.id}>
+                <article className={`${goal.tone === 'gold' ? 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#b45309] bg-surface-overlay' : goal.tone === 'rose' ? 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#e11d48] bg-surface-overlay' : 'flex flex-col overflow-hidden rounded-lg border border-border border-l-[3px] border-l-[#0284c7] bg-surface-overlay'}`} key={goal.id}>
                   <div className="flex min-h-14 min-w-0 items-center justify-between gap-2 p-2 px-3 max-[480px]:gap-1 max-[480px]:p-2">
                     <div className="flex min-w-0 flex-1 items-center gap-3 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-[0.1rem] [&>h3]:flex-1 [&>h3]:truncate [&>h3]:text-sm [&>h3]:font-bold [&>h3]:text-text [&>span]:whitespace-nowrap [&>span]:text-xs [&>span]:text-text-muted">
                       <h3>{goal.title}</h3>

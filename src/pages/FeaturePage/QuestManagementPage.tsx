@@ -89,10 +89,10 @@ export function QuestManagementPage() {
       </DemoNotice>
       <SummaryGrid
         items={[
-          { label: 'Active objectives', value: String(activeQuests.filter((quest) => quest.category !== 'recovery').length), note: 'Main, side and challenge quests', tone: 'violet' },
+          { label: 'Active objectives', value: String(activeQuests.filter((quest) => quest.category !== 'recovery').length), note: 'Main, side and challenge quests', tone: 'gold' },
           { label: 'Potential rewards', value: `${activeQuests.reduce((sum, quest) => sum + quest.reward, 0)} XP`, note: 'Before consistency adjustment', tone: 'sky' },
           { label: 'Completed today', value: String(completed.length), note: 'Temporary session state', tone: 'emerald' },
-          { label: 'Recovery quests', value: String(quests.filter((quest) => quest.category === 'recovery').length), note: 'Daily claim limit applies', tone: 'amber' },
+          { label: 'Recovery quests', value: String(quests.filter((quest) => quest.category === 'recovery').length), note: 'Daily claim limit applies', tone: 'ember' },
         ]}
       />
 

@@ -4,14 +4,14 @@ export interface SummaryItem {
   label: string
   value: string
   note: string
-  tone?: 'violet' | 'sky' | 'emerald' | 'amber' | 'rose'
+  tone?: 'gold' | 'sky' | 'emerald' | 'ember' | 'rose'
 }
 
 const toneBorder: Record<NonNullable<SummaryItem['tone']>, string> = {
-  violet: '#7c3aed',
+  gold: '#b45309',
   sky: '#0284c7',
   emerald: '#059669',
-  amber: '#d97706',
+  ember: '#c2410c',
   rose: '#e11d48',
 }
 

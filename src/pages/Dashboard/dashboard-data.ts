@@ -178,7 +178,7 @@ export const initialGoals = [
     title: 'Ship LifeOS v1.0 MVP',
     target: 'Target: Oct 30 · 3/5 Milestones',
     progress: 68,
-    tone: 'violet',
+    tone: 'gold',
   },
   {
     title: '15% Body Fat & 100kg Bench',

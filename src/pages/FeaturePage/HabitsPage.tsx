@@ -156,10 +156,10 @@ export function HabitsPage() {
       </DemoNotice>
       <SummaryGrid
         items={[
-          { label: 'Active routines', value: String(activeHabits.length), note: `${todayHabits.length} scheduled today`, tone: 'violet' },
+          { label: 'Active routines', value: String(activeHabits.length), note: `${todayHabits.length} scheduled today`, tone: 'gold' },
           { label: 'Daily completion', value: `${completedToday}/${todayHabits.length}`, note: 'Temporary check-ins', tone: 'emerald' },
           { label: 'Average consistency', value: '89%', note: 'Across tracked routines', tone: 'sky' },
-          { label: 'Longest streak', value: '14 days', note: 'Morning Deep Work', tone: 'amber' },
+          { label: 'Longest streak', value: '14 days', note: 'Morning Deep Work', tone: 'ember' },
         ]}
       />
 
