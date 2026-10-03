@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { EventManager, type ManagedEvent } from '../../components/event-manager'
+import { EventManager, type Event } from '../../components/event-manager'
 import { initialGoals } from '../Dashboard/dashboard-data'
 import { DemoNotice, FeaturePanel, ProgressTrack, SummaryGrid } from './FeaturePage.shared'
 
@@ -82,26 +82,32 @@ export function GoalsPage() {
   const [targetDate, setTargetDate] = useState('')
   const [expandedGoalIds, setExpandedGoalIds] = useState<Set<string>>(() => new Set())
 
-  const goalEvents = useMemo<ManagedEvent[]>(
+  const goalEvents = useMemo<Event[]>(
     () =>
       goals.flatMap((goal) => [
         ...(goal.targetDate
           ? [{
               id: `${goal.id}-deadline`,
-              date: goal.targetDate,
               title: goal.title,
-              goalTitle: goal.title,
-              type: 'goal' as const,
+              description: goal.title,
+              startTime: new Date(`${goal.targetDate}T09:00:00`),
+              endTime: new Date(`${goal.targetDate}T10:00:00`),
+              color: goal.tone === 'violet' ? 'purple' : goal.tone === 'sky' ? 'blue' : 'pink',
+              category: 'Goal',
+              tags: [],
             }]
           : []),
         ...goal.milestones.flatMap((milestone, index) =>
           milestone.dueDate
             ? [{
                 id: `${goal.id}-milestone-${index}`,
-                date: milestone.dueDate,
                 title: milestone.title,
-                goalTitle: goal.title,
-                type: 'milestone' as const,
+                description: goal.title,
+                startTime: new Date(`${milestone.dueDate}T09:00:00`),
+                endTime: new Date(`${milestone.dueDate}T10:00:00`),
+                color: goal.tone === 'violet' ? 'purple' : goal.tone === 'sky' ? 'blue' : 'pink',
+                category: 'Milestone',
+                tags: [],
               }]
             : [],
         ),
@@ -197,7 +203,7 @@ export function GoalsPage() {
           </form>
         )}
 
-        <EventManager events={goalEvents} />
+        <EventManager events={goalEvents} categories={['Goal', 'Milestone']} />
 
         {goals.length === 0 ? (
           <div className="feature-empty" role="status">
