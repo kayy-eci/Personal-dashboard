@@ -25,14 +25,18 @@ export type PageId =
   | 'attributes'
   | 'timeline'
   | 'analytics'
+  | 'calendar'
+  | 'settings'
 
 /** Primary LifeOS destinations, ordered by the product's daily workflow. */
 export const navItems: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
-  { id: 'habits', label: 'Habits & Routines', icon: HabitsIcon },
-  { id: 'quests', label: 'Quests & Objectives', icon: QuestsIcon },
-  { id: 'goals', label: 'Goals & Milestones', icon: GoalsIcon },
-  { id: 'attributes', label: 'Attributes & Stats', icon: AttributesIcon },
-  { id: 'timeline', label: 'Timeline & Logs', icon: TimelineIcon },
+  { id: 'habits', label: 'Habits', icon: HabitsIcon },
+  { id: 'quests', label: 'Quests', icon: QuestsIcon },
+  { id: 'goals', label: 'Goals', icon: GoalsIcon },
+  { id: 'attributes', label: 'Character', icon: AttributesIcon },
+  { id: 'timeline', label: 'Timeline', icon: TimelineIcon },
   { id: 'analytics', label: 'Analytics', icon: AnalyticsIcon },
+  { id: 'calendar', label: 'Calendar', icon: DashboardIcon },
+  { id: 'settings', label: 'Settings', icon: AttributesIcon },
 ]

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { PageHeader } from '../PageHeader/PageHeader'
 import { Sidebar } from '../Sidebar/Sidebar'
+import { ThemeToggle } from '../ThemeToggle/ThemeToggle'
 import { MenuIcon } from '../icons/Icons'
 import './AppShell.css'
 
@@ -85,6 +86,8 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
           <span className="sr-only">Toggle sidebar</span>
         </button>
         <span className="app-shell__topbar-title">{page.title}</span>
+        <span className="app-shell__topbar-spacer" />
+        <ThemeToggle compact />
       </div>
 
       <Sidebar

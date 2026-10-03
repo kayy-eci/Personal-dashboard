@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AppShell } from './components/AppShell/AppShell'
 import { navItems, type PageId } from './components/Sidebar/nav-items'
+import { useTheme } from './hooks/useTheme'
 import { Dashboard } from './pages/Dashboard/Dashboard'
 import { FeaturePage } from './pages/FeaturePage/FeaturePage'
 
@@ -9,6 +10,8 @@ function isPageId(route: string): route is PageId {
 }
 
 function App() {
+  // Owns the theme so `data-theme` stays in sync for the whole session.
+  useTheme()
   const [activePageId, setActivePageId] = useState<PageId>(() => {
     const route = window.location.hash.replace(/^#\/?/, '')
     return isPageId(route) ? route : 'dashboard'
@@ -27,12 +30,14 @@ function App() {
 
   const pageTitles: Record<PageId, { title: string; subtitle: string }> = {
     dashboard: { title: 'Dashboard', subtitle: 'Your daily progress at a glance' },
-    habits: { title: 'Habits & Routines', subtitle: 'Build reliable routines through consistent practice' },
-    quests: { title: 'Quests & Objectives', subtitle: 'Turn your priorities into clear, rewarding actions' },
-    goals: { title: 'Goals & Milestones', subtitle: 'Track meaningful outcomes one milestone at a time' },
-    attributes: { title: 'Attributes & Stats', subtitle: 'Review the capabilities growing through your activity' },
-    timeline: { title: 'Timeline & Logs', subtitle: 'A chronological record of your activity' },
+    habits: { title: 'Habits', subtitle: 'Build reliable routines through consistent practice' },
+    quests: { title: 'Quests', subtitle: 'Turn your priorities into clear, rewarding actions' },
+    goals: { title: 'Goals', subtitle: 'Track meaningful outcomes one milestone at a time' },
+    attributes: { title: 'Character', subtitle: 'Review the capabilities growing through your activity' },
+    timeline: { title: 'Timeline', subtitle: 'A chronological record of your activity' },
     analytics: { title: 'Analytics', subtitle: 'Understand your consistency, progress, and focus' },
+    calendar: { title: 'Calendar', subtitle: 'Keep the week and month in view' },
+    settings: { title: 'Settings', subtitle: 'Configure the app and your rules' },
   }
   const page = pageTitles[activePage.id]
 

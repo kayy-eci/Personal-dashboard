@@ -1,5 +1,6 @@
 import { usePlayerProfile } from '../../features/player/usePlayerProfile'
 import { ChevronDownIcon, CloseIcon } from '../icons/Icons'
+import { ThemeToggle } from '../ThemeToggle/ThemeToggle'
 import { navItems } from './nav-items'
 import './Sidebar.css'
 
@@ -80,6 +81,7 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose }: SidebarProp
       </nav>
 
       <div className="sidebar__footer">
+        <ThemeToggle />
         <div className="sidebar__account">
           {profileWithAvatar.avatarSrc ? (
             <img

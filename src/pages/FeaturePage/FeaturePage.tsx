@@ -1,9 +1,11 @@
 import type { PageId } from '../../components/Sidebar/nav-items'
 import { AnalyticsPage } from './AnalyticsPage'
 import { AttributesPage } from './AttributesPage'
+import { CalendarPage } from './CalendarPage'
 import { GoalsPage } from './GoalsPage'
 import { HabitsPage } from './HabitsPage'
 import { QuestManagementPage } from './QuestManagementPage'
+import { SettingsPage } from './SettingsPage'
 import { TimelinePage } from './TimelinePage'
 import './FeaturePage.css'
 
@@ -25,5 +27,9 @@ export function FeaturePage({ pageId }: FeaturePageProps) {
       return <TimelinePage />
     case 'analytics':
       return <AnalyticsPage />
+    case 'calendar':
+      return <CalendarPage />
+    case 'settings':
+      return <SettingsPage />
   }
 }

@@ -75,13 +75,17 @@
   color: var(--text);
 }
 
+.app-shell__topbar-spacer {
+  flex: 1 1 auto;
+}
+
 /* -------------------------------------------------------------- scrim */
 
 .app-shell__scrim {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(15, 15, 15, 0.4);
+  background: var(--scrim, rgba(15, 15, 15, 0.4));
 }
 
 /* --------------------------------------------------------------- main */
