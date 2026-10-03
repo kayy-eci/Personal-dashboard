@@ -60,19 +60,35 @@ export async function setPreference<K extends PreferenceKey>(
 }
 
 /**
- * Restores a scope to its defaults. `display` covers the appearance settings,
- * `all` covers every preference including sidebar and dashboard state.
+ * Restores a scope to its defaults. `display` covers the appearance settings
+ * only — sidebar groups, hidden sections and focus mode are deliberately left
+ * alone, so "Reset display settings" cannot quietly rearrange the dashboard.
  */
 export async function resetPreferences(scope: ResetScope): Promise<Preferences> {
-  const targets: PreferenceKey[] =
-    scope === 'display'
-      ? (['theme', 'accent', 'density', 'textSize', 'reduceMotion'] as PreferenceKey[])
-      : (Object.keys(PREFERENCE_STORAGE_KEYS) as PreferenceKey[])
+  const displayKeys: PreferenceKey[] = [
+    'theme',
+    'accent',
+    'density',
+    'textSize',
+    'reduceMotion',
+  ]
+  const current = loadFromStorage()
 
-  for (const key of targets) {
-    removeStoredValue(PREFERENCE_STORAGE_KEYS[key])
+  if (scope === 'all') {
+    for (const key of Object.keys(PREFERENCE_STORAGE_KEYS) as PreferenceKey[]) {
+      removeStoredValue(PREFERENCE_STORAGE_KEYS[key])
+    }
+    cache = { ...DEFAULT_PREFERENCES }
+    writeCount += 1
+    return { ...cache }
   }
-  cache = { ...DEFAULT_PREFERENCES }
+
+  const next: Preferences = { ...current }
+  for (const key of displayKeys) {
+    removeStoredValue(PREFERENCE_STORAGE_KEYS[key])
+    Object.assign(next, { [key]: DEFAULT_PREFERENCES[key] })
+  }
+  cache = { ...next }
   writeCount += 1
   return { ...cache }
 }

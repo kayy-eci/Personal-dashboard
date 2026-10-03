@@ -9,6 +9,7 @@ import {
   type Preferences,
   type SidebarGroupId,
 } from './schema'
+import { sectionLabel } from './sections'
 import { getPreferences, readCachedPreferences, resetPreferences, setPreference } from './store'
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
@@ -88,39 +89,35 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       .catch(() => setSaveError(true))
   }, [])
 
+  const announce = useCallback((message: string) => {
+    // Re-announce identical messages by clearing first.
+    setAnnouncement('')
+    window.setTimeout(() => setAnnouncement(message), 30)
+  }, [])
+
   const hideSection = useCallback(
     (id: DashboardSectionId) => {
       if (ALWAYS_VISIBLE_SECTIONS.includes(id)) return
-      setPreferences((current) =>
-        current.hiddenSections.includes(id)
-          ? current
-          : { ...current, hiddenSections: [...current.hiddenSections, id] },
-      )
-      void setPreference(
-        'hiddenSections',
-        (preferences.hiddenSections.includes(id)
-          ? preferences.hiddenSections
-          : [...preferences.hiddenSections, id]
-        ).filter((sectionId) => !ALWAYS_VISIBLE_SECTIONS.includes(sectionId)),
-      ).catch(() => setSaveError(true))
+      const next = preferences.hiddenSections.includes(id)
+        ? preferences.hiddenSections
+        : [...preferences.hiddenSections, id]
+      setPreferences((current) => ({ ...current, hiddenSections: next }))
+      announce(`${sectionLabel(id)} hidden. Undo available.`)
+      void setPreference('hiddenSections', next).catch(() => setSaveError(true))
     },
-    [preferences.hiddenSections],
+    [announce, preferences.hiddenSections],
   )
 
   const restoreSection = useCallback(
     (id: DashboardSectionId) => {
-      setPreferences((current) => ({
-        ...current,
-        hiddenSections: current.hiddenSections.filter((sectionId) => sectionId !== id),
-      }))
-      void setPreference(
-        'hiddenSections',
-        preferences.hiddenSections.filter((sectionId) => sectionId !== id),
-      )
+      const next = preferences.hiddenSections.filter((sectionId) => sectionId !== id)
+      setPreferences((current) => ({ ...current, hiddenSections: next }))
+      announce(`${sectionLabel(id)} restored.`)
+      void setPreference('hiddenSections', next)
         .then((stored) => setPreferences(stored))
         .catch(() => setSaveError(true))
     },
-    [preferences.hiddenSections],
+    [announce, preferences.hiddenSections],
   )
 
   const toggleSidebarGroup = useCallback(
@@ -135,12 +132,6 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     },
     [preferences.sidebarCollapsedGroups],
   )
-
-  const announce = useCallback((message: string) => {
-    // Re-announce identical messages by clearing first.
-    setAnnouncement('')
-    window.setTimeout(() => setAnnouncement(message), 30)
-  }, [])
 
   const retrySave = useCallback(() => {
     const failed = failedWrite.current

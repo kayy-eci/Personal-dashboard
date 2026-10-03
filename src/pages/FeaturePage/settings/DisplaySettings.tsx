@@ -66,6 +66,7 @@ const ghostButton =
 export function DisplaySettings() {
   const {
     preferences,
+    ready,
     setPreference,
     resetDisplayPreferences,
     restoreSection,
@@ -78,7 +79,7 @@ export function DisplaySettings() {
   )
 
   return (
-    <section className="rounded-lg border border-border bg-surface-overlay p-3">
+    <section className="rounded-lg border border-border bg-surface-overlay p-3" aria-busy={!ready}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-base font-bold text-text">Display</h3>
         <button type="button" className={ghostButton} onClick={() => setConfirmReset(true)}>

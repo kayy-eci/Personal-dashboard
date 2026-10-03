@@ -54,7 +54,7 @@ function parseActivityDate(time: string): Date | null {
 
 export function Dashboard() {
   const status = usePlayerStatus()
-  const { preferences, hideSection, restoreSection, announce } = usePreferences()
+  const { preferences, hideSection, restoreSection } = usePreferences()
   const [doneMap, setDoneMap, resetDoneMap] = usePersistentState<Record<string, boolean>>('habits-done', {})
   const [completedQuestIds, setCompletedQuestIds, resetCompletedQuestIds] = usePersistentState<string[]>('completed-quest-ids', [])
   const [recoveryClaimed, setRecoveryClaimed, resetRecoveryClaimed] = usePersistentState('recovery-claimed', false)
@@ -175,17 +175,13 @@ export function Dashboard() {
   const hideSectionWithUndo = (id: DashboardSectionId) => {
     const label = sectionLabel(id)
     hideSection(id)
-    announce(`${label} hidden. Undo available.`)
     setToast({
       title: `${label} hidden`,
       detail: 'Restore it here, or in Settings → Display.',
       duration: HIDE_UNDO_MS,
       action: {
         label: 'Undo',
-        onClick: () => {
-          restoreSection(id)
-          announce(`${label} restored.`)
-        },
+        onClick: () => restoreSection(id),
       },
     })
   }
