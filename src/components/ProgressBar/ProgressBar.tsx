@@ -33,14 +33,14 @@ export function ProgressBar({
 
   const fillClass =
     tone === 'health'
-      ? 'bg-[#4a9d5b]'
+      ? 'bg-brand'
       : tone === 'xp'
         ? 'bg-brand'
         : 'bg-text-faint'
 
   return (
     <div
-      className="relative w-full h-2 overflow-hidden bg-surface-sunken border border-border rounded-pill"
+      className="relative w-full h-2 overflow-hidden bg-progress-track border border-border rounded-pill"
       role="progressbar"
       aria-label={label}
       aria-valuenow={value}

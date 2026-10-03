@@ -15,7 +15,7 @@ function goalSoft(tone: string) {
 }
 
 function goalPercentColor(tone: string) {
-  return tone === 'gold' ? 'text-brand' : tone === 'rose' ? 'text-[#e11d48]' : 'text-[#0369a1]'
+  return tone === 'gold' ? 'text-brand-text' : tone === 'rose' ? 'text-[#e11d48]' : 'text-[#0369a1]'
 }
 
 function goalTone(tone: string) {

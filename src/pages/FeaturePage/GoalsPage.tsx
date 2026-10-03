@@ -173,7 +173,7 @@ export function GoalsPage() {
         action={
           <button
             type="button"
-            className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover"
+            className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover"
             onClick={() => setShowForm((visible) => !visible)}
             aria-expanded={showForm}
             aria-controls="create-goal-form"
@@ -198,7 +198,7 @@ export function GoalsPage() {
               />
             </label>
             <div className="col-span-full flex flex-wrap gap-2">
-              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover" type="submit">Add sample goal</button>
+              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover" type="submit">Add sample goal</button>
             </div>
           </form>
         )}
@@ -226,7 +226,7 @@ export function GoalsPage() {
                       <span>{formatTargetDate(goal.targetDate)}</span>
                     </div>
                     <span className="whitespace-nowrap text-xs text-text-muted max-[480px]:text-[0.625rem]">{doneCount}/{goal.milestones.length} checklist</span>
-                    <span className="min-w-10 text-right font-mono text-sm font-bold text-brand">{percent}%</span>
+                    <span className="min-w-10 text-right font-mono text-sm font-bold text-brand-text">{percent}%</span>
                     <button
                       className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-sunken hover:text-text"
                       type="button"

@@ -25,7 +25,7 @@ export function SettingsPage() {
         <aside className="rounded-lg border border-border bg-surface-overlay p-4 max-[480px]:w-full" aria-label="Settings navigation">
           <h2 className="mb-3 text-lg text-text">Settings</h2>
           <nav className="flex flex-col gap-2" aria-label="Settings sections">
-            <button type="button" className="min-h-9 rounded-md border border-border-strong bg-transparent px-3 py-2 text-left text-sm text-text-muted border-brand bg-brand text-white">Profile</button>
+            <button type="button" className="min-h-9 rounded-md border border-border-strong bg-transparent px-3 py-2 text-left text-sm text-text-muted border-brand bg-brand text-brand-contrast">Profile</button>
             <button type="button" className="min-h-9 rounded-md border border-border-strong bg-transparent px-3 py-2 text-left text-sm text-text-muted">Display</button>
             <button type="button" className="min-h-9 rounded-md border border-border-strong bg-transparent px-3 py-2 text-left text-sm text-text-muted">Health rules</button>
             <button type="button" className="min-h-9 rounded-md border border-border-strong bg-transparent px-3 py-2 text-left text-sm text-text-muted">Data</button>
@@ -48,7 +48,7 @@ export function SettingsPage() {
               >
                 <button
                   type="button"
-                  className={`min-h-9 min-w-[4.5rem] rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-left text-sm text-text-muted${theme === 'light' ? ' border-brand bg-brand text-white' : ''}`}
+                  className={`min-h-9 min-w-[4.5rem] rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-left text-sm text-text-muted${theme === 'light' ? ' border-brand bg-brand text-brand-contrast' : ''}`}
                   aria-pressed={theme === 'light'}
                   onClick={(event) => setTheme('light', event)}
                 >
@@ -56,7 +56,7 @@ export function SettingsPage() {
                 </button>
                 <button
                   type="button"
-                  className={`min-h-9 min-w-[4.5rem] rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-left text-sm text-text-muted${theme === 'dark' ? ' border-brand bg-brand text-white' : ''}`}
+                  className={`min-h-9 min-w-[4.5rem] rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-left text-sm text-text-muted${theme === 'dark' ? ' border-brand bg-brand text-brand-contrast' : ''}`}
                   aria-pressed={theme === 'dark'}
                   onClick={(event) => setTheme('dark', event)}
                 >
@@ -111,7 +111,7 @@ export function SettingsPage() {
               <label>Backup actions</label>
               <div className="flex flex-wrap items-center gap-2 text-text">
                 <button type="button" className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 ">Export data</button>
-                <button type="button" className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover">Back up now</button>
+                <button type="button" className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover">Back up now</button>
               </div>
             </div>
             <div className="grid grid-cols-[minmax(0,220px)_minmax(0,1fr)] items-center gap-3 border-t border-border pt-3 max-[820px]:grid-cols-1 max-[820px]:gap-2 [&>label]:text-sm [&>label]:font-semibold [&>label]:text-text-muted">
@@ -176,7 +176,7 @@ export function SettingsPage() {
                 )}
                 <button
                   type="button"
-                  className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover"
+                  className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover"
                   onClick={() => {
                     if (!usernameDraft.trim()) return
                     setUsername(usernameDraft)
@@ -217,7 +217,7 @@ export function SettingsPage() {
                 <div className="flex flex-wrap items-center gap-2 text-text">
                   <button
                     type="button"
-                    className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover"
+                    className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover"
                     disabled={!tokenDraft.trim()}
                     onClick={() => {
                       if (!tokenDraft.trim()) return

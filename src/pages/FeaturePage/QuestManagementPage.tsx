@@ -102,7 +102,7 @@ export function QuestManagementPage() {
         action={
           <button
             type="button"
-            className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover"
+            className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover"
             onClick={() => setShowForm((visible) => !visible)}
             aria-expanded={showForm}
             aria-controls="create-quest-form"
@@ -146,7 +146,7 @@ export function QuestManagementPage() {
               </select>
             </label>
             <div className="col-span-full flex flex-wrap gap-2">
-              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover" type="submit">Add sample quest</button>
+              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover" type="submit">Add sample quest</button>
             </div>
           </form>
         )}
@@ -172,7 +172,7 @@ export function QuestManagementPage() {
                     </div>
                     <button
                       type="button"
-                      className={`inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60${isComplete ? '' : ' border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover'}`}
+                      className={`inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60${isComplete ? '' : ' border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover'}`}
                       disabled={isComplete}
                       onClick={() => finishQuest(quest)}
                     >

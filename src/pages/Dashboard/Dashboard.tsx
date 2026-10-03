@@ -4,6 +4,7 @@ import { usePlayerStatus } from '../../features/player/usePlayerStatus'
 import { AttributesPanel } from './AttributesPanel/AttributesPanel'
 import { GoalsAndTimeline } from './GoalsAndTimeline'
 import { HabitsSection } from './HabitsSection'
+import { DashboardWidgets } from './DashboardWidgets'
 import { PlayerStatusCard } from './PlayerStatusCard/PlayerStatusCard'
 import { QuestSection } from './QuestSection'
 import {
@@ -109,6 +110,7 @@ export function Dashboard() {
 
   return (
     <div className="flex w-full max-w-[100rem] flex-col gap-5 p-4 min-[769px]:p-5 min-[769px]:pb-7 mx-auto">
+      <DashboardWidgets />
       <PlayerStatusCard
         status={status}
         completedHabits={completedHabits}

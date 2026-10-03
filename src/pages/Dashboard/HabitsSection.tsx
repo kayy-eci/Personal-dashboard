@@ -34,7 +34,7 @@ export function HabitsSection({ habits, onToggle }: HabitsSectionProps) {
     <section className="min-w-0 rounded-xl border border-border bg-surface p-4 shadow-xs scroll-mt-4 max-[600px]:p-3" id="habits" aria-labelledby={headingId}>
       <div className="flex items-center justify-between gap-3 border-b border-border pb-3 max-[600px]:items-start">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#efdcb0] bg-[#fdf6e8] text-brand">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#d5e8a0] bg-[#f4f8e8] text-brand-text">
             <HabitsIcon className="h-[1.1rem] w-[1.1rem]" />
           </span>
           <div>
@@ -73,7 +73,7 @@ export function HabitsSection({ habits, onToggle }: HabitsSectionProps) {
           >
             <button
               type="button"
-              className={`inline-flex h-5 w-5 items-center justify-center rounded-[5px] border text-[0.8rem] font-bold leading-none transition-colors max-[600px]:row-span-2 ${habit.done ? 'border-[#059669] bg-[#059669] text-white' : 'border-[#cbd5e1] bg-surface text-transparent hover:border-[#dc2626] hover:text-[#dc2626]'}`}
+              className={`inline-flex h-5 w-5 items-center justify-center rounded-[5px] border text-[0.8rem] font-bold leading-none transition-colors max-[600px]:row-span-2 ${habit.done ? 'border-brand bg-brand text-brand-contrast' : 'border-[#cbd5e1] bg-surface text-transparent hover:border-[#dc2626] hover:text-[#dc2626]'}`}
               aria-pressed={habit.done}
               aria-label={`${habit.done ? 'Undo completion of' : 'Mark complete'} ${habit.name}`}
               onClick={() => onToggle(habit)}
@@ -103,7 +103,7 @@ export function HabitsSection({ habits, onToggle }: HabitsSectionProps) {
               </div>
             </div>
 
-            <span className={`whitespace-nowrap rounded-[5px] border px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold max-[600px]:col-start-2 max-[600px]:justify-self-start ${habit.done ? 'border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]' : 'border-[#efdcb0] bg-[#fdf6e8] text-brand'}`}>
+            <span className={`whitespace-nowrap rounded-[5px] border px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold max-[600px]:col-start-2 max-[600px]:justify-self-start ${habit.done ? 'border-[#a7f3d0] bg-[#ecfdf5] text-[#047857]' : 'border-[#d5e8a0] bg-[#f4f8e8] text-brand-text'}`}>
               {habit.done ? 'Earned ' : '+'}
               {habit.reward} {habit.rewardType}
             </span>

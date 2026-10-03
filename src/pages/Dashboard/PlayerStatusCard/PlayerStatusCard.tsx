@@ -54,7 +54,7 @@ export function PlayerStatusCard({
               maxLength={40}
               autoComplete="off"
             />
-            <span className="whitespace-nowrap rounded-md border border-[#efdcb0] bg-[#fdf6e8] px-2 py-0.5 font-mono text-xs font-bold text-brand">Level {status.level}</span>
+            <span className="whitespace-nowrap rounded-md border border-[#efdcb0] bg-[#fdf6e8] px-2 py-0.5 font-mono text-xs font-bold text-brand-text">Level {status.level}</span>
           </div>
           <h2 id="status-card-heading" className="mt-1 text-sm font-medium text-text-muted">
             Your player profile

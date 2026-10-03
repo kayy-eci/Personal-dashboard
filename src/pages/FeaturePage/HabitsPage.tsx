@@ -169,7 +169,7 @@ export function HabitsPage() {
         action={
           <button
             type="button"
-            className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover"
+            className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover"
             onClick={() => setShowForm((visible) => !visible)}
             aria-expanded={showForm}
             aria-controls="create-habit-form"
@@ -226,7 +226,7 @@ export function HabitsPage() {
               </select>
             </label>
             <div className="col-span-full flex flex-wrap gap-2">
-              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-white hover:border-brand-hover hover:bg-brand-hover" type="submit">
+              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover" type="submit">
                 Add sample habit
               </button>
             </div>
@@ -271,7 +271,7 @@ export function HabitsPage() {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 max-[480px]:flex-col max-[480px]:items-end">
-                  <span className={`${habit.done ? 'inline-flex items-center whitespace-nowrap rounded-[5px] border border-[#a7f3d0] bg-[#ecfdf5] px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold text-[#047857]' : 'inline-flex items-center whitespace-nowrap rounded-[5px] border border-[#efdcb0] bg-[#fdf6e8] px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold text-brand'}`}>
+                  <span className={`${habit.done ? 'inline-flex items-center whitespace-nowrap rounded-[5px] border border-[#a7f3d0] bg-[#ecfdf5] px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold text-[#047857]' : 'inline-flex items-center whitespace-nowrap rounded-[5px] border border-[#d5e8a0] bg-[#f4f8e8] px-[0.45rem] py-[0.3rem] font-mono text-[0.65rem] font-bold text-brand-text'}`}>
                     {habit.done ? 'Checked in' : `+${habit.reward} ${habit.rewardType}`}
                   </span>
                   <button

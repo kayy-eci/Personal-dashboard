@@ -68,7 +68,7 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
   }, [activePageId])
 
   return (
-    <div className={`relative flex min-h-dvh flex-1 flex-col bg-surface min-[769px]:flex-row`}>
+    <div className={`relative flex min-h-dvh flex-1 flex-col bg-page-bg min-[769px]:flex-row`}>
       <a
         className="absolute left-2 top-2 z-[60] rounded-md border border-border-strong bg-surface px-3 py-2 text-sm text-text no-underline shadow-sm -translate-y-[200%] transition-transform focus-visible:translate-y-0"
         href="#main-content"

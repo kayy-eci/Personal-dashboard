@@ -69,7 +69,7 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose }: SidebarProp
                   aria-current={active ? 'page' : undefined}
                   onClick={onSelect}
                 >
-                  <Icon className={`h-[1.125rem] w-[1.125rem] shrink-0 ${active ? 'text-brand' : 'text-sidebar-text-muted'}`} />
+                  <Icon className={`h-[1.125rem] w-[1.125rem] shrink-0 ${active ? 'text-brand-text' : 'text-sidebar-text-muted'}`} />
                   <span className="truncate">{item.label}</span>
                 </a>
               </li>
