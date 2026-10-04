@@ -1,6 +1,6 @@
 import { getDb } from '../db/db'
 import type { Profile } from '../db/types'
-import { localDate } from '../domain/time'
+import { addDaysLocal, localDate } from '../domain/time'
 
 export async function getProfile(): Promise<Profile | undefined> {
   return getDb().profile.get(1)
@@ -35,7 +35,7 @@ export async function createProfile(name: string, avatar?: string): Promise<Prof
   await db.transaction('rw', [db.profile, db.timelineEvents, db.settings], async () => {
     await db.profile.put(profile)
     await db.timelineEvents.add({ eventType: 'profile_created', title: `Welcome, ${profile.name}`, note: '', localDate: today, createdAt: now.toISOString() })
-    await db.settings.put({ key: 'health.lastCheckedDate', value: new Date(now.getTime() - 86400000).toISOString().slice(0, 10), updatedAt: now.toISOString() })
+    await db.settings.put({ key: 'health.lastCheckedDate', value: addDaysLocal(today, -1), updatedAt: now.toISOString() })
     await db.settings.put({ key: 'app.firstRunDate', value: today, updatedAt: now.toISOString() })
     await db.settings.put({ key: 'health.max', value: 100, updatedAt: now.toISOString() })
   })

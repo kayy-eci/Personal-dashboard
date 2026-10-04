@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGitHubActivity } from '../../hooks/useGitHubActivity'
 import { usePlayerProfile } from '../../features/player/usePlayerProfile'
-import { clearAllStoredValues, usePersistentState, writeStoredValue } from '../../lib/storage'
+import { clearAllStoredValues, usePersistentState } from '../../lib/storage'
 import { DisplaySettings } from './settings/DisplaySettings'
+import { setSetting, exportData as exportRealData, importData as importRealData } from '../../data'
 
 type SettingsSection = 'profile' | 'display' | 'health' | 'data' | 'integrations' | 'about'
 
@@ -54,37 +55,97 @@ export function SettingsPage() {
   const [showToken, setShowToken] = useState(false)
   const [rules, setRules] = usePersistentState<HealthRules>('settings:health-rules', DEFAULT_RULES)
   const [lastBackup, setLastBackup] = usePersistentState<string | null>('settings:last-backup', null)
+  const [dataError, setDataError] = useState<string | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const [nameDraft, setNameDraft] = useState(profile.name)
+  const [persisted, setPersisted] = useState<boolean | null>(null)
+  const [usageMb, setUsageMb] = useState<number | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        if ('storage' in navigator) {
+          const p = await navigator.storage.persisted()
+          if (!cancelled) setPersisted(p)
+          const est = await navigator.storage.estimate()
+          if (!cancelled && typeof est.usage === 'number') setUsageMb(est.usage / 1e6)
+        }
+        const { getSetting } = await import('../../data')
+        const max = await getSetting<number>('health.max').catch(() => null)
+        const loss = await getSetting<number>('health.lossPerMissedHabit').catch(() => null)
+        const limit = await getSetting<number>('health.recoveryDailyLimit').catch(() => null)
+        if (!cancelled && max !== null) {
+          setRules((current) => ({
+            ...current,
+            maxVitality: max,
+            missedHabitLoss: loss ?? current.missedHabitLoss,
+            recoveryLimit: limit ?? current.recoveryLimit,
+          }))
+        }
+      } catch {
+        // ignore
+      }
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const updateRule = (key: keyof HealthRules, raw: string, min: number, max: number) => {
     setRules((current) => ({ ...current, [key]: clampNumber(Number(raw), min, max) }))
   }
 
-  const exportData = () => {
-    const dump: Record<string, string | null> = {}
+  // Mirror health rules into the Dexie settings store so the daily vitality
+  // check uses the same numbers the page displays.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      void setSetting('health.max', rules.maxVitality).catch(() => undefined)
+      void setSetting('health.lossPerMissedHabit', rules.missedHabitLoss).catch(() => undefined)
+      void setSetting('health.recoveryDailyLimit', rules.recoveryLimit).catch(() => undefined)
+    }, 400)
+    return () => clearTimeout(id)
+  }, [rules])
+
+  const exportData = async () => {
     try {
-      for (let i = 0; i < window.localStorage.length; i++) {
-        const key = window.localStorage.key(i)
-        if (key) dump[key] = window.localStorage.getItem(key)
-      }
+      const json = await exportRealData()
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `lifeos-export-${new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19)}.json`
+      link.click()
+      URL.revokeObjectURL(url)
     } catch {
-      return
+      // surfaced via console; non-blocking
     }
-    const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `lifeos-backup-${new Date().toISOString().slice(0, 10)}.json`
-    link.click()
-    URL.revokeObjectURL(url)
   }
 
-  const backUpNow = () => {
-    exportData()
+  const backUpNow = async () => {
+    await exportData()
     const stamp = new Date().toISOString()
+    try {
+      await setSetting('backup.lastBackupAt', stamp)
+    } catch {
+      // ignore
+    }
     setLastBackup(stamp)
-    writeStoredValue('settings:last-backup', stamp)
+  }
+
+  const importData = async (file: File) => {
+    try {
+      const text = await file.text()
+      const result = await importRealData(text)
+      if (result.ok) {
+        window.location.reload()
+      } else {
+        setDataError(result.error)
+      }
+    } catch {
+      setDataError('Could not read that file.')
+    }
   }
 
   const resetAll = () => {
@@ -93,6 +154,11 @@ export function SettingsPage() {
       return
     }
     clearAllStoredValues()
+    try {
+      indexedDB.deleteDatabase('lifeos')
+    } catch {
+      // ignore
+    }
     window.location.reload()
   }
 
@@ -193,20 +259,40 @@ export function SettingsPage() {
               <div className={`${rowGrid} mt-3`}>
                 <label>Backup actions</label>
                 <div className="flex flex-wrap items-center gap-2 text-text">
-                  <button type="button" className={ghostButton} onClick={exportData}>
+                  <button type="button" className={ghostButton} onClick={() => void exportData()}>
                     Export data
                   </button>
-                  <button type="button" className={primaryButton} onClick={backUpNow}>
+                  <button type="button" className={primaryButton} onClick={() => void backUpNow()}>
                     Back up now
                   </button>
+                  <label className={ghostButton + ' cursor-pointer'}>
+                    Import data
+                    <input
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) void importData(file)
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
+              {dataError && (
+                <p className="mt-2 text-sm" role="alert">
+                  {dataError}
+                </p>
+              )}
               <div className={rowGrid}>
                 <label>Storage</label>
-                <div className="flex items-center gap-2 text-text">
+                <div className="flex flex-wrap items-center gap-2 text-text">
                   <code className="rounded-md border border-border bg-surface-sunken px-2 py-[0.4rem] font-mono text-xs text-text">
-                    Browser localStorage (this device only)
+                    Browser IndexedDB {usageMb !== null ? `· ${usageMb.toFixed(1)} MB used` : ''}
                   </code>
+                  <span className="text-xs text-text-muted">
+                    {persisted === null ? 'Persistence status unknown' : persisted ? 'Storage protected (won’t be auto-cleared)' : 'Storage not protected — back up regularly'}
+                  </span>
                 </div>
               </div>
               <div className={rowGrid}>
