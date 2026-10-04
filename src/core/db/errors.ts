@@ -3,7 +3,7 @@ export type DataErrorCode = 'STORAGE_FULL' | 'STORAGE_UNAVAILABLE' | 'DATABASE_C
 export class DataError extends Error {
   code: DataErrorCode
   constructor(code: DataErrorCode, message: string) {
-    super(message)
+    super(`${code}: ${message}`)
     this.name = 'DataError'
     this.code = code
   }

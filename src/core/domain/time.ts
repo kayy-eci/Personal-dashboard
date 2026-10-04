@@ -35,3 +35,8 @@ export function weekKey(d: Date, weekStart: 'monday' | 'sunday'): string {
   const start = new Date(d.getFullYear(), d.getMonth(), d.getDate() - diff)
   return localDate(start)
 }
+
+/** Start (local date string) of the week containing the given local date string. */
+export function weekStartOf(dateStr: string, weekStart: 'monday' | 'sunday' = 'monday'): string {
+  return weekKey(parseLocalDate(dateStr), weekStart)
+}
