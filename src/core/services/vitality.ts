@@ -36,7 +36,7 @@ export async function runDailyCheck(now: Date = new Date()): Promise<{ daysProce
       if (log) done.add(h.id!)
     }
     const missedQuests = await db.quests
-      .filter((q) => !q.archived && q.deadline === d && q.createdLocalDate <= d && (q.status !== 'completed' || (q.completedLocalDate ?? '') > d))
+      .filter((q) => q.status !== 'archived' && q.deadline === d && q.createdLocalDate <= d && (q.status !== 'completed' || (q.completedLocalDate ?? '') > d))
       .count()
 
     const missedHabits = scheduled.length - done.size

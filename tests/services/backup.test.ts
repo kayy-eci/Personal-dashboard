@@ -44,7 +44,7 @@ describe('backup export/import', () => {
     setDbForTests(db)
     await seedDatabase(db)
     await createProfile('X')
-    let json = await exportData()
+    const json = await exportData()
     const ok = JSON.parse(json)
 
     expect((await validateBackup(JSON.stringify({ ...ok, app: 'Other' }))).ok).toBe(false)
