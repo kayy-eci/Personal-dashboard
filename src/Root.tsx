@@ -4,6 +4,7 @@ import { getDb, seedDatabase } from './core/db/db'
 import { installDailyCheckTriggers } from './core/platform/dailyCheck'
 import { getProfile } from './data'
 import { FirstRun } from './pages/FirstRun/FirstRun'
+import { UpdatePrompt } from './components/UpdatePrompt'
 
 function requestPersistence() {
   try {
@@ -43,5 +44,10 @@ export function Root() {
 
   if (state === 'loading') return null
   if (state === 'setup') return <FirstRun onDone={() => setState('app')} />
-  return <App />
+  return (
+    <>
+      <App />
+      <UpdatePrompt />
+    </>
+  )
 }
