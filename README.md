@@ -5,7 +5,7 @@
 
 A personal web dashboard that turns real-life habits, goals, and tasks into an RPG-style progression system. Your character's stats, XP, level, and health are calculated automatically from what you actually get done.
 
-> **Status:** Dashboard UI prototype. Activity, quest, goal, and attribute values are sample data; dashboard check-ins are temporary previews and are not saved to a ledger.
+> **Status:** Installable PWA with an offline-first persistent data layer (IndexedDB via Dexie). Habits, quests, goals, timeline, analytics and vitality are backed by a real XP ledger and are fully offline-capable. GitHub activity is the only network feature. See `docs/QA.md` for the acceptance checklist, `docs/DATA.md` for data safety, and `docs/DEPLOY.md` to ship.
 
 ## Why
 
@@ -39,7 +39,10 @@ Habits, tasks, and goals usually live in separate tools, and none of them show h
 
 ## Tech Stack
 
-- Frontend: React, TypeScript, and [Vite](https://vite.dev)
+- Frontend: React, TypeScript, Vite
+- Data: IndexedDB via Dexie (offline-first)
+- PWA: vite-plugin-pwa (Workbox), installable, offline-capable
+- Tests: Vitest + fake-indexeddb
 
 ## Getting Started
 
@@ -50,7 +53,11 @@ npm install
 npm run dev
 ```
 
-Run the production build and lint checks with `npm run build` and `npm run lint`.
+Run tests, typecheck, lint and the production build with `npm run test`, `npm run typecheck`, `npm run lint` and `npm run build`.
+
+## Keeping your data safe
+
+LifeOS runs entirely in your browser. For details on persistence, export/import, backup folders and why the app URL must stay the same, see `docs/DATA.md`.
 
 ## License
 
