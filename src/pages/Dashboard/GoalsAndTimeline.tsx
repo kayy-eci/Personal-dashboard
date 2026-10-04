@@ -2,7 +2,8 @@ import { useId, useMemo, useState, type ReactNode } from 'react'
 import { GoalsIcon, TimelineIcon } from '../../components/icons/Icons'
 import { inRange, type DateRange } from '../../lib/dates'
 import { filterAndSort, useSearch, type SortOption } from '../../hooks/useListControls'
-import { initialGoals, type ActivityEntry } from './dashboard-data'
+import { type ActivityEntry } from './dashboard-data'
+import type { GoalView } from '../../data/views'
 
 type ActivityToneFilter = 'all' | 'xp' | 'health'
 
@@ -26,22 +27,23 @@ function goalColor(tone: string) {
 
 interface GoalsPanelProps {
   xpTotals: { today: number; week: number; month: number }
+  goals: GoalView[]
   /** Rendered at the end of the header — the section menu. */
   menu?: ReactNode
 }
 
 /** Long-term trajectories (`next-milestone` in the Dashboard section registry). */
-export function GoalsPanel({ xpTotals, menu }: GoalsPanelProps) {
+export function GoalsPanel({ xpTotals, goals, menu }: GoalsPanelProps) {
   const goalsHeadingId = useId()
   const [goalSort, setGoalSort] = useState<'progress' | 'tone'>('progress')
 
-  const activeGoals = initialGoals.filter((goal) => goal.progress < 100)
+  const activeGoals = goals.filter((goal) => goal.progress < 100)
   const sortedGoals = useMemo(() => {
-    const goals = [...initialGoals]
+    const copy = [...goals]
     return goalSort === 'progress'
-      ? goals.sort((a, b) => b.progress - a.progress)
-      : goals.sort((a, b) => a.tone.localeCompare(b.tone))
-  }, [goalSort])
+      ? copy.sort((a, b) => b.progress - a.progress)
+      : copy.sort((a, b) => a.tone.localeCompare(b.tone))
+  }, [goalSort, goals])
 
   return (
     <section
@@ -202,9 +204,9 @@ export function ActivityPanel({ activity, dateRange, menu }: ActivityPanelProps)
           </h2>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-flex items-center gap-[0.35rem] whitespace-nowrap font-mono text-[0.65rem] font-bold text-success-text">
-            <span className="h-[0.45rem] w-[0.45rem] rounded-full bg-success" /> Demo feed
-          </span>
+            <span className="inline-flex items-center gap-[0.35rem] whitespace-nowrap font-mono text-[0.65rem] font-bold text-success-text">
+              <span className="h-[0.45rem] w-[0.45rem] rounded-full bg-success" /> Live feed
+            </span>
           {menu}
         </div>
       </div>
@@ -282,7 +284,7 @@ export function ActivityPanel({ activity, dateRange, menu }: ActivityPanelProps)
         <p className="mt-3 text-xs text-text-muted">No activity matches the current filters.</p>
       )}
       <p className="mt-3 text-[0.6875rem] leading-[1.5] text-text-faint">
-        Sample activity shown for layout preview; this feed is not a saved ledger.
+        Recorded from your real completions, vitality and level events.
       </p>
     </section>
   )

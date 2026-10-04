@@ -88,6 +88,12 @@ export async function linkToGoal(kind: 'habit' | 'quest', id: number, goalId: nu
   else await db.quests.update(id, { goalId })
 }
 
+export async function uncheckHabitToday(habitId: number, date?: string): Promise<void> {
+  const db = getDb()
+  const d = date ?? localDate(new Date())
+  await db.habitLogs.where('[habitId+logDate]').equals([habitId, d]).delete()
+}
+
 export async function unlinkFromGoal(kind: 'habit' | 'quest', id: number): Promise<void> {
   const db = getDb()
   if (kind === 'habit') await db.habits.update(id, { goalId: undefined })

@@ -59,7 +59,7 @@ function weekDatesHasThisWeek(dates: Set<string>): boolean {
 
 export async function listQuestItems(): Promise<QuestItem[]> {
   const db = getDb()
-  const quests = await db.quests.where('status').notEqual('archived').toArray()
+  const quests = await db.quests.where('status').equals('active').toArray()
   return quests.map((q) => ({
     id: String(q.id),
     category: q.type,
@@ -114,6 +114,23 @@ export async function listGoalViews(): Promise<GoalView[]> {
     })
   }
   return out
+}
+
+export async function getXpTotals(): Promise<{ today: number; week: number; month: number }> {
+  const db = getDb()
+  const today = localDate(new Date())
+  const weekAgo = addDaysLocal(today, -6)
+  const monthAgo = addDaysLocal(today, -29)
+  const rows = await db.xpLedger.where('localDate').between(monthAgo, today, true, true).toArray()
+  let week = 0
+  let month = 0
+  let todaySum = 0
+  for (const r of rows) {
+    month += r.xpAmount
+    if (r.localDate >= weekAgo) week += r.xpAmount
+    if (r.localDate === today) todaySum += r.xpAmount
+  }
+  return { today: todaySum, week, month }
 }
 
 export async function listActivity(limit = 10): Promise<ActivityEntry[]> {

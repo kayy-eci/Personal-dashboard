@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import { HabitsIcon, QuestsIcon, TimelineIcon } from '../../components/icons/Icons'
 import { usePlayerStatus } from '../../features/player/usePlayerStatus'
-import { usePersistentState } from '../../lib/storage'
 import { usePreferences } from '../../preferences/usePreferences'
 import { sectionLabel } from '../../preferences/sections'
 import type { DashboardSectionId } from '../../preferences/schema'
 import { rangeForPreset, type DatePreset } from '../../lib/dates'
+import { checkInHabit, completeQuest, getXpTotals, listActivity, listGoalViews, listHabitItems, listQuestItems, subscribe, uncheckHabitToday } from '../../data'
+import type { ManagedHabitItem } from '../../data/views'
+import type { GoalView } from '../../data/views'
 import { AttributesPanel } from './AttributesPanel/AttributesPanel'
 import { ActivityPanel, GoalsPanel } from './GoalsAndTimeline'
 import { HabitsSection } from './HabitsSection'
@@ -14,17 +16,8 @@ import { PlayerStatusCard } from './PlayerStatusCard/PlayerStatusCard'
 import { QuestSection } from './QuestSection'
 import { SectionMenu } from './SectionMenu'
 import { UpcomingDeadlines } from './UpcomingDeadlines'
-import {
-  initialActivity,
-  initialHabits,
-  initialQuests,
-  initialRecoveryQuest,
-  type ActivityEntry,
-  type HabitItem,
-  type QuestItem,
-} from './dashboard-data'
+import { type ActivityEntry, type HabitItem, type QuestItem } from './dashboard-data'
 
-const MAX_ACTIVITY_ITEMS = 10
 /** How long the hide-section toast offers Undo. */
 const HIDE_UNDO_MS = 6000
 
@@ -35,39 +28,36 @@ const ACTIVITY_DATE_PRESETS: Array<{ id: DatePreset; label: string }> = [
   { id: 'all', label: 'All' },
 ]
 
-function parseRewardValue(reward: string): number | null {
-  const match = /^\s*([+-]?\d+)\s*(XP|HP)/i.exec(reward)
-  return match ? Number.parseInt(match[1], 10) : null
-}
-
-function parseActivityDate(time: string): Date | null {
-  const upper = time.toUpperCase()
-  if (upper.includes('TODAY')) return new Date()
-  if (upper.includes('YESTERDAY')) {
-    const d = new Date()
-    d.setDate(d.getDate() - 1)
-    return d
-  }
-  const parsed = new Date(time)
-  return Number.isNaN(parsed.getTime()) ? null : parsed
-}
-
 export function Dashboard() {
   const status = usePlayerStatus()
   const { preferences, hideSection, restoreSection } = usePreferences()
-  const [doneMap, setDoneMap, resetDoneMap] = usePersistentState<Record<string, boolean>>('habits-done', {})
-  const [completedQuestIds, setCompletedQuestIds, resetCompletedQuestIds] = usePersistentState<string[]>('completed-quest-ids', [])
-  const [recoveryClaimed, setRecoveryClaimed, resetRecoveryClaimed] = usePersistentState('recovery-claimed', false)
-  const [activity, setActivity, resetActivity] = usePersistentState<ActivityEntry[]>('activity-feed', initialActivity)
+  const [habits, setHabits] = useState<ManagedHabitItem[]>([])
+  const [quests, setQuests] = useState<QuestItem[]>([])
+  const [activity, setActivity] = useState<ActivityEntry[]>([])
+  const [goals, setGoals] = useState<GoalView[]>([])
   const [selectedAttribute, setSelectedAttribute] = useState<string | null>(null)
   const [datePreset, setDatePreset] = useState<DatePreset>('all')
+  const [xpTotals, setXpTotals] = useState({ today: 0, week: 0, month: 0 })
   const [toast, setToast] = useState<{ title: string; detail: string; action?: { label: string; onClick: () => void }; duration?: number } | null>(null)
-  const activitySequence = useRef(0)
-  const habits = initialHabits.map((habit) => ({
-    ...habit,
-    done: doneMap[habit.id] ?? habit.initialDone,
-  }))
   const completedHabits = habits.filter((habit) => habit.done).length
+
+  const refresh = useCallback(async () => {
+    const [h, q, a, g, x] = await Promise.all([listHabitItems('today'), listQuestItems(), listActivity(), listGoalViews(), getXpTotals()])
+    setHabits(h)
+    setQuests(q)
+    setActivity(a)
+    setGoals(g)
+    setXpTotals(x)
+  }, [])
+
+  useEffect(() => {
+    const id = setTimeout(() => void refresh(), 0)
+    const unsub = subscribe('data', () => void refresh())
+    return () => {
+      clearTimeout(id)
+      unsub()
+    }
+  }, [refresh])
 
   useEffect(() => {
     if (!toast) return
@@ -75,101 +65,35 @@ export function Dashboard() {
     return () => window.clearTimeout(timeout)
   }, [toast])
 
-  const recordActivity = (entry: Omit<ActivityEntry, 'id' | 'time'>) => {
-    const time = `${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} TODAY`
-    const id = `demo-${activitySequence.current++}`
-    setActivity((current) =>
-      [{ ...entry, id, time }, ...current].slice(0, MAX_ACTIVITY_ITEMS),
-    )
-  }
-
-  const sumXp = (preset: DatePreset) => {
-    const range = rangeForPreset(preset, new Date(), preferences.weekStart)
-    return activity.reduce((total, entry) => {
-      if (!entry.reward.toUpperCase().includes('XP')) return total
-      const value = parseRewardValue(entry.reward)
-      if (value === null || value <= 0) return total
-      const parsed = parseActivityDate(entry.time)
-      if (parsed === null) return preset === 'all' ? total + value : total
-      if (range !== null && (parsed < range.start || parsed > range.end)) return total
-      return total + value
-    }, 0)
-  }
-  const xpTotals = { today: sumXp('today'), week: sumXp('this-week'), month: sumXp('this-month') }
-
-  const handleResetDemo = () => {
-    resetDoneMap()
-    resetCompletedQuestIds()
-    resetRecoveryClaimed()
-    resetActivity()
-    activitySequence.current = 0
-    setSelectedAttribute(null)
-    setDatePreset('all')
-    setToast(null)
-  }
-
   const handleHabitToggle = (habit: HabitItem & { done: boolean }) => {
-    const isCompleting = !habit.done
-    setDoneMap((current) => ({ ...current, [habit.id]: isCompleting }))
-    const undoToggle = () =>
-      setDoneMap((current) => ({ ...current, [habit.id]: !isCompleting }))
-
-    if (!isCompleting) {
-      setToast({
-        title: 'Habit check-in undone',
-        detail: 'Only the temporary demo preview was changed.',
-        action: { label: 'Undo', onClick: undoToggle },
-      })
-      recordActivity({
-        title: `Habit check-in undone: "${habit.name}"`,
-        reward: `-${habit.reward} ${habit.rewardType}`,
-        detail: 'Temporary demo preview only; no saved stats changed.',
-        tone: habit.rewardType === 'HP' ? 'health' : 'xp',
-      })
+    if (!habit.done) {
+      void checkInHabit(Number(habit.id))
+        .then((r) => {
+          setToast({ title: `Checked in: ${habit.name}`, detail: `+${r.xpGained} XP saved to your ledger` })
+          void refresh()
+        })
+        .catch(() => setToast({ title: 'Already checked in', detail: habit.name }))
       return
     }
-    setToast({
-      title: 'Habit checked in',
-      detail: `+${habit.reward} ${habit.rewardType} is a demo preview; stats are not saved.`,
-      action: { label: 'Undo', onClick: undoToggle },
-    })
-    recordActivity({
-      title: `Habit: "${habit.name}" checked`,
-      reward: `+${habit.reward} ${habit.rewardType}`,
-      detail: `${habit.attributes.join(', ')} · ${habit.streak} day streak`,
-      tone: habit.rewardType === 'HP' ? 'health' : 'xp',
-    })
+    void uncheckHabitToday(Number(habit.id)).then(() => refresh())
   }
 
   const handleQuestComplete = (quest: QuestItem) => {
-    if (completedQuestIds.includes(quest.id)) return
-    setCompletedQuestIds((current) => [...current, quest.id])
-    setToast({
-      title: 'Quest completed',
-      detail: `+${quest.reward} XP is a demo preview; stats are not saved.`,
-      action: { label: 'Undo', onClick: () => setCompletedQuestIds((current) => current.filter((id) => id !== quest.id)) },
-    })
-    recordActivity({
-      title: `Quest completed: "${quest.title}"`,
-      reward: `+${quest.reward} XP`,
-      detail: quest.attributeRewards.join(' · ') || 'Quest completion preview',
-      tone: 'xp',
-    })
+    void completeQuest(Number(quest.id))
+      .then((r) => {
+        setToast({ title: `Completed: ${quest.title}`, detail: `+${r.xpGained} XP saved to your ledger` })
+        void refresh()
+      })
+      .catch(() => setToast({ title: 'Could not complete quest', detail: quest.title }))
   }
 
   const handleRecoveryClaim = (quest: QuestItem) => {
-    if (recoveryClaimed) return
-    setRecoveryClaimed(true)
-    setToast({
-      title: 'Recovery logged',
-      detail: `+${quest.reward} HP is a demo preview; stats are not saved.`,
-    })
-    recordActivity({
-      title: `Recovery: "${quest.title}" claimed`,
-      reward: `+${quest.reward} HP`,
-      detail: 'Vitality restoration preview · daily recovery quota used',
-      tone: 'health',
-    })
+    void completeQuest(Number(quest.id))
+      .then((r) => {
+        setToast({ title: `Recovery logged: ${quest.title}`, detail: r.vitalityChange ? `+${r.vitalityChange.delta} HP` : 'Logged' })
+        void refresh()
+      })
+      .catch((err: unknown) => setToast({ title: 'Recovery unavailable', detail: err instanceof Error ? err.message : 'Limit reached' }))
   }
 
   const hideSectionWithUndo = (id: DashboardSectionId) => {
@@ -232,9 +156,9 @@ export function Dashboard() {
       slot: 'main',
       node: (
         <QuestSection
-          quests={initialQuests}
-          completedIds={completedQuestIds}
-          recoveryClaimed={recoveryClaimed}
+          quests={quests}
+          completedIds={[]}
+          recoveryClaimed={false}
           onComplete={handleQuestComplete}
           onClaimRecovery={handleRecoveryClaim}
           selectedAttribute={selectedAttribute}
@@ -248,6 +172,7 @@ export function Dashboard() {
       node: (
         <GoalsPanel
           xpTotals={xpTotals}
+          goals={goals}
           menu={<SectionMenu sectionId="next-milestone" onHide={hideSectionWithUndo} />}
         />
       ),
@@ -257,7 +182,7 @@ export function Dashboard() {
       slot: 'side',
       node: (
         <UpcomingDeadlines
-          quests={initialQuests}
+          quests={quests}
           menu={<SectionMenu sectionId="deadlines" onHide={hideSectionWithUndo} />}
         />
       ),
@@ -313,17 +238,13 @@ export function Dashboard() {
         <button
           type="button"
           className="inline-flex min-h-[var(--control-h)] items-center gap-2 rounded-md border border-info-border bg-info-soft px-[var(--pad-x)] py-[var(--pad-y)] text-xs font-bold uppercase tracking-[0.035em] text-info-text transition-colors hover:bg-info-soft hover:text-info-text disabled:cursor-default disabled:border-success-border disabled:bg-success-soft disabled:text-success-text [&_svg]:h-4 [&_svg]:w-4"
-          onClick={() => handleRecoveryClaim(initialRecoveryQuest)}
-          disabled={recoveryClaimed}
+          onClick={() => {
+            const recovery = quests.find((q) => q.category === 'recovery')
+            if (recovery) handleRecoveryClaim(recovery)
+          }}
+          disabled={!quests.some((q) => q.category === 'recovery')}
         >
-          <TimelineIcon /> {recoveryClaimed ? 'Recovery logged' : 'Log recovery (+HP)'}
-        </button>
-        <button
-          type="button"
-          className="inline-flex min-h-[var(--control-h)] items-center gap-2 rounded-md border border-border-strong bg-surface px-[var(--pad-x)] py-[var(--pad-y)] text-xs font-bold uppercase tracking-[0.035em] text-text-muted transition-colors hover:bg-surface-sunken hover:text-text"
-          onClick={handleResetDemo}
-        >
-          Reset demo
+          <TimelineIcon /> Log recovery (+HP)
         </button>
       </nav>
       {inSlot('after-actions').map((section) => (
