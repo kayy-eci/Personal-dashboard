@@ -1,14 +1,13 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
-  initialQuests,
   type QuestItem,
 } from '../Dashboard/dashboard-data'
 import { GitHubActivityGrid } from '../../components/github-activity-grid'
 import { useGitHubActivity } from '../../hooks/useGitHubActivity'
 import { getActivityCopy } from './github-activity-copy'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
-import { usePersistentState } from '../../lib/storage'
 import { applySort, matchesQuery, type SortOption } from '../../hooks/useListControls'
+import { completeQuest, createQuest, listQuestItems, subscribe } from '../../data'
 
 type QuestFilter = 'all' | QuestItem['category']
 
@@ -18,13 +17,6 @@ const questSortOptions: SortOption<QuestItem>[] = [
   { id: 'difficulty-desc', label: 'Difficulty (desc)', compare: (a, b) => (b.difficulty ?? 0) - (a.difficulty ?? 0) },
   { id: 'title', label: 'Title (A–Z)', compare: (a, b) => a.title.localeCompare(b.title) },
 ]
-
-function todayKey() {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${now.getFullYear()}-${month}-${day}`
-}
 
 const categoryLabels: Record<QuestItem['category'], string> = {
   main: 'Main',
@@ -41,8 +33,20 @@ export function QuestManagementPage() {
     source: activitySource,
     hasToken,
   } = useGitHubActivity()
-  const [completed, setCompleted] = usePersistentState<string[]>('quests-page:completed', [])
-  const [customQuests, setCustomQuests] = usePersistentState<QuestItem[]>('quests-page:custom', [])
+  const [completed, setCompleted] = useState<string[]>([])
+  const [recoveryClaims, setRecoveryClaims] = useState<string[]>([])
+  const [quests, setQuests] = useState<QuestItem[]>([])
+  const refreshQuests = useCallback(async () => {
+    setQuests(await listQuestItems())
+  }, [])
+  useEffect(() => {
+    const id = setTimeout(() => void refreshQuests(), 0)
+    const unsub = subscribe('data', () => void refreshQuests())
+    return () => {
+      clearTimeout(id)
+      unsub()
+    }
+  }, [refreshQuests])
   const [filter, setFilter] = useState<QuestFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('reward-desc')
@@ -57,9 +61,7 @@ export function QuestManagementPage() {
   const [effort, setEffort] = useState(1)
   const [impact, setImpact] = useState(1)
   const [attributeRewardsText, setAttributeRewardsText] = useState('INT +50')
-  const [recoveryClaims, setRecoveryClaims] = usePersistentState<string[]>(`quests-page:recovery:${todayKey()}`, [])
 
-  const quests = useMemo(() => [...customQuests, ...initialQuests], [customQuests])
   const activeQuests = quests.filter((quest) => !completed.includes(quest.id))
   const attributePrefixes = useMemo(() => {
     const prefixes = new Set<string>()
@@ -100,27 +102,20 @@ export function QuestManagementPage() {
     const trimmedTitle = title.trim()
     const trimmedDescription = description.trim()
     if (!trimmedTitle || !trimmedDescription) return
-    const reward = Math.round(baseReward * difficulty * effort * impact)
-    const parsedAttributeRewards = attributeRewardsText
-      .split(',')
-      .map((part) => part.trim())
-      .filter((part) => part.length > 0)
-    setCustomQuests((current) => [
-      {
-        id: `quest-${Date.now()}`,
-        category,
-        title: trimmedTitle,
-        description: trimmedDescription,
-        baseReward,
-        difficulty,
-        effort,
-        impact,
-        reward,
-        rewardType: 'XP',
-        attributeRewards: parsedAttributeRewards.length > 0 ? parsedAttributeRewards : ['INT +0'],
-      },
-      ...current,
-    ])
+    void createQuest({
+      title: trimmedTitle,
+      description: trimmedDescription,
+      type: category,
+      category: 'general',
+      difficulty: Math.max(1, Math.min(5, Math.round(difficulty))),
+      effort: Math.max(1, Math.min(5, Math.round(effort))),
+      impact: Math.max(1, Math.min(5, Math.round(impact))),
+      baseXp: baseReward,
+      attributes: attributeRewardsText
+        .split(',')
+        .map((part) => part.trim().split('+')[0]?.trim())
+        .filter((part): part is NonNullable<typeof part> => typeof part === 'string' && part.length > 0) as never[],
+    }).then(() => refreshQuests())
     setTitle('')
     setDescription('')
     setCategory('side')
@@ -135,12 +130,20 @@ export function QuestManagementPage() {
 
   const finishQuest = (quest: QuestItem) => {
     if (quest.category === 'recovery') {
-      setRecoveryClaims((current) =>
-        current.length >= 2 || current.includes(quest.id) ? current : [...current, quest.id],
-      )
+      if (!recoveryClaims.includes(quest.id)) {
+        void completeQuest(Number(quest.id))
+          .then(() => {
+            setRecoveryClaims((current) => (current.length >= 2 ? current : [...current, quest.id]))
+            void refreshQuests()
+          })
+          .catch(() => setRecoveryClaims((current) => current))
+      }
       return
     }
-    setCompleted((current) => (current.includes(quest.id) ? current : [...current, quest.id]))
+    void completeQuest(Number(quest.id)).then(() => {
+      setCompleted((current) => (current.includes(quest.id) ? current : [...current, quest.id]))
+      void refreshQuests()
+    })
   }
 
   return (
@@ -152,13 +155,13 @@ export function QuestManagementPage() {
         description={getActivityCopy(username, activityStatus, activitySource, hasToken).description}
       />
       <DemoNotice>
-        Quest completion is a preview only. XP calculations and attribute updates are not written to a ledger.
+        Quest completion writes XP to the ledger and updates your character stats, saved in this browser.
       </DemoNotice>
       <SummaryGrid
         items={[
           { label: 'Active objectives', value: String(activeQuests.filter((quest) => quest.category !== 'recovery').length), note: 'Main, side and challenge quests', tone: 'gold' },
           { label: 'Potential rewards', value: `${activeQuests.reduce((sum, quest) => sum + quest.reward, 0)} XP`, note: 'Before consistency adjustment', tone: 'sky' },
-          { label: 'Completed today', value: String(completed.length), note: 'Temporary session state', tone: 'emerald' },
+          { label: 'Completed today', value: String(completed.length), note: 'Finished quests', tone: 'emerald' },
           { label: 'Recovery quests', value: String(quests.filter((quest) => quest.category === 'recovery').length), note: 'Daily claim limit applies', tone: 'ember' },
         ]}
       />
@@ -353,7 +356,8 @@ export function QuestManagementPage() {
                   </div>
                   {isRecovery ? (
                     <p className="mt-3 flex flex-wrap justify-between gap-2 border-t border-border pt-3 text-xs font-semibold text-[var(--attr-focus)] [&>span]:font-normal [&>span]:text-text-faint">
-                      Restores vitality <span>{recoveryClaims.length} of 2 used · Demo preview only</span>
+                      Restores vitality 
+<span>{recoveryClaims.length} of 2 used · saved to your health log</span>
                     </p>
                   ) : (
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">

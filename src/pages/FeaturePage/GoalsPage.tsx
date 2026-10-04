@@ -1,43 +1,23 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { EventManager, type Event } from '../../components/event-manager'
-import { initialGoals } from '../Dashboard/dashboard-data'
 import { DemoNotice, FeaturePanel, ProgressTrack, SummaryGrid } from './FeaturePage.shared'
-import { usePersistentState } from '../../lib/storage'
 import { applySort, type SortOption } from '../../hooks/useListControls'
+import {
+  addMilestone,
+  completeMilestoneAction,
+  createGoal,
+  deleteMilestone,
+  listGoalViews,
+  subscribe,
+  updateGoal,
+} from '../../data'
 
 interface Goal {
   id: string
   title: string
   targetDate: string
   tone: 'gold' | 'rose' | 'sky'
-  milestones: Array<{ title: string; done: boolean; dueDate: string }>
-}
-
-function dateKey(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function addDays(date: Date, days: number) {
-  const result = new Date(date)
-  result.setDate(result.getDate() + days)
-  return dateKey(result)
-}
-
-function parseTargetDate(target: string) {
-  const match = target.match(/([A-Za-z]{3,})\s+(\d{1,2})/)
-  if (!match) return ''
-
-  const today = new Date()
-  const year = today.getFullYear()
-  let date = new Date(`${match[1]} ${match[2]}, ${year} 12:00:00`)
-  if (Number.isNaN(date.getTime())) return ''
-  if (date < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-    date = new Date(`${match[1]} ${match[2]}, ${year + 1} 12:00:00`)
-  }
-  return dateKey(date)
+  milestones: Array<{ id: string; title: string; done: boolean; dueDate: string }>
 }
 
 function formatTargetDate(value: string) {
@@ -48,34 +28,6 @@ function formatTargetDate(value: string) {
     year: 'numeric',
   })
 }
-
-const startingGoals: Goal[] = initialGoals.map((goal, index) => {
-  const targetDate = parseTargetDate(goal.target)
-  const milestoneTitles = [
-    'Define the next concrete step',
-    'Complete a focused work session',
-    'Review progress and adjust',
-    'Share or document the result',
-    'Plan the next milestone',
-  ].slice(0, index === 1 ? 4 : 5)
-
-  return {
-    id: `goal-${index}`,
-    title: goal.title,
-    targetDate,
-    tone: goal.tone,
-    milestones: milestoneTitles.map((title, milestoneIndex) => ({
-      title,
-      done: milestoneIndex < (index === 0 ? 3 : 2),
-      dueDate: targetDate
-        ? addDays(
-            new Date(`${targetDate}T12:00:00`),
-            milestoneIndex - milestoneTitles.length,
-          )
-        : '',
-    })),
-  }
-})
 
 function goalProgress(goal: Goal) {
   if (goal.milestones.length === 0) return 0
@@ -103,7 +55,27 @@ const goalSortOptions: SortOption<Goal>[] = [
 ]
 
 export function GoalsPage() {
-  const [goals, setGoals] = usePersistentState('goals-page:goals', startingGoals)
+  const [goals, setGoals] = useState<Goal[]>([])
+  const refreshGoals = useCallback(async () => {
+    const views = await listGoalViews()
+    setGoals(
+      views.map((g) => ({
+        id: g.id,
+        title: g.title,
+        targetDate: g.deadline ?? '',
+        tone: g.tone === 'rose' ? 'rose' : g.tone === 'sky' ? 'sky' : 'gold',
+        milestones: g.milestones.map((m) => ({ id: m.id, title: m.title, done: m.done, dueDate: '' })),
+      })),
+    )
+  }, [])
+  useEffect(() => {
+    const id = setTimeout(() => void refreshGoals(), 0)
+    const unsub = subscribe('data', () => void refreshGoals())
+    return () => {
+      clearTimeout(id)
+      unsub()
+    }
+  }, [refreshGoals])
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
   const [targetDate, setTargetDate] = useState('')
@@ -170,19 +142,7 @@ export function GoalsPage() {
     event.preventDefault()
     const trimmedTitle = title.trim()
     if (!trimmedTitle) return
-    setGoals((current) => [
-      {
-        id: `goal-${Date.now()}`,
-        title: trimmedTitle,
-        targetDate,
-        tone: 'gold',
-        milestones: [
-          { title: 'Define the next concrete step', done: false, dueDate: '' },
-          { title: 'Review progress and adjust', done: false, dueDate: '' },
-        ],
-      },
-      ...current,
-    ])
+    void createGoal({ title: trimmedTitle, category: 'general', deadline: targetDate || undefined }).then(() => refreshGoals())
     setTitle('')
     setTargetDate('')
     setShowForm(false)
@@ -191,13 +151,13 @@ export function GoalsPage() {
   return (
     <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-3 p-3 pb-5 min-[769px]:p-4 min-[769px]:pb-6">
       <DemoNotice>
-        Goal progress here is illustrative. Toggling milestones changes only this temporary view.
+        Goals and milestones are stored in this browser; completing milestones awards XP and advances the goal.
       </DemoNotice>
       <SummaryGrid
         items={[
           { label: 'Active goals', value: String(goals.length - completedGoals), note: 'Across personal projects', tone: 'gold' },
           { label: 'Average progress', value: `${averageProgress}%`, note: 'Based on milestones', tone: 'sky' },
-          { label: 'Milestones complete', value: `${goals.reduce((sum, goal) => sum + goal.milestones.filter((item) => item.done).length, 0)}/${goals.reduce((sum, goal) => sum + goal.milestones.length, 0)}`, note: 'Sample goal data', tone: 'emerald' },
+          { label: 'Milestones complete', value: `${goals.reduce((sum, goal) => sum + goal.milestones.filter((item) => item.done).length, 0)}/${goals.reduce((sum, goal) => sum + goal.milestones.length, 0)}`, note: 'Across tracked milestones', tone: 'emerald' },
           { label: 'Goals completed', value: String(completedGoals), note: 'All milestones complete', tone: 'ember' },
         ]}
       />
@@ -233,7 +193,7 @@ export function GoalsPage() {
               />
             </label>
             <div className="col-span-full flex flex-wrap gap-2">
-              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover" type="submit">Add sample goal</button>
+              <button className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 border-brand bg-brand text-brand-contrast hover:border-brand-hover hover:bg-brand-hover" type="submit">Add goal</button>
             </div>
           </form>
         )}
@@ -336,13 +296,7 @@ export function GoalsPage() {
                             aria-label={`Goal deadline for ${goal.title}`}
                             value={goal.targetDate}
                             onChange={(event) =>
-                              setGoals((current) =>
-                                current.map((item) =>
-                                  item.id === goal.id
-                                    ? { ...item, targetDate: event.target.value }
-                                    : item,
-                                ),
-                              )
+                              void updateGoal(Number(goal.id), { deadline: event.target.value || undefined }).then(() => refreshGoals())
                             }
                           />
                         </label>
@@ -355,61 +309,22 @@ export function GoalsPage() {
                                 type="checkbox"
                                 checked={milestone.done}
                                 onChange={() =>
-                                  setGoals((current) =>
-                                    current.map((item) =>
-                                      item.id === goal.id
-                                        ? {
-                                            ...item,
-                                            milestones: item.milestones.map((step, stepIndex) =>
-                                              stepIndex === index
-                                                ? { ...step, done: !step.done }
-                                                : step,
-                                            ),
-                                          }
-                                        : item,
-                                    ),
-                                  )
+                                  void (milestone.done ? Promise.resolve() : completeMilestoneAction(Number(milestone.id))).then(() => refreshGoals())
                                 }
                               />
                               <span className={milestone.done ? 'text-text-muted line-through' : ''}>
                                 {milestone.title}
                               </span>
                             </label>
-                            <input
-                              className="w-[9.5rem] min-w-0 rounded border border-border bg-surface-overlay p-[0.35rem] text-xs text-text-muted max-[480px]:w-[8.5rem]"
-                              type="date"
-                              aria-label={`Due date for ${milestone.title} in ${goal.title}`}
-                              value={milestone.dueDate}
-                              onChange={(event) =>
-                                setGoals((current) =>
-                                  current.map((item) =>
-                                    item.id === goal.id
-                                      ? {
-                                          ...item,
-                                          milestones: item.milestones.map((step, stepIndex) =>
-                                            stepIndex === index
-                                              ? { ...step, dueDate: event.target.value }
-                                              : step,
-                                          ),
-                                        }
-                                      : item,
-                                  ),
-                                )
-                              }
-                            />
                             <button
                               type="button"
                               className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border text-text-muted transition-colors hover:border-[var(--danger-border)] hover:text-[var(--danger)]"
                               aria-label={`Delete milestone ${milestone.title} from ${goal.title}`}
-                              onClick={() =>
-                                setGoals((current) =>
-                                  current.map((item) =>
-                                    item.id === goal.id
-                                      ? { ...item, milestones: item.milestones.filter((_, stepIndex) => stepIndex !== index) }
-                                      : item,
-                                  ),
-                                )
-                              }
+                               onClick={() =>
+                                 void deleteMilestone(Number(milestone.id))
+                                   .then(() => refreshGoals())
+                                   .catch(() => undefined)
+                               }
                             >
                               <span aria-hidden="true">×</span>
                             </button>
@@ -422,14 +337,8 @@ export function GoalsPage() {
                           event.preventDefault()
                           const trimmed = (newMilestoneText[goal.id] ?? '').trim()
                           if (!trimmed) return
-                          setGoals((current) =>
-                            current.map((item) =>
-                              item.id === goal.id
-                                ? { ...item, milestones: [...item.milestones, { title: trimmed, done: false, dueDate: '' }] }
-                                : item,
-                            ),
-                          )
-                          setNewMilestoneText((current) => ({ ...current, [goal.id]: '' }))
+                           void addMilestone(Number(goal.id), trimmed).then(() => refreshGoals())
+                           setNewMilestoneText((current) => ({ ...current, [goal.id]: '' }))
                         }}
                       >
                         <input

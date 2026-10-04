@@ -1,11 +1,19 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { GitHubActivityGrid } from '../../components/github-activity-grid'
 import { useGitHubActivity } from '../../hooks/useGitHubActivity'
 import { getActivityCopy } from './github-activity-copy'
 import type { HabitItem } from '../Dashboard/dashboard-data'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
-import { usePersistentState } from '../../lib/storage'
 import { applySort, type SortOption } from '../../hooks/useListControls'
+import {
+  archiveHabit,
+  checkInHabit,
+  createHabit,
+  listHabitItems,
+  subscribe,
+  unarchiveHabit,
+  uncheckHabitToday,
+} from '../../data'
 
 type ManagedHabit = HabitItem & {
   done: boolean
@@ -22,66 +30,6 @@ const habitSortOptions: SortOption<ManagedHabit>[] = [
   { id: 'name', label: 'Name (A–Z)', compare: (a, b) => a.name.localeCompare(b.name) },
 ]
 
-const startingHabits: ManagedHabit[] = [
-  {
-    id: 'deep-work',
-    name: 'Morning Deep Work (90m)',
-    attributes: ['FOCUS', 'INT'],
-    difficulty: 'Hard',
-    streak: 14,
-    consistency: 92,
-    reward: 45,
-    rewardType: 'XP',
-    initialDone: true,
-    done: true,
-    archived: false,
-    frequency: 'Daily',
-  },
-  {
-    id: 'strength',
-    name: 'Compound Strength Workout',
-    attributes: ['STR', 'DISC'],
-    difficulty: 'Med',
-    streak: 4,
-    consistency: 85,
-    reward: 60,
-    rewardType: 'XP',
-    initialDone: false,
-    done: false,
-    archived: false,
-    frequency: 'Weekly',
-  },
-  {
-    id: 'reading',
-    name: 'Read 20 pages Technical Book',
-    attributes: ['INT', 'FOCUS'],
-    difficulty: 'Easy',
-    streak: 8,
-    consistency: 90,
-    reward: 30,
-    rewardType: 'XP',
-    initialDone: false,
-    done: false,
-    archived: false,
-    frequency: 'Daily',
-  },
-  {
-    id: 'meditation',
-    name: 'Mindful Meditation & Mobility',
-    attributes: ['Health Recovery'],
-    difficulty: 'Easy',
-    streak: 12,
-    consistency: null,
-    reward: 15,
-    rewardType: 'HP',
-    recovery: true,
-    initialDone: false,
-    done: false,
-    archived: false,
-    frequency: 'Daily',
-  },
-]
-
 export function HabitsPage() {
   const {
     username,
@@ -90,7 +38,19 @@ export function HabitsPage() {
     source: activitySource,
     hasToken,
   } = useGitHubActivity()
-  const [habits, setHabits] = usePersistentState('habits-page:habits', startingHabits)
+  const [habits, setHabits] = useState<ManagedHabit[]>([])
+  const refreshHabits = useCallback(async () => {
+    const [active, archived] = await Promise.all([listHabitItems('all'), listHabitItems('archived')])
+    setHabits([...active, ...archived].map((h) => ({ ...h, initialDone: h.done })))
+  }, [])
+  useEffect(() => {
+    const id = setTimeout(() => void refreshHabits(), 0)
+    const unsub = subscribe('data', () => void refreshHabits())
+    return () => {
+      clearTimeout(id)
+      unsub()
+    }
+  }, [refreshHabits])
   const [filter, setFilter] = useState<HabitFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('streak')
@@ -137,23 +97,14 @@ export function HabitsPage() {
     event.preventDefault()
     const trimmedName = name.trim()
     if (!trimmedName) return
-    setHabits((current) => [
-      {
-        id: `habit-${Date.now()}`,
-        name: trimmedName,
-        attributes: ['FOCUS'],
-        difficulty,
-        streak: 0,
-        consistency: null,
-        reward,
-        rewardType: 'XP',
-        initialDone: false,
-        done: false,
-        archived: false,
-        frequency,
-      },
-      ...current,
-    ])
+    void createHabit({
+      name: trimmedName,
+      frequency: frequency === 'Daily' ? 'daily' : 'weekly',
+      category: 'general',
+      difficulty: difficulty === 'Easy' ? 2 : difficulty === 'Med' ? 3 : 5,
+      impact: 3,
+      attributes: ['FOCUS'],
+    }).then(() => refreshHabits())
     setName('')
     setFrequency('Daily')
     setDifficulty('Easy')
@@ -180,12 +131,12 @@ export function HabitsPage() {
         description={activityCopy.description}
       />
       <DemoNotice>
-        Sample routines only. Check-ins and edits stay in this browser session and do not update saved player stats.
+        Check-ins, edits and archives are stored in this browser and saved to your character stats.
       </DemoNotice>
       <SummaryGrid
         items={[
           { label: 'Active routines', value: String(activeHabits.length), note: `${todayHabits.length} scheduled today`, tone: 'gold' },
-          { label: 'Daily completion', value: `${completedToday}/${todayHabits.length}`, note: 'Temporary check-ins', tone: 'emerald' },
+           { label: 'Daily completion', value: `${completedToday}/${todayHabits.length}`, note: 'Checked in today', tone: 'emerald' },
           { label: 'Average consistency', value: `${averageConsistency}%`, note: 'Across tracked routines', tone: 'sky' },
           { label: 'Longest streak', value: longestStreakHabit ? `${longestStreakHabit.streak} days` : '0 days', note: longestStreakHabit ? longestStreakHabit.name : 'No active habits', tone: 'ember' },
         ]}
@@ -312,13 +263,10 @@ export function HabitsPage() {
                       className="inline-flex h-5 w-5 items-center justify-center rounded-[5px] border border-[var(--border-strong)] bg-surface-overlay text-[0.8rem] font-bold leading-none text-transparent transition-colors hover:border-[var(--danger-border)] hover:text-[var(--danger)] aria-pressed:border-[var(--success-border)] aria-pressed:bg-[var(--success)] aria-pressed:text-white"
                       aria-pressed={habit.done}
                       aria-label={`${habit.done ? 'Undo' : 'Check in'} ${habit.name}`}
-                      onClick={() =>
-                        setHabits((current) =>
-                          current.map((item) =>
-                            item.id === habit.id ? { ...item, done: !item.done } : item,
-                          ),
-                        )
-                      }
+                       onClick={() => {
+                         const id = Number(habit.id)
+                         void (habit.done ? uncheckHabitToday(id) : checkInHabit(id)).then(() => refreshHabits())
+                       }}
                     >
                       {habit.done ? '✓' : ''}
                     </button>
@@ -341,13 +289,10 @@ export function HabitsPage() {
                   <button
                     type="button"
                     className="inline-flex min-h-[2.4rem] items-center justify-center gap-2 rounded-md border border-border-strong bg-surface-overlay px-3 py-2 text-xs font-bold text-text-muted transition-colors hover:bg-surface-sunken hover:text-text disabled:cursor-default disabled:opacity-60 min-h-8 px-2 py-[0.35rem] font-semibold"
-                    onClick={() =>
-                      setHabits((current) =>
-                        current.map((item) =>
-                          item.id === habit.id ? { ...item, archived: !item.archived } : item,
-                        ),
-                      )
-                    }
+                    onClick={() => {
+                      const id = Number(habit.id)
+                      void (habit.archived ? unarchiveHabit(id) : archiveHabit(id)).then(() => refreshHabits())
+                    }}
                   >
                     {habit.archived ? 'Restore' : 'Archive'}
                   </button>
