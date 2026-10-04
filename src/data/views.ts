@@ -116,6 +116,60 @@ export async function listGoalViews(): Promise<GoalView[]> {
   return out
 }
 
+export async function getAnalytics(rangeDays: 7 | 30 | 90): Promise<{
+  labels: string[]
+  activity: number[]
+  completion: number[]
+  xpTotal: number
+  habits: { name: string; consistency: number | null }[]
+  daysOfData: number
+}> {
+  const db = getDb()
+  const today = localDate(new Date())
+  const from = addDaysLocal(today, -(rangeDays - 1))
+  const ledgerRows = await db.xpLedger.where('localDate').between(from, today, true, true).toArray()
+  const habits = await db.habits.filter((h) => !h.archived).toArray()
+  const habitLogs = await db.habitLogs.toArray()
+
+  const labels: string[] = []
+  const activity: number[] = []
+  const completion: number[] = []
+  const perDayXp = new Map<string, number>()
+  for (const r of ledgerRows) perDayXp.set(r.localDate, (perDayXp.get(r.localDate) ?? 0) + r.xpAmount)
+  const uniqueDays = new Set(ledgerRows.map((r) => r.localDate))
+
+  for (let i = rangeDays - 1; i >= 0; i--) {
+    const d = addDaysLocal(today, -i)
+    labels.push(d.slice(5))
+    const xp = perDayXp.get(d) ?? 0
+    const scheduled = habits.filter((h) => h.frequency === 'daily' && h.createdLocalDate <= d)
+    const done = new Set(habitLogs.filter((l) => l.logDate === d).map((l) => l.habitId))
+    const rate = scheduled.length === 0 ? 0 : Math.round((scheduled.filter((h) => done.has(h.id!)).length / scheduled.length) * 100)
+    activity.push(Math.min(100, xp))
+    completion.push(rate)
+  }
+
+  const habitItems: { name: string; consistency: number | null }[] = []
+  for (const h of habits) {
+    const logs = habitLogs.filter((l) => l.habitId === h.id && l.logDate >= from && l.logDate <= today)
+    if (h.frequency === 'daily') {
+      const days = Math.max(1, rangeDays)
+      habitItems.push({ name: h.name, consistency: Math.round((logs.length / days) * 100) })
+    } else {
+      habitItems.push({ name: h.name, consistency: logs.length > 0 ? 100 : 0 })
+    }
+  }
+
+  return {
+    labels,
+    activity,
+    completion,
+    xpTotal: ledgerRows.reduce((s, r) => s + r.xpAmount, 0),
+    habits: habitItems,
+    daysOfData: uniqueDays.size,
+  }
+}
+
 export async function getXpTotals(): Promise<{ today: number; week: number; month: number }> {
   const db = getDb()
   const today = localDate(new Date())
@@ -138,7 +192,7 @@ export async function listActivity(limit = 10): Promise<ActivityEntry[]> {
   const events = await db.timelineEvents.orderBy('id').reverse().limit(limit).toArray()
   return events.map((e) => ({
     id: String(e.id),
-    time: `${e.createdAt.slice(11, 16)} ${e.localDate === localDate(new Date()) ? 'TODAY' : e.localDate}`,
+    time: e.localDate === localDate(new Date()) ? `${e.createdAt.slice(11, 16)} TODAY` : e.createdAt,
     title: e.title,
     reward: e.xpDelta ? `+${e.xpDelta} XP` : e.healthDelta ? `${e.healthDelta > 0 ? '+' : ''}${e.healthDelta} HP` : '',
     detail: e.note || e.eventType,

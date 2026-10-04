@@ -30,14 +30,14 @@ export function AttributesPage() {
   return (
     <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-3 p-3 pb-5 min-[769px]:p-4 min-[769px]:pb-6">
       <DemoNotice>
-        Attribute totals are illustrative. The real system will derive growth from verified habit and quest completions.
+        Attribute totals are computed from your saved completions and XP ledger.
       </DemoNotice>
       <SummaryGrid
         items={[
           { label: 'Attributes', value: String(status.attributes.length), note: 'System-determined', tone: 'gold' },
           { label: 'Combined attribute XP', value: totalAttributeXp.toLocaleString(), note: 'Across all six attributes', tone: 'sky' },
           { label: 'Highest level', value: `Lv ${highestAttribute.level}`, note: highestAttribute.label, tone: 'ember' },
-          { label: 'Tracking window', value: period.toUpperCase(), note: 'Sample growth history', tone: 'emerald' },
+          { label: 'Tracking window', value: period.toUpperCase(), note: 'Tracking window', tone: 'emerald' },
         ]}
       />
 
@@ -47,7 +47,7 @@ export function AttributesPage() {
 
       <FeaturePanel
         title="Growth history"
-        description="Relative sample attribute activity during the selected period."
+        description="Relative attribute activity during the selected period."
         action={
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex flex-wrap gap-1 rounded-md border border-border bg-surface-sunken p-[0.2rem] [&>button]:rounded [&>button]:border [&>button]:border-transparent [&>button]:bg-transparent [&>button]:px-[0.55rem] [&>button]:py-[0.35rem] [&>button]:text-xs [&>button]:font-semibold [&>button]:text-text-muted hover:[&>button]:text-text [&>button[aria-pressed=true]]:border-border [&>button[aria-pressed=true]]:bg-surface-overlay [&>button[aria-pressed=true]]:text-text [&>button[aria-pressed=true]]:shadow-xs" role="group" aria-label="Growth history period">
@@ -86,7 +86,7 @@ export function AttributesPage() {
               <div
                 className="h-[0.45rem] overflow-hidden rounded-pill bg-[var(--attr-soft)]"
                 role="img"
-                aria-label={`${attribute.label} sample growth: ${growth} percent`}
+                aria-label={`${attribute.label} growth: ${growth} percent`}
               >
                 <span className="block h-full rounded-[inherit] bg-brand" style={{ width: `${growth}%` }} />
               </div>

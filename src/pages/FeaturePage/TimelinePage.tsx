@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
-import { initialActivity } from '../Dashboard/dashboard-data'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DemoNotice, FeaturePanel, SummaryGrid } from './FeaturePage.shared'
 import { usePersistentState } from '../../lib/storage'
 import { rangeForPreset, inRange } from '../../lib/dates'
 import { usePreferences } from '../../preferences/usePreferences'
+import { listActivity, subscribe } from '../../data'
+import type { ActivityEntry } from '../Dashboard/dashboard-data'
 
 type EventFilter = 'all' | 'xp' | 'health'
 type DatePresetId = 'all' | 'today' | 'week' | 'month'
@@ -55,9 +56,21 @@ export function TimelinePage() {
   })
   const { filter, search, sort, preset } = prefs
   const { preferences } = usePreferences()
+  const [allEntries, setAllEntries] = useState<ActivityEntry[]>([])
+  const refresh = useCallback(async () => {
+    setAllEntries(await listActivity(100))
+  }, [])
+  useEffect(() => {
+    const id = setTimeout(() => void refresh(), 0)
+    const unsub = subscribe('data', () => void refresh())
+    return () => {
+      clearTimeout(id)
+      unsub()
+    }
+  }, [refresh])
   const entries = useMemo(() => {
     const range = rangeForPreset(datePresetMap[preset] ?? 'all', new Date(), preferences.weekStart)
-    const filtered = initialActivity.filter((entry) => {
+    const filtered = allEntries.filter((entry) => {
       const matchesType = filter === 'all' || entry.tone === filter
       const matchesSearch =
         `${entry.title} ${entry.detail} ${entry.reward}`.toLowerCase().includes(search.toLowerCase())
@@ -71,21 +84,21 @@ export function TimelinePage() {
       const timeB = parseActivityTime(b.time)?.getTime() ?? 0
       return sort === 'newest' ? timeB - timeA : timeA - timeB
     })
-  }, [filter, preset, preferences.weekStart, search, sort])
-  const xpEntries = initialActivity.filter((entry) => entry.tone === 'xp').length
-  const healthEntries = initialActivity.filter((entry) => entry.tone === 'health').length
+  }, [allEntries, filter, preset, preferences.weekStart, search, sort])
+  const xpEntries = allEntries.filter((entry) => entry.tone === 'xp').length
+  const healthEntries = allEntries.filter((entry) => entry.tone === 'health').length
 
   return (
     <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-3 p-3 pb-5 min-[769px]:p-4 min-[769px]:pb-6">
       <DemoNotice>
-        This sample feed is not a saved ledger. Only verified backend events can become permanent history.
+        Every event here was written by a real completion, level-up, vitality change or achievement.
       </DemoNotice>
       <SummaryGrid
         items={[
           { label: 'Visible events', value: String(entries.length), note: 'Matching current filters', tone: 'gold' },
           { label: 'XP events', value: String(xpEntries), note: 'Completions and rewards', tone: 'sky' },
           { label: 'Vitality events', value: String(healthEntries), note: 'Health changes', tone: 'rose' },
-          { label: 'Time range', value: 'Recent', note: 'Sample entries only', tone: 'ember' },
+          { label: 'Time range', value: 'Recent', note: 'Most recent history', tone: 'ember' },
         ]}
       />
 

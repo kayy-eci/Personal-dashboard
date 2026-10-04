@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePlayerStatus } from '../../features/player/usePlayerStatus'
-import {
-  initialActivity,
-  initialGoals,
-  initialHabits,
-  initialQuests,
-} from '../../pages/Dashboard/dashboard-data'
+import { listActivity, listGoalViews, listHabitItems, listQuestItems, subscribe } from '../../data'
+import type { ActivityEntry } from '../../pages/Dashboard/dashboard-data'
+import type { GoalView, ManagedHabitItem } from '../../data/views'
+import type { QuestItem } from '../../pages/Dashboard/dashboard-data'
 
 interface SearchHit {
   group: 'Quests' | 'Habits' | 'Goals' | 'Activity' | 'Attributes'
@@ -48,26 +46,51 @@ export function GlobalSearch() {
     if (open) window.setTimeout(() => inputRef.current?.focus(), 0)
   }, [open])
 
+  const [quests, setQuests] = useState<QuestItem[]>([])
+  const [habits, setHabits] = useState<ManagedHabitItem[]>([])
+  const [goals, setGoals] = useState<GoalView[]>([])
+  const [activity, setActivity] = useState<ActivityEntry[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      const [q, h, g, a] = await Promise.all([listQuestItems(), listHabitItems('all'), listGoalViews(), listActivity(50)])
+      if (!cancelled) {
+        setQuests(q)
+        setHabits(h)
+        setGoals(g)
+        setActivity(a)
+      }
+    }
+    const id = setTimeout(() => void load(), 0)
+    const unsub = subscribe('data', () => void load())
+    return () => {
+      cancelled = true
+      clearTimeout(id)
+      unsub()
+    }
+  }, [])
+
   const index = useMemo<SearchHit[]>(() => {
-    const quests: SearchHit[] = initialQuests.map((q) => ({
+    const questHits: SearchHit[] = quests.map((q) => ({
       group: 'Quests',
       title: q.title,
       detail: `${q.category} · +${q.reward} ${q.rewardType}${q.linkedGoal ? ` · ${q.linkedGoal}` : ''}`,
       page: 'quests',
     }))
-    const habits: SearchHit[] = initialHabits.map((h) => ({
+    const habitHits: SearchHit[] = habits.map((h) => ({
       group: 'Habits',
       title: h.name,
       detail: `${h.difficulty} · ${h.streak} day streak · +${h.reward} ${h.rewardType}`,
       page: 'habits',
     }))
-    const goals: SearchHit[] = initialGoals.map((g) => ({
+    const goalHits: SearchHit[] = goals.map((g) => ({
       group: 'Goals',
       title: g.title,
       detail: g.target,
       page: 'goals',
     }))
-    const activity: SearchHit[] = initialActivity.map((a) => ({
+    const activityHits: SearchHit[] = activity.map((a) => ({
       group: 'Activity',
       title: a.title,
       detail: `${a.time} · ${a.reward}`,
@@ -79,8 +102,8 @@ export function GlobalSearch() {
       detail: `${a.xp} XP · ${a.xpToNextLevel} to next level`,
       page: 'attributes',
     }))
-    return [...quests, ...habits, ...goals, ...activity, ...attributes]
-  }, [status])
+    return [...questHits, ...habitHits, ...goalHits, ...activityHits, ...attributes]
+  }, [activity, goals, habits, quests, status])
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
