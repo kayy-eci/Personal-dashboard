@@ -1,0 +1,13 @@
+// Public data contract for the UI. Components never import src/core directly.
+export { DATA_SOURCE } from './source'
+export { getProfile, createProfile } from '../core/repo/profile'
+export { getSetting, setSetting, getAllSettings } from '../core/settings/repo'
+export { checkInHabit, completeQuest, completeMilestone } from '../core/services/completion'
+export { runDailyCheck } from '../core/services/vitality'
+export { verifyIntegrity } from '../core/services/integrity'
+export { exportData, importData } from '../core/services/backup'
+export { subscribe, publish } from '../core/platform/events'
+export { listHabitItems, listQuestItems, listGoalViews, listActivity } from './views'
+export { getPlayerStatus } from './player'
+export { createHabit, updateHabit, archiveHabit, unarchiveHabit, createQuest, updateQuest, archiveQuest, deleteQuest, createGoal, updateGoal, addMilestone, completeMilestoneAction, reorderMilestones, deleteMilestone, linkToGoal, unlinkFromGoal } from './write'
+export { getDbStatus } from './status'
