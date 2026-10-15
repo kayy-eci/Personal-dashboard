@@ -24,6 +24,14 @@ async function requireDumpBuilder(): Promise<(dbName: string) => Promise<string>
 const NAME = 'mig-legacy-v2'
 const NOW = '2026-10-01T08:00:00.000Z'
 
+/** A log dated today proves a live streak survives the migration. */
+function todayStr(): string {
+  const d = new Date()
+  const m = `${d.getMonth() + 1}`.padStart(2, '0')
+  const day = `${d.getDate()}`.padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
+
 function breakdown(final: number) {
   return {
     base: 60,
@@ -96,6 +104,7 @@ async function seedLegacy(): Promise<void> {
     { id: 1, habitId: 1, logDate: '2026-09-30', createdAt: NOW },
     { id: 2, habitId: 2, logDate: '2026-09-29', createdAt: NOW },
     { id: 3, habitId: 1, logDate: '2026-09-29', createdAt: NOW },
+    { id: 4, habitId: 1, logDate: todayStr(), createdAt: NOW },
   ])
   await t('xpLedger').bulkPut([
     { id: 1, sourceType: 'habit', sourceId: 1, attribute: 'STR', xpAmount: 120, breakdown: breakdown(120), formulaVersion: 1, localDate: '2026-09-30', createdAt: NOW },
@@ -114,6 +123,7 @@ async function seedLegacy(): Promise<void> {
     { id: 5, eventType: 'level_up', refType: 'profile', refId: 1, title: 'Reached level 5', note: '', localDate: '2026-09-30', createdAt: NOW },
     { id: 6, eventType: 'achievement_unlocked', refType: 'achievement', refId: 0, title: 'Achievement unlocked: First quest', note: '', localDate: '2026-09-30', createdAt: NOW },
     { id: 7, eventType: 'vitality_loss', refType: 'profile', refId: 1, title: 'Missed: Morning run', note: '', healthDelta: -5, localDate: '2026-09-28', createdAt: NOW },
+    { id: 8, eventType: 'habit_checkin', refType: 'habit', refId: 1, title: 'Checked in: Morning run', note: '', xpDelta: 15, localDate: todayStr(), createdAt: NOW },
   ])
   await t('achievements').bulkPut([
     { ruleKey: 'first_quest', name: 'First quest', description: 'Complete your first quest', target: 1, unlockedAt: NOW },
@@ -163,7 +173,7 @@ describe('v2 → v4 migration', () => {
     expect(await db.habits.count()).toBe(2)
     expect(await db.goals.count()).toBe(2)
     expect(await db.milestones.count()).toBe(3)
-    expect(await db.habitLogs.count()).toBe(3)
+    expect(await db.habitLogs.count()).toBe(4)
     expect(await db.githubActivity.count()).toBe(2)
     expect(await db.chats.count()).toBe(2)
     expect(await db.table('tasks').count()).toBe(4)
@@ -193,10 +203,11 @@ describe('v2 → v4 migration', () => {
       expect(() => db.table(gone)).toThrow()
     }
 
-    // profile keeps identity + streaks, drops game fields
+    // profile keeps identity; current streak is recomputed from the logs
+    // (today's log keeps it alive), best streak is a historical max and kept
     const profile = (await db.profile.get(1)) as unknown as Record<string, unknown>
     expect(profile.name).toBe('Legacy User')
-    expect(profile.currentStreak).toBe(4)
+    expect(profile.currentStreak as number).toBeGreaterThanOrEqual(1)
     expect(profile.bestStreak).toBe(9)
     for (const dropped of ['level', 'totalXp', 'health', 'maxHealth']) {
       expect(profile, `profile must not have ${dropped}`).not.toHaveProperty(dropped)
@@ -214,7 +225,7 @@ describe('v2 → v4 migration', () => {
 
     // timeline: removed types gone, renames applied, deltas stripped, order kept
     const events = await db.timelineEvents.orderBy('id').toArray()
-    expect(events.map((e) => e.id)).toEqual([1, 2, 3, 4])
+    expect(events.map((e) => e.id)).toEqual([1, 2, 3, 4, 8])
     expect(events.map((e) => e.eventType as string).sort()).toEqual(['habit_checkin', 'milestone_completed', 'profile_created', 'task_completed'])
     const completed = events.find((e) => (e.eventType as string) === 'task_completed')!
     expect(completed.refType).toBe('task')

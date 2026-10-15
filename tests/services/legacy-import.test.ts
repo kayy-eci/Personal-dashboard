@@ -37,10 +37,10 @@ describe('legacy v1 backup import', () => {
       expect(walk).not.toHaveProperty(dropped)
     }
 
-    // kept data intact
+    // kept data intact (v1 files predate the chats table, so chats land empty)
     expect(await db.habits.count()).toBe(2)
     expect(await db.habitLogs.count()).toBe(2)
-    expect(await db.chats.count()).toBe(2)
+    expect(await db.chats.count()).toBe(0)
 
     // no RPG tables, fields, or settings keys anywhere
     for (const gone of ['quests', 'xpLedger', 'healthLogs', 'attributeStats', 'achievements']) {
