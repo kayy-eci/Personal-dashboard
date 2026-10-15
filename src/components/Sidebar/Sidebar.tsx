@@ -6,6 +6,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   CloseIcon,
+  HomeIcon,
   MessageSquareIcon,
   MoonIcon,
   PanelLeftIcon,
@@ -13,7 +14,7 @@ import {
   SettingsIcon,
   SunIcon,
 } from '../icons/Icons'
-import { chatItem, navGroups, topLevelItems, type NavGroup, type NavItem } from './nav-items'
+import { navGroups, topLevelItems, type NavGroup, type NavItem } from './nav-items'
 import { loadChatSessions, deleteChatSession } from '../../data'
 import type { ChatSession } from '../../core/db/types'
 import { Plus, Trash2 } from 'lucide-react'
@@ -45,7 +46,30 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose, collapsed = f
   const menuRef = useRef<HTMLDivElement>(null)
   const initial = profileWithAvatar.name.trim().charAt(0).toUpperCase() || '?'
   const isDark = preferences.theme === 'dark' || (preferences.theme === 'system' && systemPrefersDark())
-  const showChatHistory = activePageId === 'chat'
+  // View follows the route: #/chat -> chat (Claude/GPT-style history), everything else -> home nav.
+  // The last manually picked view is also persisted so a reload restores intent via the route.
+  const sidebarView = activePageId === 'chat' ? 'chat' : 'home'
+  const showChatHistory = sidebarView === 'chat'
+
+  const persistView = (next: 'home' | 'chat') => {
+    try {
+      window.localStorage.setItem('lifeos:sidebar-view', next)
+    } catch {
+      // ignore
+    }
+  }
+
+  const handleHomeClick = () => {
+    persistView('home')
+    if (activePageId === 'chat') window.location.hash = '#/dashboard'
+    onSelect()
+  }
+
+  const handleChatClick = () => {
+    persistView('chat')
+    if (activePageId !== 'chat') window.location.hash = '#/chat'
+    onSelect()
+  }
 
   // Load chat sessions when on chat page
   useEffect(() => {
@@ -171,6 +195,42 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose, collapsed = f
         </button>
       </div>
 
+      {/* View toggle: Home | Chat */}
+      <div className="mt-2 flex shrink-0 gap-1 px-2" role="group" aria-label="Sidebar view">
+        <button
+          type="button"
+          onClick={handleHomeClick}
+          aria-pressed={sidebarView === 'home'}
+          aria-label="Home navigation"
+          title="Home"
+          className="flex h-7 flex-1 items-center justify-center rounded-md transition-colors hover:bg-[var(--sb-hover)]"
+          style={{
+            backgroundColor: sidebarView === 'home' ? 'var(--sb-selected)' : 'transparent',
+          }}
+        >
+          <HomeIcon
+            className="h-[1.125rem] w-[1.125rem]"
+            style={{ color: sidebarView === 'home' ? 'var(--sb-text-strong)' : 'var(--sb-icon)' }}
+          />
+        </button>
+        <button
+          type="button"
+          onClick={handleChatClick}
+          aria-pressed={sidebarView === 'chat'}
+          aria-label="Chat history"
+          title="Chat"
+          className="flex h-7 flex-1 items-center justify-center rounded-md transition-colors hover:bg-[var(--sb-hover)]"
+          style={{
+            backgroundColor: sidebarView === 'chat' ? 'var(--sb-selected)' : 'transparent',
+          }}
+        >
+          <MessageSquareIcon
+            className="h-[1.125rem] w-[1.125rem]"
+            style={{ color: sidebarView === 'chat' ? 'var(--sb-text-strong)' : 'var(--sb-icon)' }}
+          />
+        </button>
+      </div>
+
       {/* Chat mode: history list */}
       {showChatHistory && !collapsed && (
         <div className="flex flex-col flex-1 min-h-0">
@@ -238,11 +298,6 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose, collapsed = f
       {/* Normal navigation */}
       {!showChatHistory && (
         <>
-          {/* Chat item */}
-          <div className="mt-3 shrink-0 px-2">
-            <SidebarItem item={chatItem} active={activePageId === chatItem.id} onSelect={onSelect} density={preferences.density} />
-          </div>
-
           {/* Top-level items */}
           <div className="shrink-0 px-2">
             {topLevelItems.map((item) => (
