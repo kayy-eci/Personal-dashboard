@@ -30,11 +30,13 @@ export interface AppShellProps {
  */
 export function AppShell({ page, activePageId, children }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
   const supportsViewTransitions =
     typeof document !== 'undefined' && typeof document.startViewTransition === 'function'
 
   const closeSidebar = useCallback(() => setIsSidebarOpen(false), [])
+  const toggleCollapse = useCallback(() => setIsSidebarCollapsed(prev => !prev), [])
 
   // Escape closes the drawer; body scroll is locked while it is open.
   useEffect(() => {
@@ -108,6 +110,8 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
         isOpen={isSidebarOpen}
         onSelect={closeSidebar}
         onClose={closeSidebar}
+        collapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleCollapse}
       />
 
       {isSidebarOpen && (

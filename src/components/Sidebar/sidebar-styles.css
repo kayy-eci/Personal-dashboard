@@ -1,0 +1,51 @@
+/**
+ * Sidebar scrollbar styles - thin scrollbar that appears on hover
+ */
+
+/* Sidebar scrollbar - thin on hover */
+#app-sidebar nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+#app-sidebar nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#app-sidebar nav::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+
+#app-sidebar nav:hover::-webkit-scrollbar-thumb {
+  background: var(--sb-scrollbar);
+}
+
+/* Firefox */
+#app-sidebar nav {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+#app-sidebar nav:hover {
+  scrollbar-color: var(--sb-scrollbar) transparent;
+}
+
+/* Focus rings - keyboard only, 2px with accent color */
+#app-sidebar a:focus-visible,
+#app-sidebar button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: inherit;
+}
+
+/* Prevent focus ring on mouse click */
+#app-sidebar a:focus:not(:focus-visible),
+#app-sidebar button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Transitions - disabled when reduce motion is on */
+[data-motion="reduce"] #app-sidebar * {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+}

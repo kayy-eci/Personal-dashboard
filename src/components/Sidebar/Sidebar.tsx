@@ -20,19 +20,33 @@ export interface SidebarProps {
   isOpen: boolean
   onSelect: () => void
   onClose: () => void
+  collapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
 /**
  * Notion-style sidebar with neutral selection, sentence-case labels,
  * and a profile menu footer.
  */
-export function Sidebar({ activePageId, isOpen, onSelect, onClose }: SidebarProps) {
+export function Sidebar({ activePageId, isOpen, onSelect, onClose, collapsed = false, onToggleCollapse }: SidebarProps) {
   const { profileWithAvatar } = usePlayerProfile()
   const { preferences, toggleSidebarGroup, setTheme } = usePreferences()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const initial = profileWithAvatar.name.trim().charAt(0).toUpperCase() || '?'
   const isDark = preferences.theme === 'dark' || (preferences.theme === 'system' && systemPrefersDark())
+
+  // Ctrl+B to toggle sidebar
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault()
+        onToggleCollapse?.()
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onToggleCollapse])
 
   // Close menu on outside click
   useEffect(() => {
@@ -57,8 +71,7 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose }: SidebarProp
   }, [menuOpen])
 
   const handleCollapseSidebar = () => {
-    // TODO: Wire to existing collapse action (Ctrl+B)
-    console.log('Collapse sidebar')
+    onToggleCollapse?.()
   }
 
   const handleNewTask = () => {
@@ -71,15 +84,17 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose }: SidebarProp
   }
 
   return (
-    <aside
-      id="app-sidebar"
-      className={`sticky top-0 flex h-dvh w-[15rem] shrink-0 flex-col overflow-hidden border-r bg-[var(--sb-bg)] text-[var(--sb-text)] max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:shadow-md max-md:transition-transform max-md:duration-200 ${isOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full'}`}
-      style={{ 
-        borderRightColor: 'var(--sb-border)',
-        fontFamily: 'var(--font-sidebar)',
-      }}
-      aria-label="Workspace"
-    >
+    <>
+      {!collapsed && (
+        <aside
+          id="app-sidebar"
+          className={`sticky top-0 flex h-dvh w-[15rem] shrink-0 flex-col overflow-hidden border-r bg-[var(--sb-bg)] text-[var(--sb-text)] max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:shadow-md max-md:transition-transform max-md:duration-200 ${isOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full'}`}
+          style={{ 
+            borderRightColor: 'var(--sb-border)',
+            fontFamily: 'var(--font-sidebar)',
+          }}
+          aria-label="Workspace"
+        >
       {/* Header row */}
       <div className="flex h-[1.75rem] shrink-0 items-center justify-between px-2 pt-3">
         <button
@@ -248,6 +263,22 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose }: SidebarProp
         )}
       </div>
     </aside>
+      )}
+
+      {/* Collapsed state - show expand button */}
+      {collapsed && (
+        <button
+          type="button"
+          onClick={handleCollapseSidebar}
+          className="sticky top-4 z-10 ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border bg-[var(--sb-bg)] shadow-sm transition-colors hover:bg-[var(--sb-hover)] max-md:hidden"
+          style={{ borderColor: 'var(--sb-border)' }}
+          aria-label="Expand sidebar (Ctrl+B)"
+          title="Expand sidebar (Ctrl+B)"
+        >
+          <PanelLeftIcon className="h-[1.125rem] w-[1.125rem]" style={{ color: 'var(--sb-icon)' }} />
+        </button>
+      )}
+    </>
   )
 }
 
