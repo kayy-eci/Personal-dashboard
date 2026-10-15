@@ -19,9 +19,13 @@ import {
   ThinkingBadge,
 } from './ChatChrome'
 import { parseToolCalls, executeTool } from './ai-tools'
+import { createChatSession, addChatMessage, getChatSession } from '../../data'
 
 /** AI chat landing content for Home — header itself stays in AppShell. */
-export function AnimatedAIChat() {
+export function AnimatedAIChat({ currentChatId, onChatChange }: { currentChatId?: number | null; onChatChange?: (id: number | null) => void }) {
+  // Derive session id from prop
+  const chatId = currentChatId ?? null
+
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<string[]>([])
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -34,6 +38,19 @@ export function AnimatedAIChat() {
   const [focused, setFocused] = useState(false)
   const { textareaRef, adjustHeight } = useAutoResizeTextarea({ minHeight: 60, maxHeight: 200 })
   const apiKey = resolveApiKey(storedKey)
+
+  // Load session messages when chatId changes
+  useEffect(() => {
+    if (!chatId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMessages([])
+      return
+    }
+    getChatSession(chatId).then((s) => {
+      if (s) setMessages(s.messages.map((m) => ({ role: m.role, text: m.text })))
+      else setMessages([])
+    }).catch(() => setMessages([]))
+  }, [chatId])
 
   // Re-read the Settings-saved key when the user returns from Settings.
   useEffect(() => {
@@ -76,29 +93,32 @@ export function AnimatedAIChat() {
       setIsTyping(true)
       void (async () => {
         try {
+          // Ensure session exists
+          let sid = chatId
+          if (!sid) {
+            sid = await createChatSession()
+            onChatChange?.(sid)
+          }
+          await addChatMessage(sid, 'user', text)
+
           const reply = await sendChatMessage(next, apiKey, controller.signal)
           if (controller.signal.aborted) return
           
-          // Parse and execute any tool calls
           const { cleanText, calls } = parseToolCalls(reply)
           
-          // Execute tools
           const toolResults: string[] = []
           for (const call of calls) {
             const result = await executeTool(call)
-            if (result.success) {
-              toolResults.push(`✓ ${result.message}`)
-            } else {
-              toolResults.push(`✗ ${result.message}`)
-            }
+            if (result.success) toolResults.push(`✓ ${result.message}`)
+            else toolResults.push(`✗ ${result.message}`)
           }
           
-          // Combine clean text with tool results
           let finalReply = cleanText
           if (toolResults.length > 0) {
             finalReply += (cleanText ? '\n\n' : '') + toolResults.join('\n')
           }
           
+          await addChatMessage(sid, 'assistant', finalReply)
           setMessages((current) => [...current, { role: 'assistant', text: finalReply }])
         } catch (err) {
           if (controller.signal.aborted) return

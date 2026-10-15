@@ -6,14 +6,17 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   CloseIcon,
+  MessageSquareIcon,
   MoonIcon,
   PanelLeftIcon,
   SearchIcon,
   SettingsIcon,
-  SquarePlusIcon,
   SunIcon,
 } from '../icons/Icons'
 import { chatItem, navGroups, topLevelItems, type NavGroup, type NavItem } from './nav-items'
+import { loadChatSessions, deleteChatSession } from '../../data'
+import type { ChatSession } from '../../core/db/types'
+import { Plus, Trash2 } from 'lucide-react'
 
 export interface SidebarProps {
   activePageId: string
@@ -22,19 +25,33 @@ export interface SidebarProps {
   onClose: () => void
   collapsed?: boolean
   onToggleCollapse?: () => void
+  /** Current chat session id */
+  currentChatId?: number | null
+  /** Called when user selects a chat session */
+  onSelectChat?: (id: number) => void
+  /** Called when user creates a new chat */
+  onNewChat?: () => void
 }
 
 /**
  * Notion-style sidebar with neutral selection, sentence-case labels,
  * and a profile menu footer.
  */
-export function Sidebar({ activePageId, isOpen, onSelect, onClose, collapsed = false, onToggleCollapse }: SidebarProps) {
+export function Sidebar({ activePageId, isOpen, onSelect, onClose, collapsed = false, onToggleCollapse, currentChatId, onSelectChat, onNewChat }: SidebarProps) {
   const { profileWithAvatar } = usePlayerProfile()
   const { preferences, toggleSidebarGroup, setTheme } = usePreferences()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
   const menuRef = useRef<HTMLDivElement>(null)
   const initial = profileWithAvatar.name.trim().charAt(0).toUpperCase() || '?'
   const isDark = preferences.theme === 'dark' || (preferences.theme === 'system' && systemPrefersDark())
+  const showChatHistory = activePageId === 'chat'
+
+  // Load chat sessions when on chat page
+  useEffect(() => {
+    if (!showChatHistory) return
+    loadChatSessions().then(setChatSessions).catch(() => setChatSessions([]))
+  }, [showChatHistory, currentChatId])
 
   // Ctrl+B to toggle sidebar
   useEffect(() => {
@@ -113,7 +130,7 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose, collapsed = f
           className="flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[var(--sb-hover)] max-md:hidden"
           aria-label="New task"
         >
-          <SquarePlusIcon className="h-[1.125rem] w-[1.125rem]" style={{ color: 'var(--sb-icon)' }} />
+          <Plus className="h-[1.125rem] w-[1.125rem]" style={{ color: 'var(--sb-icon)' }} />
         </button>
 
         <button
@@ -154,40 +171,109 @@ export function Sidebar({ activePageId, isOpen, onSelect, onClose, collapsed = f
         </button>
       </div>
 
-      {/* Chat item */}
-      <div className="mt-3 shrink-0 px-2">
-        <SidebarItem item={chatItem} active={activePageId === chatItem.id} onSelect={onSelect} density={preferences.density} />
-      </div>
+      {/* Chat mode: history list */}
+      {showChatHistory && !collapsed && (
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="shrink-0 px-2 pb-2">
+            <button
+              type="button"
+              onClick={() => onNewChat?.()}
+              className="flex h-7 w-full items-center gap-2 rounded-md bg-[var(--sb-selected)] px-2 text-sm font-medium transition-colors hover:bg-[var(--sb-hover)]"
+              style={{ color: 'var(--sb-text-strong)' }}
+            >
+              <Plus className="h-[1.125rem] w-[1.125rem]" style={{ color: 'var(--sb-icon)' }} />
+              <span>New chat</span>
+            </button>
+          </div>
+          <div
+            className="min-h-0 flex-1 overflow-y-auto border-t px-2 pt-2"
+            style={{ 
+              borderTopColor: 'var(--sb-border)',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'transparent transparent',
+            }}
+          >
+            {chatSessions.length === 0 && (
+              <p className="px-2 py-3 text-xs" style={{ color: 'var(--sb-text-muted)' }}>
+                No conversations yet
+              </p>
+            )}
+            {chatSessions.map((s) => (
+              <div
+                key={s.id}
+                className={`group/chat flex w-full items-center gap-1 rounded-md px-2 transition-colors hover:bg-[var(--sb-hover)] ${
+                  currentChatId === s.id ? 'bg-[var(--sb-selected)]' : ''
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => s.id && onSelectChat?.(s.id)}
+                  className="flex flex-1 items-center gap-2 py-1.5 text-left"
+                >
+                  <MessageSquareIcon className="h-[1.125rem] w-[1.125rem] shrink-0" style={{ color: currentChatId === s.id ? 'var(--sb-text-strong)' : 'var(--sb-icon)' }} />
+                  <span className="flex-1 truncate text-sm" style={{ color: currentChatId === s.id ? 'var(--sb-text-strong)' : 'var(--sb-text)', fontWeight: currentChatId === s.id ? 600 : 500 }}>
+                    {s.title}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!s.id) return
+                    deleteChatSession(s.id).then(() => {
+                      setChatSessions((prev) => prev.filter((x) => x.id !== s.id))
+                      if (currentChatId === s.id) onNewChat?.()
+                    })
+                  }}
+                  className="opacity-0 transition-opacity group-hover/chat:opacity-100 flex h-7 w-7 items-center justify-center rounded-md hover:bg-[var(--sb-hover)]"
+                  aria-label="Delete chat"
+                >
+                  <Trash2 className="h-3.5 w-3.5" style={{ color: 'var(--sb-icon)' }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* Top-level items */}
-      <div className="shrink-0 px-2">
-        {topLevelItems.map((item) => (
-          <SidebarItem key={item.id} item={item} active={activePageId === item.id} onSelect={onSelect} density={preferences.density} />
-        ))}
-      </div>
+      {/* Normal navigation */}
+      {!showChatHistory && (
+        <>
+          {/* Chat item */}
+          <div className="mt-3 shrink-0 px-2">
+            <SidebarItem item={chatItem} active={activePageId === chatItem.id} onSelect={onSelect} density={preferences.density} />
+          </div>
 
-      {/* Scrollable groups */}
-      <nav
-        className="mt-3 min-h-0 flex-1 overflow-y-auto border-t px-2 pt-2"
-        style={{ 
-          borderTopColor: 'var(--sb-border)',
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'transparent transparent',
-        }}
-        aria-label="Main"
-      >
-        {navGroups.map((group) => (
-          <SidebarGroup
-            key={group.id}
-            group={group}
-            activePageId={activePageId}
-            collapsed={preferences.sidebarCollapsedGroups.includes(group.id)}
-            onToggle={() => toggleSidebarGroup(group.id)}
-            onSelect={onSelect}
-            density={preferences.density}
-          />
-        ))}
-      </nav>
+          {/* Top-level items */}
+          <div className="shrink-0 px-2">
+            {topLevelItems.map((item) => (
+              <SidebarItem key={item.id} item={item} active={activePageId === item.id} onSelect={onSelect} density={preferences.density} />
+            ))}
+          </div>
+
+          {/* Scrollable groups */}
+          <nav
+            className="mt-3 min-h-0 flex-1 overflow-y-auto border-t px-2 pt-2"
+            style={{ 
+              borderTopColor: 'var(--sb-border)',
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'transparent transparent',
+            }}
+            aria-label="Main"
+          >
+            {navGroups.map((group) => (
+              <SidebarGroup
+                key={group.id}
+                group={group}
+                activePageId={activePageId}
+                collapsed={preferences.sidebarCollapsedGroups.includes(group.id)}
+                onToggle={() => toggleSidebarGroup(group.id)}
+                onSelect={onSelect}
+                density={preferences.density}
+              />
+            ))}
+          </nav>
+        </>
+      )}
 
       {/* Footer */}
       <div className="relative mt-1.5 flex h-8 shrink-0 items-center gap-1 border-t px-1 pb-2"

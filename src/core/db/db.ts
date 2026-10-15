@@ -18,6 +18,7 @@ export class LifeOSDb extends Dexie {
   githubActivity!: Table<T.GithubDay, number>
   settings!: Table<T.Setting, string>
   handles!: Table<T.HandleRow, string>
+  chats!: Table<T.ChatSession, number>
 
   constructor(name = 'lifeos') {
     super(name)
@@ -36,6 +37,24 @@ export class LifeOSDb extends Dexie {
       githubActivity: '++id, activityDate, &[activityDate+repoName]',
       settings: 'key',
       handles: 'key',
+    })
+
+    this.version(2).stores({
+      profile: 'id',
+      attributeStats: 'attribute',
+      goals: '++id, status, deadline',
+      milestones: '++id, goalId, [goalId+orderIndex], status',
+      quests: '++id, goalId, milestoneId, type, status, deadline, scheduledDate, completedLocalDate, *attributes',
+      habits: '++id, goalId, frequency, archived, *attributes',
+      habitLogs: '++id, habitId, logDate, &[habitId+logDate]',
+      xpLedger: '++id, localDate, attribute, [attribute+localDate], [sourceType+sourceId]',
+      healthLogs: '++id, logDate, kind, &lossKey',
+      timelineEvents: '++id, localDate, eventType, [localDate+id], [eventType+localDate]',
+      achievements: 'ruleKey',
+      githubActivity: '++id, activityDate, &[activityDate+repoName]',
+      settings: 'key',
+      handles: 'key',
+      chats: '++id, createdAt',
     })
 
     const deny = () => {

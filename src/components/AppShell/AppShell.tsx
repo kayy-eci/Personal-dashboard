@@ -19,6 +19,10 @@ export interface AppShellProps {
   }
   /** Page body, rendered below the header. */
   children: ReactNode
+  // Chat integration
+  currentChatId?: number | null
+  onNewChat?: () => void
+  onSelectChat?: (id: number) => void
 }
 
 /**
@@ -28,7 +32,7 @@ export interface AppShellProps {
  * Above 768px the sidebar is a static column. At 768px and below it becomes
  * an off-canvas drawer with a scrim, driven by the top bar toggle.
  */
-export function AppShell({ page, activePageId, children }: AppShellProps) {
+export function AppShell({ page, activePageId, children, currentChatId, onNewChat, onSelectChat }: AppShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
@@ -112,6 +116,9 @@ export function AppShell({ page, activePageId, children }: AppShellProps) {
         onClose={closeSidebar}
         collapsed={isSidebarCollapsed}
         onToggleCollapse={toggleCollapse}
+        currentChatId={currentChatId}
+        onNewChat={onNewChat}
+        onSelectChat={onSelectChat}
       />
 
       {isSidebarOpen && (

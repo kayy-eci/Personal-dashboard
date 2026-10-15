@@ -20,7 +20,17 @@ function AppRoutes() {
     const route = window.location.hash.replace(/^#\/?/, '')
     return isPageId(route) ? route : 'dashboard'
   })
+  const [currentChatId, setCurrentChatId] = useState<number | null>(null)
   const activePage = navItems.find((item) => item.id === activePageId) ?? navItems[0]
+
+  const handleNewChat = () => {
+    setCurrentChatId(null)
+  }
+
+  const handleSelectChat = (id: number) => {
+    setCurrentChatId(id)
+    if (activePageId !== 'chat') window.location.hash = '#/chat'
+  }
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -57,9 +67,15 @@ function AppRoutes() {
   const page = pageTitles[activePage.id]
 
   return (
-    <AppShell page={{ pageId: activePage.id, ...page }} activePageId={activePage.id}>
+    <AppShell
+      page={{ pageId: activePage.id, ...page }}
+      activePageId={activePage.id}
+      currentChatId={currentChatId}
+      onNewChat={handleNewChat}
+      onSelectChat={handleSelectChat}
+    >
       {activePage.id === 'chat' ? (
-        <HomePage />
+        <HomePage currentChatId={currentChatId} onChatChange={setCurrentChatId} />
       ) : activePage.id === 'dashboard' ? (
         <Dashboard />
       ) : (

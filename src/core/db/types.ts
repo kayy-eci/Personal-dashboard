@@ -164,3 +164,11 @@ export interface HandleRow {
   key: string
   handle: FileSystemDirectoryHandle
 }
+
+export interface ChatSession {
+  id?: number
+  title: string
+  messages: Array<{ role: 'user' | 'assistant'; text: string; createdAt: string }>
+  createdAt: string
+  updatedAt: string
+}
