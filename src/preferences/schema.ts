@@ -26,7 +26,7 @@ export type ReduceMotion = (typeof REDUCE_MOTION_OPTIONS)[number]
 export const WEEK_START_OPTIONS = ['monday', 'sunday'] as const
 export type WeekStart = (typeof WEEK_START_OPTIONS)[number]
 
-export const SIDEBAR_GROUP_OPTIONS = ['daily', 'growth', 'system'] as const
+export const SIDEBAR_GROUP_OPTIONS = ['daily', 'growth'] as const
 export type SidebarGroupId = (typeof SIDEBAR_GROUP_OPTIONS)[number]
 
 export const DASHBOARD_SECTION_OPTIONS = [

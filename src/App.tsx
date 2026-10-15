@@ -7,6 +7,7 @@ import { PreferencesProvider } from './preferences/PreferencesProvider'
 import { usePreferences } from './preferences/usePreferences'
 import { Dashboard } from './pages/Dashboard/Dashboard'
 import { FeaturePage } from './pages/FeaturePage/FeaturePage'
+import { HomePage } from './pages/Home/HomePage'
 
 function isPageId(route: string): route is PageId {
   return navItems.some((item) => item.id === route)
@@ -43,6 +44,7 @@ function AppRoutes() {
   }, [activePageId, preferences.reduceMotion])
 
   const pageTitles: Record<PageId, { title: string; subtitle: string }> = {
+    chat: { title: 'Chat', subtitle: 'Ask anything — your day, organised' },
     dashboard: { title: 'Dashboard', subtitle: 'Your daily progress at a glance' },
     habits: { title: 'Habits', subtitle: 'Build reliable routines through consistent practice' },
     quests: { title: 'Quests', subtitle: 'Turn your priorities into clear, rewarding actions' },
@@ -56,7 +58,9 @@ function AppRoutes() {
 
   return (
     <AppShell page={{ pageId: activePage.id, ...page }} activePageId={activePage.id}>
-      {activePage.id === 'dashboard' ? (
+      {activePage.id === 'chat' ? (
+        <HomePage />
+      ) : activePage.id === 'dashboard' ? (
         <Dashboard />
       ) : (
         <FeaturePage pageId={activePage.id} />

@@ -8,6 +8,7 @@ import {
   type PreferenceKey,
   type Preferences,
   type SidebarGroupId,
+  type ThemePreference,
 } from './schema'
 import { sectionLabel } from './sections'
 import { getPreferences, readCachedPreferences, resetPreferences, setPreference } from './store'
@@ -79,6 +80,11 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     [commit],
   )
 
+  const setTheme = useCallback(
+    (theme: ThemePreference) => commit('theme', theme),
+    [commit],
+  )
+
   const resetDisplayPreferences = useCallback(() => {
     setPreferences((current) => ({ ...current, ...pickDisplayDefaults(current) }))
     void resetPreferences('display')
@@ -147,6 +153,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       preferences,
       ready,
       setPreference: setPreferenceValue,
+      setTheme,
       resetDisplayPreferences,
       hideSection,
       restoreSection,
@@ -159,6 +166,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
       preferences,
       ready,
       setPreferenceValue,
+      setTheme,
       resetDisplayPreferences,
       hideSection,
       restoreSection,

@@ -1,12 +1,13 @@
 import type { ComponentType } from 'react'
 import {
   AnalyticsIcon,
-  AttributesIcon,
+  CheckSquareIcon,
   DashboardIcon,
   GoalsIcon,
   HabitsIcon,
-  QuestsIcon,
+  MessageSquareIcon,
   TimelineIcon,
+  UserRoundIcon,
   type IconProps,
 } from '../icons/Icons'
 import type { SidebarGroupId } from '../../preferences/schema'
@@ -19,6 +20,7 @@ export interface NavItem {
 }
 
 export type PageId =
+  | 'chat'
   | 'dashboard'
   | 'habits'
   | 'quests'
@@ -34,33 +36,40 @@ export interface NavGroup {
   items: NavItem[]
 }
 
-/** Primary LifeOS destinations, grouped by when they are used. */
+/** Top-level items (no group label). */
+export const topLevelItems: NavItem[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
+]
+
+/** Chat item (separate from main navigation). */
+export const chatItem: NavItem = { id: 'chat', label: 'Chat', icon: MessageSquareIcon }
+
+/** Grouped navigation items. */
 export const navGroups: NavGroup[] = [
   {
     id: 'daily',
-    label: 'DAILY',
+    label: 'Daily',
     items: [
-      { id: 'dashboard', label: 'Dashboard', icon: DashboardIcon },
       { id: 'habits', label: 'Habits', icon: HabitsIcon },
-      { id: 'quests', label: 'Quests', icon: QuestsIcon },
+      { id: 'quests', label: 'Tasks', icon: CheckSquareIcon },
     ],
   },
   {
     id: 'growth',
-    label: 'GROWTH',
+    label: 'Growth',
     items: [
       { id: 'goals', label: 'Goals', icon: GoalsIcon },
-      { id: 'attributes', label: 'Character', icon: AttributesIcon },
+      { id: 'attributes', label: 'Character', icon: UserRoundIcon },
       { id: 'timeline', label: 'Timeline', icon: TimelineIcon },
       { id: 'analytics', label: 'Analytics', icon: AnalyticsIcon },
     ],
   },
-  {
-    id: 'system',
-    label: 'SYSTEM',
-    items: [{ id: 'settings', label: 'Settings', icon: AttributesIcon }],
-  },
 ]
 
-/** Flat list in navigation order — used by routing and search. */
-export const navItems: NavItem[] = navGroups.flatMap((group) => group.items)
+/** Flat list in navigation order. */
+export const navItems: NavItem[] = [
+  chatItem,
+  ...topLevelItems,
+  ...navGroups.flatMap((group) => group.items),
+  { id: 'settings', label: 'Settings', icon: UserRoundIcon }, // accessed via footer
+]

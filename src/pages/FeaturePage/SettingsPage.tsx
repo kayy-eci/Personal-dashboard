@@ -4,6 +4,7 @@ import { usePlayerProfile } from '../../features/player/usePlayerProfile'
 import { clearAllStoredValues, usePersistentState } from '../../lib/storage'
 import { DisplaySettings } from './settings/DisplaySettings'
 import { setSetting, exportData as exportRealData, importData as importRealData } from '../../data'
+import { getStoredApiKey, setStoredApiKey } from '../Home/gemini-client'
 
 type SettingsSection = 'profile' | 'display' | 'health' | 'data' | 'integrations' | 'about'
 
@@ -60,6 +61,10 @@ export function SettingsPage() {
   const [nameDraft, setNameDraft] = useState(profile.name)
   const [persisted, setPersisted] = useState<boolean | null>(null)
   const [usageMb, setUsageMb] = useState<number | null>(null)
+  const [geminiKeyDraft, setGeminiKeyDraft] = useState('')
+  const [geminiKeySaved, setGeminiKeySaved] = useState(false)
+  const [showGeminiKey, setShowGeminiKey] = useState(false)
+  const [hasGeminiKey, setHasGeminiKey] = useState(() => getStoredApiKey().length > 0)
 
   useEffect(() => {
     let cancelled = false
@@ -422,6 +427,75 @@ export function SettingsPage() {
                       Token saved — grids now use exact counts incl. private contributions.
                     </span>
                   )}
+                </div>
+              </div>
+              <div className={rowGrid}>
+                <label htmlFor="gemini-key">Gemini API key</label>
+                <div className="flex flex-col items-start gap-2 text-text">
+                  <div className="flex items-center gap-2 text-text">
+                    <input
+                      id="gemini-key"
+                      className={inputClass}
+                      type={showGeminiKey ? 'text' : 'password'}
+                      value={geminiKeyDraft}
+                      onChange={(event) => {
+                        setGeminiKeyDraft(event.target.value)
+                        setGeminiKeySaved(false)
+                      }}
+                      placeholder={hasGeminiKey ? 'Key saved — paste a new one to replace' : 'AIzaSy...'}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    <button type="button" className={ghostButton} onClick={() => setShowGeminiKey((v) => !v)} aria-pressed={showGeminiKey}>
+                      {showGeminiKey ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-text">
+                    <button
+                      type="button"
+                      className={primaryButton}
+                      disabled={!geminiKeyDraft.trim()}
+                      onClick={() => {
+                        if (!geminiKeyDraft.trim()) return
+                        setStoredApiKey(geminiKeyDraft)
+                        setGeminiKeyDraft('')
+                        setGeminiKeySaved(true)
+                        setHasGeminiKey(true)
+                      }}
+                    >
+                      Save key
+                    </button>
+                    {hasGeminiKey && (
+                      <button
+                        type="button"
+                        className={ghostButton}
+                        onClick={() => {
+                          setStoredApiKey('')
+                          setGeminiKeyDraft('')
+                          setGeminiKeySaved(false)
+                          setHasGeminiKey(false)
+                        }}
+                      >
+                        Remove key
+                      </button>
+                    )}
+                  </div>
+                  {geminiKeySaved && (
+                    <span className="text-text-muted" role="status">
+                      Key saved — AI chat on the Home page is now active.
+                    </span>
+                  )}
+                  <p className="text-xs text-text-muted">
+                    Get a free API key from{' '}
+                    <a 
+                      href="https://aistudio.google.com/app/apikey" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-brand hover:underline"
+                    >
+                      Google AI Studio
+                    </a>
+                  </p>
                 </div>
               </div>
             </section>
