@@ -6,6 +6,7 @@ export type EventType =
   | 'profile_created'
   | 'habit_checkin'
   | 'quest_completed'
+  | 'task_completed'
   | 'milestone_completed'
   | 'goal_completed'
   | 'level_up'
@@ -58,6 +59,25 @@ export interface Milestone {
 
 export type QuestType = 'main' | 'side' | 'challenge' | 'recovery'
 export type QuestStatus = 'active' | 'completed' | 'archived'
+
+export type TaskStatus = 'active' | 'completed' | 'archived'
+
+/** A task is a one-time objective (formerly "quest", minus game fields). */
+export interface Task {
+  id?: number
+  goalId?: number
+  milestoneId?: number
+  title: string
+  description: string
+  category: string
+  scheduledDate?: string
+  deadline?: string
+  status: TaskStatus
+  createdAt: string
+  createdLocalDate: string
+  completedAt?: string
+  completedLocalDate?: string
+}
 
 export interface Quest {
   id?: number

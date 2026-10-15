@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import type * as T from './types'
+import { V3_HABITS_INDEXES, V3_TASKS_INDEXES, upgradeV2toV3 } from './migration'
 
 export const LEDGER_GUARD = { allowWrites: false }
 
@@ -9,6 +10,7 @@ export class LifeOSDb extends Dexie {
   goals!: Table<T.Goal, number>
   milestones!: Table<T.Milestone, number>
   quests!: Table<T.Quest, number>
+  tasks!: Table<T.Task, number>
   habits!: Table<T.Habit, number>
   habitLogs!: Table<T.HabitLog, number>
   xpLedger!: Table<T.XpLedgerRow, number>
@@ -22,6 +24,14 @@ export class LifeOSDb extends Dexie {
 
   constructor(name = 'lifeos') {
     super(name)
+    // An open tab on the old version blocks the upgrade; close our
+    // connection and let the UI prompt for a reload.
+    this.on('versionchange', () => {
+      this.close()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('lifeos:db-versionchange'))
+      }
+    })
     this.version(1).stores({
       profile: 'id',
       attributeStats: 'attribute',
@@ -56,6 +66,13 @@ export class LifeOSDb extends Dexie {
       handles: 'key',
       chats: '++id, createdAt',
     })
+
+    // v3: copy and transform — quests become tasks, RPG fields are
+    // stripped, old tables stay present. v4 drops the RPG stores.
+    this.version(3).stores({
+      tasks: V3_TASKS_INDEXES,
+      habits: V3_HABITS_INDEXES,
+    }).upgrade((tx) => upgradeV2toV3(tx))
 
     const deny = () => {
       if (!LEDGER_GUARD.allowWrites) throw new Error('XP ledger is append-only')

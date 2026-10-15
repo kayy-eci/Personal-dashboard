@@ -19,7 +19,7 @@ Legend: REMOVE = delete | RENAME = quest→task etc. | REWRITE = strip RPG, keep
 ## Core DB (`src/core/db/`)
 | location | what | decision | reason |
 |---|---|---|---|
-| `db.ts` LifeOSDb | tables `attributeStats`, `xpLedger`, `healthLogs`, `achievements`, `quests` | REMOVE (v2 copy quests→tasks, v3 drop) | RPG stores |
+| `db.ts` LifeOSDb | tables `attributeStats`, `xpLedger`, `healthLogs`, `achievements`, `quests` | REMOVE (v3 copy quests→tasks, v4 drop) | RPG stores |
 | `db.ts` | `LEDGER_GUARD` + append-only hooks | REMOVE | ledger gone |
 | `db.ts` | `seedDatabase` (attribute + achievement seeds) | REMOVE + drop call in `Root.tsx` | RPG seeds |
 | `db.ts` | `habits` `*attributes` index | REMOVE index | attribute links gone |
