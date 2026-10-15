@@ -29,3 +29,22 @@ export/import there.
 - Export a backup before any major change.
 - Don't clear site data unless you have an export.
 - Don't change the app's URL unless you plan to migrate with export/import.
+
+## Game-features removal migration
+
+When LifeOS removed its game features (XP, levels, vitality, achievements),
+the database migrated automatically from schema v2 to v4:
+
+- **v3 (copy):** quests were copied to a new `tasks` table with identical ids,
+  so links from goals, milestones, timeline, and chats stay valid. Game-only
+  fields were stripped from habits, goals, the profile, timeline events, and
+  settings. Game-only timeline entries were deleted.
+- **v4 (drop):** the game-only tables were deleted.
+
+Before migrating, the app asks you to **download a backup first**. That file
+uses the old format and can be imported back at any time — importing an old
+backup runs the same transformation in memory, then checks integrity.
+
+Manual recovery: if the automatic migration ever fails, the app keeps the old
+database untouched (upgrades are transactional). Export a copy from another
+device or reinstall, then use Settings → Data → Import with the backup file.

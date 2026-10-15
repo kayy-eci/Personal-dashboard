@@ -6,6 +6,7 @@ import { exportData, importData, validateBackup } from '../../src/core/services/
 import { verifyIntegrity } from '../../src/core/services/integrity'
 import { setSetting } from '../../src/core/settings/repo'
 import { checkInHabit } from '../../src/core/services/completion'
+import { createChatSession, addChatMessage } from '../../src/data/chats'
 import { localDate } from '../../src/core/domain/time'
 
 describe('backup export/import', () => {
@@ -16,10 +17,18 @@ describe('backup export/import', () => {
     await createProfile('RoundTrip')
     await db.habits.add({ name: 'Run', frequency: 'daily', category: 'fitness', difficulty: 3, impact: 3, attributes: ['STR'], archived: false, createdAt: new Date().toISOString(), createdLocalDate: localDate(new Date()) })
     await checkInHabit(1)
+    const chatId = await createChatSession()
+    await addChatMessage(chatId, 'user', 'Plan my week')
     await setSetting('github.token', 'secret-token')
 
     const json = await exportData()
     const parsed = JSON.parse(json)
+    expect(parsed.schemaVersion).toBe(2)
+    // RPG tables are not exported anymore
+    for (const gone of ['xpLedger', 'healthLogs', 'attributeStats', 'achievements', 'quests']) {
+      expect(parsed.tables).not.toHaveProperty(gone)
+    }
+    expect(parsed.tables).toHaveProperty('tasks')
     const settingsRows = parsed.tables.settings as { key: string }[]
     expect(settingsRows.some((r) => r.key === 'github.token')).toBe(false)
 
@@ -30,10 +39,11 @@ describe('backup export/import', () => {
     const db2 = new LifeOSDb('lifeos')
     setDbForTests(db2)
     const res = await importData(json)
-    expect(res.ok).toBe(true)
+    expect(res).toEqual({ ok: true })
     const profile = await db2.profile.get(1)
     expect(profile?.name).toBe('RoundTrip')
-    expect(await db2.xpLedger.count()).toBe(1)
+    const chat = await db2.chats.get(chatId)
+    expect(chat?.messages.map((m) => m.text)).toEqual(['Plan my week'])
     expect(await verifyIntegrity()).toEqual([])
     await db2.close()
     await Dexie.delete('lifeos')
