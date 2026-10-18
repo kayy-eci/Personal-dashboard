@@ -12,7 +12,10 @@ import { dirname, extname, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { openDatabase, type DatabaseConnection } from "./database";
 import { MigrationError } from "./database/migrations";
+import { devices } from "./database/schema";
 import { registerIpcHandler } from "./ipc-main";
+import { registerPageIpcHandlers } from "./pages/ipc";
+import { PageRepository } from "./pages/repository";
 
 const appScheme = "lifeos";
 const developmentUrl = process.env.LIFEOS_DEV_SERVER_URL;
@@ -34,6 +37,7 @@ protocol.registerSchemesAsPrivileged([
 
 let mainWindow: BrowserWindow | null = null;
 let databaseConnection: DatabaseConnection | null = null;
+let pageRepository: PageRepository | null = null;
 
 function notFound(): Response {
   return new Response("Not found", { status: 404 });
@@ -173,8 +177,28 @@ registerIpcHandler(
   () => app.getVersion(),
 );
 
+registerPageIpcHandlers(validateIpcSender, () => {
+  if (!pageRepository) {
+    throw new Error("The page repository is not initialized");
+  }
+  return pageRepository;
+});
+
 void app.whenReady().then(async () => {
   databaseConnection = await openDatabase(app.getPath("userData"));
+  const device = databaseConnection.db
+    .select({ id: devices.id })
+    .from(devices)
+    .limit(1)
+    .get();
+  if (!device) {
+    throw new Error("LifeOS device identity is missing");
+  }
+  pageRepository = new PageRepository(
+    databaseConnection.db,
+    databaseConnection.sqlite,
+    device.id,
+  );
   protocol.handle(appScheme, serveExport);
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -217,6 +241,7 @@ void app.whenReady().then(async () => {
 });
 
 app.on("before-quit", () => {
+  pageRepository = null;
   if (databaseConnection) {
     databaseConnection.sqlite.close();
     databaseConnection = null;
