@@ -1,13 +1,17 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   net,
   protocol,
+  shell,
   type IpcMainInvokeEvent,
 } from "electron";
 import { realpath, stat } from "node:fs/promises";
-import { extname, join, resolve, sep } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
+import { openDatabase, type DatabaseConnection } from "./database";
+import { MigrationError } from "./database/migrations";
 import { registerIpcHandler } from "./ipc-main";
 
 const appScheme = "lifeos";
@@ -29,6 +33,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 let mainWindow: BrowserWindow | null = null;
+let databaseConnection: DatabaseConnection | null = null;
 
 function notFound(): Response {
   return new Response("Not found", { status: 404 });
@@ -168,7 +173,8 @@ registerIpcHandler(
   () => app.getVersion(),
 );
 
-void app.whenReady().then(() => {
+void app.whenReady().then(async () => {
+  databaseConnection = await openDatabase(app.getPath("userData"));
   protocol.handle(appScheme, serveExport);
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -176,9 +182,45 @@ void app.whenReady().then(() => {
     }
   });
   createWindow();
-}).catch((error: unknown) => {
+}).catch(async (error: unknown) => {
   console.error("LifeOS failed to start", error);
-  app.quit();
+  try {
+    if (error instanceof MigrationError) {
+      const backupDirectory = dirname(error.backupPath);
+      const result = await dialog.showMessageBox({
+        type: "error",
+        title: "LifeOS database migration failed",
+        message: "The database migration failed. Your existing database was left unchanged.",
+        detail: `A pre-migration backup is available in:\n${backupDirectory}`,
+        buttons: ["Open backup folder", "Quit"],
+        defaultId: 1,
+        cancelId: 1,
+      });
+
+      if (result.response === 0) {
+        const openError = await shell.openPath(backupDirectory);
+        if (openError) {
+          dialog.showErrorBox("Could not open backup folder", openError);
+        }
+      }
+    } else {
+      dialog.showErrorBox(
+        "LifeOS failed to start",
+        "LifeOS could not initialize its local workspace. Check the application data directory and try again.",
+      );
+    }
+  } catch (displayError) {
+    console.error("LifeOS could not display startup recovery options", displayError);
+  } finally {
+    app.quit();
+  }
+});
+
+app.on("before-quit", () => {
+  if (databaseConnection) {
+    databaseConnection.sqlite.close();
+    databaseConnection = null;
+  }
 });
 
 app.on("window-all-closed", () => {

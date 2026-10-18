@@ -11,15 +11,19 @@
     "build": "npm run typecheck && npm run build:renderer && node scripts/apply-csp.mjs && npm run build:electron",
     "start": "electron .",
     "package": "npm run build && electron-builder",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npm run build:electron && node --test tests/database.test.mjs"
   },
   "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "drizzle-orm": "0.45.4",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "@types/better-sqlite3": "9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -33,6 +37,7 @@
   "build": {
     "appId": "com.lifeos.desktop",
     "productName": "LifeOS",
+    "npmRebuild": false,
     "directories": {
       "output": "release"
     },

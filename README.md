@@ -24,3 +24,5 @@ npm run package
 
 `npm run build` emits the static renderer to `out/` and compiles Electron to
 `dist-electron/`. `npm run package` uses electron-builder for the current OS.
+Packaging uses better-sqlite3's bundled Node-API binaries and skips native
+rebuilds, so creating a package does not require a platform C++ toolchain.
