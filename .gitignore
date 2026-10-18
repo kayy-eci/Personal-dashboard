@@ -15,10 +15,13 @@
 
 # next.js
 /.next/
+/.next-lifeos-dev/
 /out/
 
 # production
 /build
+/dist-electron/
+/release/
 
 # misc
 .DS_Store
