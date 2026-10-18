@@ -1,8 +1,12 @@
+"use client";
+
+import { WorkspaceProvider } from "./_components/workspace-provider";
+import { WorkspaceShell } from "./_components/workspace-shell";
+
 export default function Home() {
   return (
-    <main>
-      <h1>LifeOS</h1>
-      <p>Your local workspace is ready.</p>
-    </main>
+    <WorkspaceProvider>
+      <WorkspaceShell />
+    </WorkspaceProvider>
   );
 }
