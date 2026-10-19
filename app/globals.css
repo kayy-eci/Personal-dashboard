@@ -627,6 +627,59 @@ body {
   font-size: 14px;
 }
 
+.shortcut-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.shortcut-section + .shortcut-section {
+  margin-top: 12px;
+}
+
+.shortcut-heading {
+  margin: 0 0 4px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.shortcut-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.shortcut-keys {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.shortcut-action {
+  color: var(--color-text);
+  text-align: right;
+}
+
 .trash-list {
   margin: 0;
   padding: 0;

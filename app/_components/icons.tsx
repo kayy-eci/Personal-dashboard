@@ -83,3 +83,12 @@ export function FileIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function ThemeIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="8" cy="8" r="2.6" />
+      <path d="M8 1.8V3.4M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.7 3.7l1.1 1.1M11.2 11.2l1.1 1.1M12.3 3.7l-1.1 1.1M4.8 11.2l-1.1 1.1" />
+    </svg>
+  );
+}

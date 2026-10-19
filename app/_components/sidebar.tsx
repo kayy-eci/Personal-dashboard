@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { PageTreeNode } from "@/lib/pages-client";
+import type { ThemePreference } from "@/lib/theme-preference";
 import { isForbiddenMoveParent } from "@/lib/page-tree";
 import {
   useWorkspace,
@@ -15,10 +16,17 @@ import {
   FileIcon,
   MoreIcon,
   PlusIcon,
+  ThemeIcon,
   TrashIcon,
 } from "./icons";
 
 const pageIdDragType = "application/x-lifeos-page-id";
+
+const themeLabels: Record<ThemePreference, string> = {
+  light: "Light",
+  dark: "Dark",
+  system: "System",
+};
 
 function zoneForPointer(target: HTMLElement, clientY: number): DropZone {
   const rect = target.getBoundingClientRect();
@@ -36,6 +44,7 @@ export function Sidebar() {
   const workspace = useWorkspace();
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartRef = useRef<{ startWidth: number; startX: number } | null>(null);
+  const themeLabel = themeLabels[workspace.theme];
 
   useEffect(() => {
     if (!isResizing) {
@@ -123,6 +132,15 @@ export function Sidebar() {
         <button type="button" className="sidebar-button" onClick={workspace.openTrash}>
           <TrashIcon />
           <span>Trash</span>
+        </button>
+        <button
+          type="button"
+          className="sidebar-button"
+          onClick={workspace.cycleTheme}
+          aria-label={`Theme: ${themeLabel}. Activates to switch to the next theme.`}
+        >
+          <ThemeIcon />
+          <span>Theme: {themeLabel}</span>
         </button>
       </div>
 

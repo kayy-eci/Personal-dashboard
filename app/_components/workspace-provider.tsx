@@ -20,6 +20,11 @@ import { getLifeOsApi, runPageOperation } from "@/lib/pages-client";
 import { flushActiveSaver } from "@/lib/page-saver";
 import { ancestorsOf, findNode, isForbiddenMoveParent } from "@/lib/page-tree";
 import {
+  isThemePreference,
+  nextTheme,
+  type ThemePreference,
+} from "@/lib/theme-preference";
+import {
   isFiniteNumber,
   isStringArray,
   readUiJson,
@@ -30,6 +35,8 @@ import {
 
 export const sidebarMinWidth = 200;
 export const sidebarMaxWidth = 480;
+
+const themeKey = "theme";
 
 export type DropZone = "before" | "after" | "inside";
 
@@ -54,6 +61,10 @@ export interface WorkspaceActions {
   errors: readonly string[];
   draggingPageId: string | null;
   hoveredRowId: string | null;
+  theme: ThemePreference;
+  cycleTheme: () => void;
+  shortcutsOpen: boolean;
+  closeShortcuts: () => void;
   selectPage: (pageId: string) => void;
   toggleExpanded: (pageId: string) => void;
   createPage: (options?: { parentId?: string | null }) => Promise<void>;
@@ -134,6 +145,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [errors, setErrors] = useState<readonly string[]>([]);
   const [draggingPageId, setDraggingPageId] = useState<string | null>(null);
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
+  const [theme, setTheme] = useState<ThemePreference>("system");
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   const treeRef = useRef<PageTreeNode[] | null>(null);
   useEffect(() => {
@@ -165,6 +178,45 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [pushError]);
 
+  /** FR-4.4: resolves the preference against the OS scheme and applies it. */
+  const applyTheme = useCallback((preference: ThemePreference) => {
+    const root = document.documentElement;
+    const dark =
+      preference === "dark" ||
+      (preference === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    if (dark) {
+      root.dataset.theme = "dark";
+    } else {
+      delete root.dataset.theme;
+    }
+  }, []);
+
+  const themeRef = useRef(theme);
+  useEffect(() => {
+    themeRef.current = theme;
+  }, [theme]);
+
+  const cycleTheme = useCallback(() => {
+    const next = nextTheme(themeRef.current);
+    writeUiString(themeKey, next);
+    setTheme(next);
+    applyTheme(next);
+  }, [applyTheme]);
+
+  // Follow OS scheme changes while "system" is selected.
+  useEffect(() => {
+    if (theme !== "system") {
+      return;
+    }
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => {
+      applyTheme("system");
+    };
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, [theme, applyTheme]);
+
   // Initial load plus persisted UI state.
   useEffect(() => {
     let cancelled = false;
@@ -187,6 +239,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (readUiString("sidebar.collapsed") === "true") {
         setSidebarCollapsed(true);
       }
+      const storedTheme = readUiString(themeKey);
+      const themePreference = isThemePreference(storedTheme)
+        ? storedTheme
+        : "system";
+      setTheme(themePreference);
+      applyTheme(themePreference);
       setActivePageId(readUiString("sidebar.activePageId") ?? null);
 
       const loaded = await loadTree();
@@ -209,7 +267,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [loadTree]);
+  }, [loadTree, applyTheme]);
 
   // Keep ancestors of the active page expanded so the selection is visible.
   useEffect(() => {
@@ -291,6 +349,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const closeTrash = useCallback(() => {
     setTrashOpen(false);
+  }, []);
+
+  const closeShortcuts = useCallback(() => {
+    setShortcutsOpen(false);
   }, []);
 
   const createPage = useCallback(
@@ -464,27 +526,32 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setHoveredRowId(null);
   }, []);
 
-  // Global shortcuts (FR-2.2 collapse, FR-2.3 create). Native menu wiring in a
-  // later step may replace these.
+  // FR-4.3: native menu accelerators (New page, Toggle sidebar, Toggle theme,
+  // Shortcut cheat sheet) arrive over the typed "app:menu-action" channel; the
+  // menu is authoritative, so no renderer-side keydown duplicates them.
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const modifier = event.ctrlKey || event.metaKey;
-      if (!modifier || event.altKey) {
-        return;
+    const api = getLifeOsApi();
+    if (!api?.onMenuAction) {
+      return;
+    }
+    return api.onMenuAction((action) => {
+      switch (action) {
+        case "new-page":
+          void createPage();
+          requestTitleFocus();
+          break;
+        case "toggle-sidebar":
+          toggleSidebar();
+          break;
+        case "toggle-theme":
+          cycleTheme();
+          break;
+        case "show-shortcuts":
+          setShortcutsOpen(true);
+          break;
       }
-      const key = event.key.toLowerCase();
-      if (key === "n" && !event.shiftKey) {
-        event.preventDefault();
-        void createPage();
-        requestTitleFocus();
-      } else if (key === "b" && event.shiftKey) {
-        event.preventDefault();
-        toggleSidebar();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [createPage, requestTitleFocus, toggleSidebar]);
+    });
+  }, [createPage, cycleTheme, requestTitleFocus, toggleSidebar]);
 
   // FR-3.2: the main process asks for a flush on window close and quit; the
   // active page saver does the work and this shell always answers the shell
@@ -520,6 +587,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       errors,
       draggingPageId,
       hoveredRowId,
+      theme,
+      cycleTheme,
+      shortcutsOpen,
+      closeShortcuts,
       selectPage,
       toggleExpanded,
       createPage,
@@ -553,6 +624,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       errors,
       draggingPageId,
       hoveredRowId,
+      theme,
+      cycleTheme,
+      shortcutsOpen,
+      closeShortcuts,
       selectPage,
       toggleExpanded,
       createPage,
