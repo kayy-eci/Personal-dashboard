@@ -13,7 +13,8 @@
   "include": [
     "electron/**/*.ts",
     "lib/page-saver.ts",
-    "lib/markdown-paste.ts"
+    "lib/markdown-paste.ts",
+    "lib/slash-filter.ts"
   ],
   "exclude": ["node_modules", "dist-electron"]
 }

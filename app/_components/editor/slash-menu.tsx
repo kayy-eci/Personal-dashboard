@@ -10,6 +10,7 @@ import type {
   SuggestionProps,
 } from "@tiptap/suggestion";
 import { ReactRenderer } from "@tiptap/react";
+import { filterSlashItems } from "@/lib/slash-filter";
 import { SlashMenuPopup, type SlashMenuRef } from "./slash-popup";
 
 export interface SlashItem {
@@ -17,6 +18,7 @@ export interface SlashItem {
   label: string;
   description: string;
   keywords?: string[];
+  aliases?: string[];
   run: (editor: Editor, range: Range) => void;
 }
 
@@ -89,21 +91,22 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       id: "heading-1",
       label: "Heading 1",
       description: "Section heading (large)",
-      keywords: ["h1", "title"],
+      keywords: ["title"],
+      aliases: ["h1", "big title"],
       run: heading(1),
     },
     {
       id: "heading-2",
       label: "Heading 2",
       description: "Subsection heading (medium)",
-      keywords: ["h2"],
+      aliases: ["h2", "medium title"],
       run: heading(2),
     },
     {
       id: "heading-3",
       label: "Heading 3",
       description: "Minor grouping (small)",
-      keywords: ["h3"],
+      aliases: ["h3", "small title"],
       run: heading(3),
     },
     {
@@ -111,6 +114,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       label: "Bulleted list",
       description: "Simple list items",
       keywords: ["unordered"],
+      aliases: ["ul", "bullet", "list"],
       run: toggleList("bulletList"),
     },
     {
@@ -118,19 +122,22 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       label: "Numbered list",
       description: "List with numbering",
       keywords: ["ordered"],
+      aliases: ["ol", "number"],
       run: toggleList("orderedList"),
     },
     {
       id: "to-do-list",
       label: "To-do list",
       description: "Track tasks with checkboxes",
-      keywords: ["task", "checklist"],
+      keywords: ["checklist"],
+      aliases: ["tdl", "todo", "task"],
       run: toggleList("taskList"),
     },
     {
       id: "quote",
       label: "Quote",
       description: "Capture a quotation",
+      aliases: ["bq", "blockquote"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).toggleBlockquote().run();
       },
@@ -140,6 +147,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       label: "Callout",
       description: "Highlighted note with an icon",
       keywords: ["info"],
+      aliases: ["note", "highlight"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).setCallout().run();
       },
@@ -148,6 +156,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       id: "code-block",
       label: "Code block",
       description: "Code with syntax highlighting",
+      aliases: ["code", "snippet"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).setCodeBlock().run();
       },
@@ -156,7 +165,8 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       id: "divider",
       label: "Divider",
       description: "Visually separate sections",
-      keywords: ["hr", "line", "rule"],
+      keywords: ["rule"],
+      aliases: ["hr", "line", "separator"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).setHorizontalRule().run();
       },
@@ -165,13 +175,15 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       id: "image",
       label: "Image",
       description: "Insert an image file",
-      keywords: ["picture", "photo"],
+      keywords: ["photo"],
+      aliases: ["img", "picture", "picture file"],
       run: pickImageFile,
     },
     {
       id: "table",
       label: "Table",
       description: "Insert a simple table",
+      aliases: ["grid"],
       run: (editor, range) => {
         editor
           .chain()
@@ -185,30 +197,12 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       id: "toggle",
       label: "Toggle",
       description: "Collapsible section",
-      keywords: ["details", "summary"],
+      aliases: ["details", "summary", "acc", "accordion"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).setDetails().run();
       },
     },
   ];
-}
-
-function filterItems(items: readonly SlashItem[], query: string): SlashItem[] {
-  const normalizedQuery = query.trim().toLowerCase();
-  if (!normalizedQuery) {
-    return [...items];
-  }
-  const tokens = normalizedQuery.split(/\s+/);
-  return items.filter((item) => {
-    const haystack = [
-      item.label,
-      item.description,
-      ...(item.keywords ?? []),
-    ]
-      .join(" ")
-      .toLowerCase();
-    return tokens.every((token) => haystack.includes(token));
-  });
 }
 
 interface SlashMenuPopupProps {
@@ -241,7 +235,7 @@ export const SlashMenu = Extension.create({
         char: "/",
         startOfLine: false,
         placement: "bottom-start",
-        items: ({ query }) => filterItems(slashItems, query),
+        items: ({ query }) => filterSlashItems(slashItems, query),
         command: ({ editor, range, props: item }) => {
           item.run(editor, range);
         },
