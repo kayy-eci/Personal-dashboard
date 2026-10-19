@@ -531,8 +531,54 @@ test("page loads assign stable unique ids to top-level blocks missing them", asy
   });
 });
 
-test("every write path appends a change_log row", async () => {
+test("saved documents with duplicate block ids are re-assigned unique ids", async () => {
   await withRepository(({ repository, connection }) => {
+    const page = repository.createPage();
+    // A document saved while the copy-paste bug still duplicated ids.
+    const duplicated = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          attrs: { id: "00000000-0000-7000-8000-00000000000a" },
+          content: [{ type: "text", text: "original" }],
+        },
+        {
+          type: "paragraph",
+          attrs: { id: "00000000-0000-7000-8000-00000000000a" },
+          content: [{ type: "text", text: "ketikan copy-paste" }],
+        },
+        { type: "paragraph", attrs: { id: "00000000-0000-7000-8000-00000000000b" } },
+      ],
+    };
+    connection.sqlite
+      .prepare("UPDATE pages SET content_json = ? WHERE id = ?")
+      .run(JSON.stringify(duplicated), page.id);
+
+    const loaded = JSON.parse(repository.getContent(page.id).contentJson);
+    const ids = loaded.content.map((node) => node.attrs.id);
+    assert.equal(ids.length, 3);
+    assert.equal(
+      new Set(ids).size,
+      3,
+      "repeated ids are re-assigned so blocks stay unique",
+    );
+    // The first occurrence keeps its id (stability), the second is new, and
+    // an unrelated third id is untouched.
+    assert.equal(ids[0], "00000000-0000-7000-8000-00000000000a");
+    assert.notEqual(ids[1], "00000000-0000-7000-8000-00000000000a");
+    assert.equal(ids[2], "00000000-0000-7000-8000-00000000000b");
+
+    // Storing the now-unique document again is a no-op (no id churn).
+    repository.saveContent(page.id, { contentJson: JSON.stringify(loaded) });
+    const reloadedIds = JSON.parse(
+      repository.getContent(page.id).contentJson,
+    ).content.map((node) => node.attrs.id);
+    assert.deepEqual(reloadedIds, ids);
+  });
+});
+
+test("every write path appends a change_log row", async () => {  await withRepository(({ repository, connection }) => {
     const operations = () =>
       connection.sqlite
         .prepare("SELECT entity_id, operation FROM change_log ORDER BY sequence")

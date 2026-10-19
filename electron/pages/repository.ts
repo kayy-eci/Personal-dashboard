@@ -60,15 +60,24 @@ export function normalizeBlockIds(
   }
 
   let assignedIds = 0;
+  const seenIds = new Set<string>();
   for (const node of document.content!) {
     const attrs =
       typeof node.attrs === "object" && node.attrs !== null
         ? node.attrs
         : (node.attrs = {});
-    if (typeof attrs.id !== "string" || attrs.id === "") {
-      attrs.id = nextId();
+    const existingId =
+      typeof attrs.id === "string" && attrs.id !== "" ? attrs.id : "";
+    const finalId =
+      existingId === "" || seenIds.has(existingId) ? nextId() : existingId;
+    // Missing ids get a fresh one; repeated ids (e.g. from legacy
+    // copy-paste) are re-assigned so every top-level block stays uniquely
+    // addressable (FR-1.1), always keeping the first occurrence stable.
+    if (finalId !== existingId) {
+      attrs.id = finalId;
       assignedIds += 1;
     }
+    seenIds.add(finalId);
   }
   return { contentJson: JSON.stringify(document), assignedIds };
 }

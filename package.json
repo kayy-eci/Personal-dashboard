@@ -12,6 +12,7 @@
     "start": "electron .",
     "package": "npm run build && electron-builder",
     "test:kill": "node tests/forced-kill.e2e.mjs",
+    "test:block-menu": "node tests/block-menu.e2e.mjs",
     "lint": "eslint",
     "test": "npm run build:electron && node --test tests/database.test.mjs tests/pages.test.mjs tests/page-saver.test.mjs tests/window-state.test.mjs tests/attachments-cleanup.test.mjs tests/markdown-paste.test.mjs tests/slash-filter.test.mjs"
   },

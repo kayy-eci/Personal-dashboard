@@ -5,7 +5,8 @@ import type { Editor } from "@tiptap/core";
 import { BubbleMenu } from "@tiptap/react/menus";
 import { useWorkspace } from "../workspace-provider";
 
-const textColors: Array<{ label: string; value: string | undefined }> = [
+/** Shared with the FR-1.7 block menu; text colors applied over the selection. */
+export const textColors: Array<{ label: string; value: string | undefined }> = [
   { label: "Default", value: undefined },
   { label: "Gray", value: "#6b6b6b" },
   { label: "Green", value: "#647c64" },
@@ -28,7 +29,8 @@ interface TurnIntoAction {
   run: (editor: Editor) => void;
 }
 
-const turnIntoActions: TurnIntoAction[] = [
+/** Shared with the FR-1.7 block menu; each action targets the editor selection. */
+export const turnIntoActions: TurnIntoAction[] = [
   { label: "Text", run: (editor) => editor.chain().focus().setParagraph().run() },
   { label: "Heading 1", run: (editor) => editor.chain().focus().toggleHeading({ level: 1 }).run() },
   { label: "Heading 2", run: (editor) => editor.chain().focus().toggleHeading({ level: 2 }).run() },
