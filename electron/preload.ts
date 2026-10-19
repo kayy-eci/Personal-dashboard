@@ -24,6 +24,7 @@ const lifeosApi: LifeOsAPI = {
   listTrash: () => invokeIpc("pages:list-trash"),
   getPageContent: (input) => invokeIpc("pages:get-content", input),
   savePageContent: (input) => invokeIpc("pages:save-content", input),
+  saveAttachment: (input) => invokeIpc("attachments:save", input),
 };
 
 contextBridge.exposeInMainWorld("lifeos", lifeosApi);

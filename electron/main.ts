@@ -8,14 +8,21 @@ import {
   type IpcMainInvokeEvent,
 } from "electron";
 import { realpath, stat } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { openDatabase, type DatabaseConnection } from "./database";
 import { MigrationError } from "./database/migrations";
 import { devices } from "./database/schema";
+import { isSaveAttachmentArgs } from "./ipc-contract";
 import { registerIpcHandler } from "./ipc-main";
 import { registerPageIpcHandlers } from "./pages/ipc";
 import { PageRepository } from "./pages/repository";
+import {
+  attachmentFileNamePattern,
+  getMimeForAttachmentFileName,
+  saveAttachment,
+} from "./attachments/store";
 
 const appScheme = "lifeos";
 const developmentUrl = process.env.LIFEOS_DEV_SERVER_URL;
@@ -39,6 +46,41 @@ let mainWindow: BrowserWindow | null = null;
 let databaseConnection: DatabaseConnection | null = null;
 let pageRepository: PageRepository | null = null;
 
+function attachmentsDirectory(): string {
+  return join(app.getPath("userData"), "attachments");
+}
+
+async function serveAttachment(
+  relativePath: string,
+): Promise<Response | null> {
+  if (!relativePath.startsWith("attachment/")) {
+    return null;
+  }
+  const fileName = relativePath.slice("attachment/".length);
+  if (!attachmentFileNamePattern.test(fileName)) {
+    return notFound();
+  }
+  const filePath = join(attachmentsDirectory(), fileName);
+  try {
+    const [file, stats] = await Promise.all([readFile(filePath), stat(filePath)]);
+    if (!stats.isFile()) {
+      return notFound();
+    }
+    return new Response(new Uint8Array(file), {
+      status: 200,
+      headers: {
+        "Content-Type":
+          getMimeForAttachmentFileName(fileName) ?? "application/octet-stream",
+        "Content-Length": String(stats.size),
+        "Cache-Control": "private, immutable",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  } catch {
+    return notFound();
+  }
+}
+
 function notFound(): Response {
   return new Response("Not found", { status: 404 });
 }
@@ -61,6 +103,11 @@ async function serveExport(request: Request): Promise<Response> {
     relativePath = decodeURIComponent(requestUrl.pathname).replace(/^\/+/, "");
   } catch {
     return notFound();
+  }
+
+  const attachmentResponse = await serveAttachment(relativePath);
+  if (attachmentResponse) {
+    return attachmentResponse;
   }
 
   const candidate = resolve(exportDirectory, relativePath || "index.html");
@@ -175,6 +222,14 @@ registerIpcHandler(
   (args): args is [] => args.length === 0,
   validateIpcSender,
   () => app.getVersion(),
+);
+
+registerIpcHandler(
+  "attachments:save",
+  isSaveAttachmentArgs,
+  validateIpcSender,
+  (_event, input) =>
+    saveAttachment(attachmentsDirectory(), input.mime, input.bytes),
 );
 
 registerPageIpcHandlers(validateIpcSender, () => {

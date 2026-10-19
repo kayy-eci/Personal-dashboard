@@ -6,8 +6,13 @@ import type {
   PageTrashEntry,
   PageTreeNode,
   RenamePageInput,
+  SavePageContentInput,
 } from "@/electron/pages/types";
-import type { LifeOsAPI } from "@/electron/ipc-contract";
+import type {
+  LifeOsAPI,
+  SaveAttachmentInput,
+} from "@/electron/ipc-contract";
+import type { StoredAttachment } from "@/electron/attachments/store";
 
 export type {
   CreatePageInput,
@@ -17,9 +22,10 @@ export type {
   PageTrashEntry,
   PageTreeNode,
   RenamePageInput,
+  SavePageContentInput,
 };
 
-export type { LifeOsAPI };
+export type { LifeOsAPI, SaveAttachmentInput, StoredAttachment };
 
 export function getLifeOsApi(): LifeOsAPI | undefined {
   if (typeof window === "undefined") {

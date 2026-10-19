@@ -24,6 +24,9 @@ export interface SavePageContentInput {
   contentJson: string;
 }
 
+/** Upper bound for stored page documents. */
+export const PAGE_CONTENT_MAX_LENGTH = 4 * 1024 * 1024;
+
 export interface PageContent {
   pageId: string;
   contentJson: string;

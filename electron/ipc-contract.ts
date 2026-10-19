@@ -9,7 +9,12 @@ import type {
   RenamePageInput,
   SavePageContentInput,
 } from "./pages/types";
-import { PAGE_CONTENT_MAX_LENGTH } from "./pages/repository";
+import { PAGE_CONTENT_MAX_LENGTH } from "./pages/types";
+import {
+  ATTACHMENT_MAX_BYTES,
+  type StoredAttachment,
+  isSupportedImageMime,
+} from "./attachments/store";
 
 export interface IpcContract {
   "app:get-version": {
@@ -52,6 +57,15 @@ export interface IpcContract {
     args: [input: SavePageContentInput];
     result: PageRecord;
   };
+  "attachments:save": {
+    args: [input: SaveAttachmentInput];
+    result: StoredAttachment;
+  };
+}
+
+export interface SaveAttachmentInput {
+  mime: string;
+  bytes: ArrayBuffer;
 }
 
 export type IpcChannel = keyof IpcContract;
@@ -66,6 +80,7 @@ const allowedKeys = {
   pageId: new Set(["pageId"]),
   rename: new Set(["pageId", "title"]),
   saveContent: new Set(["pageId", "contentJson"]),
+  saveAttachment: new Set(["mime", "bytes"]),
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -169,6 +184,21 @@ export function isSavePageContentArgs(
   );
 }
 
+export function isSaveAttachmentArgs(
+  args: unknown[],
+): args is [SaveAttachmentInput] {
+  const [input] = args;
+  return (
+    args.length === 1 &&
+    isRecord(input) &&
+    hasOnlyKeys(input, allowedKeys.saveAttachment) &&
+    isSupportedImageMime(input.mime) &&
+    input.bytes instanceof ArrayBuffer &&
+    input.bytes.byteLength > 0 &&
+    input.bytes.byteLength <= ATTACHMENT_MAX_BYTES
+  );
+}
+
 export interface LifeOsAPI {
   getAppVersion(): Promise<string>;
   createPage(input?: CreatePageInput): Promise<PageRecord>;
@@ -180,6 +210,7 @@ export interface LifeOsAPI {
   listTrash(): Promise<PageTrashEntry[]>;
   getPageContent(input: PageIdInput): Promise<PageContent>;
   savePageContent(input: SavePageContentInput): Promise<PageRecord>;
+  saveAttachment(input: SaveAttachmentInput): Promise<StoredAttachment>;
 }
 
 declare global {

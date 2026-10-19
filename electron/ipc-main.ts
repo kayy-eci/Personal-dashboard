@@ -8,9 +8,9 @@ export function registerIpcHandler<Channel extends IpcChannel>(
   handler: (
     event: IpcMainInvokeEvent,
     ...args: IpcArgs<Channel>
-  ) => IpcResult<Channel>,
+  ) => IpcResult<Channel> | Promise<IpcResult<Channel>>,
 ): void {
-  ipcMain.handle(channel, (event, ...args: unknown[]) => {
+  ipcMain.handle(channel, async (event, ...args: unknown[]) => {
     validateSender(event);
 
     if (!validateArgs(args)) {

@@ -3,6 +3,7 @@ import type Database from "better-sqlite3";
 import type { LifeOsDatabase } from "../database";
 import { changeLog, pages } from "../database/schema";
 import { uuidv7 } from "../database/uuid";
+import { PAGE_CONTENT_MAX_LENGTH } from "./types";
 import type {
   CreatePageInput,
   MovePageInput,
@@ -16,7 +17,6 @@ import type {
 
 const positionLimit = 0xffff_ffff_ffff_ffffn;
 const positionPattern = /^[0-9a-f]{16}$/;
-export const PAGE_CONTENT_MAX_LENGTH = 4 * 1024 * 1024;
 
 export class PageRepositoryError extends Error {
   constructor(
