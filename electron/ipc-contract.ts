@@ -41,6 +41,14 @@ export interface IpcContract {
     args: [input: PageIdInput];
     result: PageRecord;
   };
+  /**
+   * FR-2.6: permanent deletion of a trash subtree. The renderer must ask for
+   * confirmation before calling; the main process refuses active pages.
+   */
+  "pages:purge": {
+    args: [input: PageIdInput];
+    result: void;
+  };
   "pages:list-tree": {
     args: [];
     result: PageTreeNode[];
@@ -232,6 +240,7 @@ export interface LifeOsAPI {
   movePage(input: MovePageInput): Promise<PageRecord>;
   deletePage(input: PageIdInput): Promise<void>;
   restorePage(input: PageIdInput): Promise<PageRecord>;
+  purgePage(input: PageIdInput): Promise<void>;
   listPageTree(): Promise<PageTreeNode[]>;
   listTrash(): Promise<PageTrashEntry[]>;
   getPageContent(input: PageIdInput): Promise<PageContent>;

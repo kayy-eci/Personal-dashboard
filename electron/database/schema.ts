@@ -52,7 +52,7 @@ export const changeLog = sqliteTable(
     entityType: text("entity_type", { enum: ["page"] }).notNull(),
     entityId: text("entity_id").notNull(),
     operation: text("operation", {
-      enum: ["create", "update", "move", "delete", "restore"],
+      enum: ["create", "update", "move", "delete", "restore", "purge"],
     }).notNull(),
     payloadJson: text("payload_json").notNull(),
     createdAt: text("created_at").notNull(),

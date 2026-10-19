@@ -433,6 +433,27 @@ async function scheduleAttachmentCleanup(): Promise<void> {
   }
 }
 
+/**
+ * FR-2.6: trash entries whose deletion date is older than the retention
+ * window disappear permanently on launch.
+ */
+function purgeExpiredPages(): void {
+  const repository = pageRepository;
+  if (!repository) {
+    return;
+  }
+  try {
+    const purged = repository.purgeExpiredTrash(Date.now());
+    if (purged > 0) {
+      console.log(
+        `LifeOS purged ${purged} trash entry/entries past the retention window`,
+      );
+    }
+  } catch (error) {
+    console.warn("LifeOS trash purge failed", error);
+  }
+}
+
 registerIpcHandler(
   "app:get-version",
   (args): args is [] => args.length === 0,
@@ -480,6 +501,7 @@ void app.whenReady().then(async () => {
   const restoreBounds = await readWindowBounds(app.getPath("userData"));
   createWindow(restoreBounds);
   void scheduleAttachmentCleanup();
+  purgeExpiredPages();
 }).catch(async (error: unknown) => {
   console.error("LifeOS failed to start", error);
   try {

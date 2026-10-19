@@ -45,6 +45,7 @@ const operationFallbacks = {
   move: "The page could not be moved",
   delete: "The page could not be moved to the trash",
   restore: "The page could not be restored",
+  purge: "The page could not be deleted permanently",
   listTree: "The page list could not be loaded",
   listTrash: "The trash could not be loaded",
   getPageContent: "The page content could not be loaded",

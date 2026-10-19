@@ -27,6 +27,9 @@ export interface SavePageContentInput {
 /** Upper bound for stored page documents. */
 export const PAGE_CONTENT_MAX_LENGTH = 4 * 1024 * 1024;
 
+/** FR-2.6: soft-deleted pages disappear permanently after this many days. */
+export const TRASH_RETENTION_DAYS = 30;
+
 export interface PageContent {
   pageId: string;
   contentJson: string;

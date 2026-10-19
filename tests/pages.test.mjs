@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import Database from "better-sqlite3";
 import { mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { openDatabase } from "../dist-electron/electron/database/index.js";
+import { runMigrations } from "../dist-electron/electron/database/migrations.js";
 import { uuidv7 } from "../dist-electron/electron/database/uuid.js";
 import {
   isCreatePageArgs,
@@ -244,6 +246,149 @@ test("reads and saves page content with validation", async () => {
         error instanceof PageRepositoryError && error.code === "NOT_FOUND",
     );
   });
+});
+
+test("purges a trash subtree permanently and keeps other pages intact", async () => {
+  await withRepository(({ repository, connection }) => {
+    const surviving = repository.createPage();
+    const parent = repository.createPage();
+    const child = repository.createPage({ parentId: parent.id });
+    const grandchild = repository.createPage({ parentId: child.id });
+
+    repository.deletePage(parent.id);
+    repository.purgePage(parent.id);
+
+    assert.deepEqual(repository.listTree().map(({ id }) => id), [surviving.id]);
+    assert.deepEqual(repository.listTrash(), []);
+
+    const remainingPages = connection.sqlite
+      .prepare("SELECT id FROM pages")
+      .all()
+      .map(({ id }) => id);
+    assert.deepEqual(remainingPages, [surviving.id]);
+
+    // Every purged row produced one terminal change-log entry.
+    const purgeEvents = connection.sqlite
+      .prepare("SELECT entity_id FROM change_log WHERE operation = 'purge'")
+      .all()
+      .map(({ entity_id }) => entity_id);
+    assert.deepEqual(purgeEvents.sort(), [child.id, grandchild.id, parent.id].sort());
+
+    // The purged page no longer resolves anywhere.
+    assert.throws(
+      () => repository.restorePage(parent.id),
+      (error) =>
+        error instanceof PageRepositoryError && error.code === "NOT_FOUND",
+    );
+  });
+});
+
+test("rejects purging an active page and purging an unknown page", async () => {
+  await withRepository(({ repository }) => {
+    const page = repository.createPage();
+
+    assert.throws(
+      () => repository.purgePage(page.id),
+      (error) =>
+        error instanceof PageRepositoryError && error.code === "INVALID_INPUT",
+    );
+    assert.throws(
+      () => repository.purgePage(uuidv7()),
+      (error) =>
+        error instanceof PageRepositoryError && error.code === "NOT_FOUND",
+    );
+    assert.equal(repository.listTree().length, 1);
+  });
+});
+
+test("auto-purge removes only trash entries past the retention window", async () => {
+  await withRepository(({ repository, connection }) => {
+    const surviving = repository.createPage();
+    const keeper = repository.createPage();
+    const expired = repository.createPage();
+    repository.deletePage(keeper.id);
+    repository.deletePage(expired.id);
+    // Age only the expired entry's tombstone past the 30-day window.
+    connection.sqlite
+      .prepare("UPDATE pages SET deleted_at = ? WHERE id = ?")
+      .run(new Date(Date.now() - 44 * 24 * 60 * 60 * 1000).toISOString(), expired.id);
+
+    const purged = repository.purgeExpiredTrash(Date.now(), 30);
+
+    assert.equal(purged, 1);
+    assert.deepEqual(
+      repository.listTrash().map(({ id }) => id),
+      [keeper.id],
+    );
+    assert.deepEqual(
+      repository.listTree().map(({ id }) => id),
+      // The keeper stays a tombstone; only the expired entry is purged.
+      [surviving.id],
+    );
+  });
+});
+
+test("version 2 migration preserves change_log entries and allows the purge operation", async () => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), "lifeos-migrations-"));
+  const db = new Database(path.join(directory, "lifeos.sqlite"));
+  try {
+    db.pragma("journal_mode = WAL");
+    db.pragma("foreign_keys = ON");
+    db.exec(`
+      CREATE TABLE devices (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE change_log (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT NOT NULL UNIQUE,
+        device_id TEXT NOT NULL REFERENCES devices(id),
+        entity_type TEXT NOT NULL CHECK (entity_type = 'page'),
+        entity_id TEXT NOT NULL,
+        operation TEXT NOT NULL
+          CHECK (operation IN ('create', 'update', 'move', 'delete', 'restore')),
+        payload_json TEXT NOT NULL CHECK (json_valid(payload_json)),
+        created_at TEXT NOT NULL
+      );
+      INSERT INTO devices (id, name, created_at, updated_at) VALUES ('device-1', 'Test', '2026-01-01', '2026-01-01');
+      INSERT INTO change_log (id, device_id, entity_type, entity_id, operation, payload_json, created_at)
+        VALUES ('entry-1', 'device-1', 'page', 'page-1', 'create', '{}', '2026-01-01');
+      PRAGMA user_version = 1;
+    `);
+    // Version 1 rejects the purge operation outright.
+    assert.throws(() =>
+      db
+        .prepare(
+          "INSERT INTO change_log (id, device_id, entity_type, entity_id, operation, payload_json, created_at) VALUES ('purge-v1', 'device-1', 'page', 'page-1', 'purge', '{}', '2026-01-02')",
+        )
+        .run());
+
+    const backupPath = await runMigrations(db, directory);
+
+    // The pre-migration backup exists and the old entry survived the rebuild.
+    assert.ok(backupPath);
+    assert.equal(
+      db
+        .prepare(
+          "SELECT operation FROM change_log WHERE id = 'entry-1'",
+        )
+        .get().operation,
+      "create",
+    );
+    // Version 2 accepts it.
+    db.prepare(
+      "INSERT INTO change_log (id, device_id, entity_type, entity_id, operation, payload_json, created_at) VALUES ('purge-v2', 'device-1', 'page', 'page-1', 'purge', '{}', '2026-01-02')",
+    ).run();
+    assert.equal(
+      db.prepare("SELECT COUNT(*) AS count FROM change_log").get().count,
+      2,
+    );
+  } finally {
+    db.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
 });
 
 test("validates every page IPC input shape and rejects extra or malformed fields", () => {

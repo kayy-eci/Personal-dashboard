@@ -3,7 +3,7 @@ import type Database from "better-sqlite3";
 import type { LifeOsDatabase } from "../database";
 import { changeLog, pages } from "../database/schema";
 import { uuidv7 } from "../database/uuid";
-import { PAGE_CONTENT_MAX_LENGTH } from "./types";
+import { PAGE_CONTENT_MAX_LENGTH, TRASH_RETENTION_DAYS } from "./types";
 import type {
   CreatePageInput,
   MovePageInput,
@@ -283,8 +283,57 @@ export class PageRepository {
     });
   }
 
-  restorePage(pageId: string): PageRecord {
-    return this.transact(() => {
+  /**
+   * FR-2.6: permanently deletes a trash subtree. Only soft-deleted subtrees
+   * qualify; an active page can never be purged by accident.
+   */
+  purgePage(pageId: string): void {
+    this.transact(() => {
+      const page = this.requirePage(pageId);
+      if (page.deletedAt === null) {
+        throw new PageRepositoryError(
+          "INVALID_INPUT",
+          "Only pages in the trash can be deleted permanently",
+        );
+      }
+
+      const subtree = this.getSubtree(pageId);
+      // Purged tombstones leave nothing to sync, so every row is removed and
+      // each removal recorded as a terminal change-log entry.
+      for (const subtreePage of subtree) {
+        this.logChange(
+          subtreePage.id,
+          "purge",
+          {
+            title: subtreePage.title,
+            deletedAt: subtreePage.deletedAt,
+          },
+          new Date().toISOString(),
+        );
+        this.db.delete(pages).where(eq(pages.id, subtreePage.id)).run();
+      }
+    });
+  }
+
+  /**
+   * FR-2.6: automatic purge. Trash entries whose deletion date is older than
+   * the retention window are removed; returns how many entries were purged.
+   */
+  purgeExpiredTrash(now: number, retentionDays = TRASH_RETENTION_DAYS): number {
+    const cutoff = now - retentionDays * 24 * 60 * 60 * 1000;
+    let purged = 0;
+    for (const entry of this.listTrash()) {
+      const deletedAt = entry.deletedAt === null ? NaN : Date.parse(entry.deletedAt);
+      if (!Number.isFinite(deletedAt) || deletedAt > cutoff) {
+        continue;
+      }
+      this.purgePage(entry.id);
+      purged += 1;
+    }
+    return purged;
+  }
+
+  restorePage(pageId: string): PageRecord {    return this.transact(() => {
       const page = this.requirePage(pageId);
       if (page.deletedAt === null) {
         throw new PageRepositoryError("NOT_FOUND", `Deleted page ${pageId} was not found`);
@@ -569,7 +618,7 @@ export class PageRepository {
 
   private logChange(
     pageId: string,
-    operation: "create" | "update" | "move" | "delete" | "restore",
+    operation: "create" | "update" | "move" | "delete" | "restore" | "purge",
     payload: Record<string, unknown>,
     timestamp: string,
   ): void {

@@ -73,6 +73,13 @@ export function registerPageIpcHandlers(
       runPageOperation(() => getRepository().restorePage(input.pageId)),
   );
   registerIpcHandler(
+    "pages:purge",
+    isPageIdArgs,
+    validateSender,
+    (_event, input) =>
+      runPageOperation(() => getRepository().purgePage(input.pageId)),
+  );
+  registerIpcHandler(
     "pages:list-tree",
     hasNoIpcArgs,
     validateSender,

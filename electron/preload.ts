@@ -21,6 +21,7 @@ const lifeosApi: LifeOsAPI = {
   movePage: (input) => invokeIpc("pages:move", input),
   deletePage: (input) => invokeIpc("pages:delete", input),
   restorePage: (input) => invokeIpc("pages:restore", input),
+  purgePage: (input) => invokeIpc("pages:purge", input),
   listPageTree: () => invokeIpc("pages:list-tree"),
   listTrash: () => invokeIpc("pages:list-trash"),
   getPageContent: (input) => invokeIpc("pages:get-content", input),

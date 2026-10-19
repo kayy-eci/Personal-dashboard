@@ -21,7 +21,7 @@ test("initializes a WAL database with a local device and pre-migration backup", 
 
     assert.equal(connection.sqlite.pragma("journal_mode", { simple: true }), "wal");
     assert.equal(connection.sqlite.pragma("foreign_keys", { simple: true }), 1);
-    assert.equal(connection.sqlite.pragma("user_version", { simple: true }), 1);
+    assert.equal(connection.sqlite.pragma("user_version", { simple: true }), 2);
 
     const [device] = connection.db.select().from(devices).all();
     assert.ok(device);

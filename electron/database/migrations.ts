@@ -79,6 +79,51 @@ const migrations: readonly Migration[] = [
         END;
     `,
   },
+  {
+    // FR-2.6: permanent deletion ("purge") is its own change-log operation,
+    // so version 2 rebuilds change_log with an extended CHECK while keeping
+    // every existing row, index, and the append-only triggers.
+    version: 2,
+    sql: `
+      CREATE TABLE change_log_v2 (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        id TEXT NOT NULL UNIQUE,
+        device_id TEXT NOT NULL REFERENCES devices(id),
+        entity_type TEXT NOT NULL CHECK (entity_type = 'page'),
+        entity_id TEXT NOT NULL,
+        operation TEXT NOT NULL
+          CHECK (operation IN ('create', 'update', 'move', 'delete', 'restore', 'purge')),
+        payload_json TEXT NOT NULL CHECK (json_valid(payload_json)),
+        created_at TEXT NOT NULL
+      );
+
+      INSERT INTO change_log_v2
+        (sequence, id, device_id, entity_type, entity_id, operation, payload_json, created_at)
+      SELECT
+        sequence, id, device_id, entity_type, entity_id, operation, payload_json, created_at
+      FROM change_log;
+
+      DROP TABLE change_log;
+      ALTER TABLE change_log_v2 RENAME TO change_log;
+
+      CREATE INDEX IF NOT EXISTS change_log_entity_idx
+        ON change_log(entity_type, entity_id);
+      CREATE INDEX IF NOT EXISTS change_log_created_at_idx
+        ON change_log(created_at);
+
+      CREATE TRIGGER change_log_no_update
+        BEFORE UPDATE ON change_log
+        BEGIN
+          SELECT RAISE(ABORT, 'change_log is append-only');
+        END;
+
+      CREATE TRIGGER change_log_no_delete
+        BEFORE DELETE ON change_log
+        BEGIN
+          SELECT RAISE(ABORT, 'change_log is append-only');
+        END;
+    `,
+  },
 ];
 
 function createBackupPath(userDataDirectory: string, version: number): string {
