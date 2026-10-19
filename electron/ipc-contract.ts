@@ -1,12 +1,15 @@
 import type {
   CreatePageInput,
   MovePageInput,
+  PageContent,
   PageIdInput,
   PageRecord,
   PageTrashEntry,
   PageTreeNode,
   RenamePageInput,
+  SavePageContentInput,
 } from "./pages/types";
+import { PAGE_CONTENT_MAX_LENGTH } from "./pages/repository";
 
 export interface IpcContract {
   "app:get-version": {
@@ -41,6 +44,14 @@ export interface IpcContract {
     args: [];
     result: PageTrashEntry[];
   };
+  "pages:get-content": {
+    args: [input: PageIdInput];
+    result: PageContent;
+  };
+  "pages:save-content": {
+    args: [input: SavePageContentInput];
+    result: PageRecord;
+  };
 }
 
 export type IpcChannel = keyof IpcContract;
@@ -54,6 +65,7 @@ const allowedKeys = {
   move: new Set(["pageId", "parentId", "beforeId", "afterId"]),
   pageId: new Set(["pageId"]),
   rename: new Set(["pageId", "title"]),
+  saveContent: new Set(["pageId", "contentJson"]),
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -142,6 +154,21 @@ export function hasNoIpcArgs(args: unknown[]): args is [] {
   return args.length === 0;
 }
 
+export function isSavePageContentArgs(
+  args: unknown[],
+): args is [SavePageContentInput] {
+  const [input] = args;
+  return (
+    args.length === 1 &&
+    isRecord(input) &&
+    hasOnlyKeys(input, allowedKeys.saveContent) &&
+    isPageId(input.pageId) &&
+    typeof input.contentJson === "string" &&
+    input.contentJson.length > 0 &&
+    input.contentJson.length <= PAGE_CONTENT_MAX_LENGTH
+  );
+}
+
 export interface LifeOsAPI {
   getAppVersion(): Promise<string>;
   createPage(input?: CreatePageInput): Promise<PageRecord>;
@@ -151,6 +178,8 @@ export interface LifeOsAPI {
   restorePage(input: PageIdInput): Promise<PageRecord>;
   listPageTree(): Promise<PageTreeNode[]>;
   listTrash(): Promise<PageTrashEntry[]>;
+  getPageContent(input: PageIdInput): Promise<PageContent>;
+  savePageContent(input: SavePageContentInput): Promise<PageRecord>;
 }
 
 declare global {

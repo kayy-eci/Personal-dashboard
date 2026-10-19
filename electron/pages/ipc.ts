@@ -6,6 +6,7 @@ import {
   isMovePageArgs,
   isPageIdArgs,
   isRenamePageArgs,
+  isSavePageContentArgs,
 } from "../ipc-contract";
 import { registerIpcHandler } from "../ipc-main";
 import { PageRepository, PageRepositoryError } from "./repository";
@@ -82,5 +83,23 @@ export function registerPageIpcHandlers(
     hasNoIpcArgs,
     validateSender,
     () => runPageOperation(() => getRepository().listTrash()),
+  );
+  registerIpcHandler(
+    "pages:get-content",
+    isPageIdArgs,
+    validateSender,
+    (_event, input) =>
+      runPageOperation(() => getRepository().getContent(input.pageId)),
+  );
+  registerIpcHandler(
+    "pages:save-content",
+    isSavePageContentArgs,
+    validateSender,
+    (_event, input) =>
+      runPageOperation(() =>
+        getRepository().saveContent(input.pageId, {
+          contentJson: input.contentJson,
+        }),
+      ),
   );
 }

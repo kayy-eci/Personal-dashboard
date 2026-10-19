@@ -10,6 +10,7 @@ import {
   isMovePageArgs,
   isPageIdArgs,
   isRenamePageArgs,
+  isSavePageContentArgs,
 } from "../dist-electron/electron/ipc-contract.js";
 import { PageRepository, PageRepositoryError } from "../dist-electron/electron/pages/repository.js";
 
@@ -194,6 +195,57 @@ test("restores a page at the root when its original parent is still deleted", as
   });
 });
 
+test("reads and saves page content with validation", async () => {
+  await withRepository(({ repository }) => {
+    const page = repository.createPage();
+    const content = repository.getContent(page.id);
+    assert.equal(content.pageId, page.id);
+    assert.equal(content.schemaVersion, 1);
+    assert.equal(JSON.parse(content.contentJson).type, "doc");
+
+    const document = {
+      type: "doc",
+      content: [{ type: "paragraph" }],
+    };
+    const updated = repository.saveContent(page.id, {
+      contentJson: JSON.stringify(document),
+    });
+    assert.equal(updated.updatedAt > content.updatedAt, true);
+    assert.equal(repository.getContent(page.id).contentJson, JSON.stringify(document));
+
+    assert.throws(
+      () => repository.saveContent(page.id, { contentJson: "" }),
+      (error) =>
+        error instanceof PageRepositoryError && error.code === "INVALID_INPUT",
+    );
+    assert.throws(
+      () =>
+        repository.saveContent(page.id, {
+          contentJson: JSON.stringify({ type: "doc", content: [] }),
+        }),
+      (error) =>
+        error instanceof PageRepositoryError && error.code === "INVALID_INPUT",
+    );
+    assert.throws(
+      () => repository.saveContent(page.id, { contentJson: "not-json" }),
+      (error) =>
+        error instanceof PageRepositoryError && error.code === "INVALID_INPUT",
+    );
+    assert.throws(
+      () => repository.getContent(uuidv7()),
+      (error) =>
+        error instanceof PageRepositoryError && error.code === "NOT_FOUND",
+    );
+
+    repository.deletePage(page.id);
+    assert.throws(
+      () => repository.getContent(page.id),
+      (error) =>
+        error instanceof PageRepositoryError && error.code === "NOT_FOUND",
+    );
+  });
+});
+
 test("validates every page IPC input shape and rejects extra or malformed fields", () => {
   const pageId = uuidv7();
   const parentId = uuidv7();
@@ -217,4 +269,12 @@ test("validates every page IPC input shape and rejects extra or malformed fields
 
   assert.equal(isPageIdArgs([{ pageId }]), true);
   assert.equal(isPageIdArgs([{ pageId, extra: "rejected" }]), false);
+
+  assert.equal(isSavePageContentArgs([{ pageId, contentJson: '{"type":"doc"}' }]), true);
+  assert.equal(isSavePageContentArgs([{ pageId, contentJson: "" }]), false);
+  assert.equal(isSavePageContentArgs([{ pageId, contentJson: 42 }]), false);
+  assert.equal(
+    isSavePageContentArgs([{ pageId, contentJson: "x".repeat(5 * 1024 * 1024) }]),
+    false,
+  );
 });

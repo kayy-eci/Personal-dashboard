@@ -15,8 +15,23 @@
     "test": "npm run build:electron && node --test tests/database.test.mjs tests/pages.test.mjs"
   },
   "dependencies": {
+    "@tiptap/core": "^3.32.0",
+    "@tiptap/extension-code-block-lowlight": "^3.32.0",
+    "@tiptap/extension-details": "^3.32.0",
+    "@tiptap/extension-drag-handle": "^3.32.0",
+    "@tiptap/extension-drag-handle-react": "^3.32.0",
+    "@tiptap/extension-image": "^3.32.0",
+    "@tiptap/extension-list": "^3.32.0",
+    "@tiptap/extension-table": "^3.32.0",
+    "@tiptap/extensions": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "@tiptap/react": "^3.32.0",
+    "@tiptap/starter-kit": "^3.32.0",
+    "@tiptap/suggestion": "^3.32.0",
     "better-sqlite3": "13.0.3",
     "drizzle-orm": "0.45.4",
+    "highlight.js": "^11.12.0",
+    "lowlight": "^3.3.0",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0"

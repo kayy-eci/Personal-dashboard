@@ -22,6 +22,8 @@ const lifeosApi: LifeOsAPI = {
   restorePage: (input) => invokeIpc("pages:restore", input),
   listPageTree: () => invokeIpc("pages:list-tree"),
   listTrash: () => invokeIpc("pages:list-trash"),
+  getPageContent: (input) => invokeIpc("pages:get-content", input),
+  savePageContent: (input) => invokeIpc("pages:save-content", input),
 };
 
 contextBridge.exposeInMainWorld("lifeos", lifeosApi);

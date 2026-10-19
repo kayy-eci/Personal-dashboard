@@ -19,6 +19,18 @@ export interface MovePageInput {
   afterId?: string;
 }
 
+export interface SavePageContentInput {
+  pageId: string;
+  contentJson: string;
+}
+
+export interface PageContent {
+  pageId: string;
+  contentJson: string;
+  schemaVersion: number;
+  updatedAt: string;
+}
+
 export interface PageRecord {
   id: string;
   parentId: string | null;

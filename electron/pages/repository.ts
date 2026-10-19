@@ -6,14 +6,17 @@ import { uuidv7 } from "../database/uuid";
 import type {
   CreatePageInput,
   MovePageInput,
+  PageContent,
   PageRecord,
   PageRepositoryErrorCode,
   PageTrashEntry,
   PageTreeNode,
+  SavePageContentInput,
 } from "./types";
 
 const positionLimit = 0xffff_ffff_ffff_ffffn;
 const positionPattern = /^[0-9a-f]{16}$/;
+export const PAGE_CONTENT_MAX_LENGTH = 4 * 1024 * 1024;
 
 export class PageRepositoryError extends Error {
   constructor(
@@ -45,6 +48,22 @@ function comparePages(
     : left.position > right.position
       ? 1
       : left.id.localeCompare(right.id);
+}
+
+function isDocumentContent(value: unknown): boolean {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const typed = value as { type?: unknown; content?: unknown };
+  return (
+    typed.type === "doc" &&
+    Array.isArray(typed.content) &&
+    typed.content.length > 0 &&
+    typed.content.every(
+      (node) =>
+        typeof node === "object" && node !== null && typeof (node as { type?: unknown }).type === "string",
+    )
+  );
 }
 
 function pageTreeNode(page: PageRecord): PageTreeNode {
@@ -123,6 +142,51 @@ export class PageRepository {
         parentId,
         position: position.position,
         title,
+      }, timestamp);
+      return this.requirePage(pageId);
+    });
+  }
+
+  getContent(pageId: string): PageContent {
+    const page = this.requireActivePage(pageId);
+    return {
+      pageId: page.id,
+      contentJson: page.contentJson,
+      schemaVersion: page.schemaVersion,
+      updatedAt: page.updatedAt,
+    };
+  }
+
+  saveContent(pageId: string, input: Omit<SavePageContentInput, "pageId">): PageRecord {
+    const { contentJson } = input;
+    const page = this.requireActivePage(pageId);
+    if (
+      typeof contentJson !== "string" ||
+      contentJson.length === 0 ||
+      contentJson.length > PAGE_CONTENT_MAX_LENGTH
+    ) {
+      throw new PageRepositoryError("INVALID_INPUT", "Page content is invalid");
+    }
+    let content: unknown;
+    try {
+      content = JSON.parse(contentJson);
+    } catch {
+      throw new PageRepositoryError("INVALID_INPUT", "Page content is invalid");
+    }
+    if (!isDocumentContent(content)) {
+      throw new PageRepositoryError("INVALID_INPUT", "Page content is invalid");
+    }
+
+    return this.transact(() => {
+      const timestamp = new Date().toISOString();
+      this.db
+        .update(pages)
+        .set({ contentJson, updatedAt: timestamp })
+        .where(eq(pages.id, pageId))
+        .run();
+      this.logChange(pageId, "update", {
+        contentLength: contentJson.length,
+        schemaVersion: page.schemaVersion,
       }, timestamp);
       return this.requirePage(pageId);
     });
