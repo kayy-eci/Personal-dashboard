@@ -1,0 +1,37 @@
+name: Build
+
+# FR-4.5: installers are built in CI for the primary OS (Windows) and uploaded
+# as workflow artifacts. Builds are unsigned — signing comes later (see PRD
+# FR-4.8/F8 risk notes).
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer and electron bundles
+        run: npm run build
+
+      - name: Package Windows installer (NSIS, unsigned)
+        run: npx electron-builder --win nsis --publish never
+
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LifeOS-windows-installer
+          path: release/*.exe
+          if-no-files-found: error
