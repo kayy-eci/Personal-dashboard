@@ -1,6 +1,8 @@
 {
   "name": "LifeOs",
   "version": "0.1.0",
+  "description": "Local-first notepad and life-tracking desktop app.",
+  "author": "LifeOS",
   "private": true,
   "main": "dist-electron/electron/main.js",
   "scripts": {
