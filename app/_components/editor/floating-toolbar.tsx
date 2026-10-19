@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Editor } from "@tiptap/core";
 import { BubbleMenu } from "@tiptap/react/menus";
 import { useWorkspace } from "../workspace-provider";
@@ -74,6 +74,39 @@ export function FloatingToolbar({ editor }: { editor: Editor }) {
   const [linkUrl, setLinkUrl] = useState("");
   const [palette, setPalette] = useState<"color" | "highlight" | null>(null);
   const [turnIntoOpen, setTurnIntoOpen] = useState(false);
+  /** Mod+K with a collapsed cursor: show the toolbar just for link editing. */
+  const [forcedOpen, setForcedOpen] = useState(false);
+
+  // FR-1.3: Ctrl/Cmd+K opens the link editor on the current selection; a
+  // collapsed cursor selects the word under it first.
+  useEffect(() => {
+    const dom = editor.view.dom;
+    const openLinkEditor = (event: KeyboardEvent): void => {
+      if (
+        !event.altKey &&
+        (event.ctrlKey || event.metaKey) &&
+        (event.key === "k" || event.key === "K")
+      ) {
+        event.preventDefault();
+        if (editor.isActive("link")) {
+          editor.chain().focus().extendMarkRange("link").run();
+        } else {
+          selectWordAtCursor(editor);
+        }
+        const existing = editor.getAttributes("link").href?.toString() ?? "";
+        setForcedOpen(true);
+        setLinkUrl(existing);
+        setEditingLink(true);
+      }
+    };
+    dom.addEventListener("keydown", openLinkEditor);
+    return () => dom.removeEventListener("keydown", openLinkEditor);
+  }, [editor]);
+
+  const closeLinkEditor = () => {
+    setEditingLink(false);
+    setForcedOpen(false);
+  };
 
   const applyLink = () => {
     if (!linkUrl.trim()) {
@@ -86,14 +119,16 @@ export function FloatingToolbar({ editor }: { editor: Editor }) {
         .setLink({ href: linkUrl.trim() })
         .run();
     }
-    setEditingLink(false);
+    closeLinkEditor();
   };
 
   return (
     <BubbleMenu
       editor={editor}
       shouldShow={({ editor: activeEditor, view, from, to }) =>
-        view.hasFocus() && from !== to && activeEditor.isEditable
+        view.hasFocus() &&
+        (from !== to || forcedOpen) &&
+        activeEditor.isEditable
       }
     >
       <div className="floating-toolbar">
@@ -115,10 +150,11 @@ export function FloatingToolbar({ editor }: { editor: Editor }) {
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
                   event.preventDefault();
-                  setEditingLink(false);
+                  editor.commands.focus();
+                  closeLinkEditor();
                 }
               }}
-              onBlur={() => setEditingLink(false)}
+              onBlur={() => closeLinkEditor()}
             />
           </form>
         ) : (
@@ -361,4 +397,36 @@ export function FloatingToolbar({ editor }: { editor: Editor }) {
 
 function toolbarButtonClass(active: boolean): string {
   return active ? "toolbar-button is-active" : "toolbar-button";
+}
+
+/**
+ * FR-1.3: when the cursor is collapsed on Mod+K, select the word under the
+ * cursor first so the opened link editor has a target range.
+ */
+function selectWordAtCursor(editor: Editor): boolean {
+  const { state } = editor;
+  const { selection } = state;
+  const { $from, empty } = selection;
+  if (!empty) {
+    return false;
+  }
+  const text = $from.parent.textContent;
+  const from = $from.parentOffset;
+  let wordStart = from;
+  let wordEnd = from;
+  while (wordStart > 0 && /\S/.test(text[wordStart - 1] ?? "")) {
+    wordStart -= 1;
+  }
+  while (wordEnd < text.length && /\S/.test(text[wordEnd] ?? "")) {
+    wordEnd += 1;
+  }
+  if (wordStart === wordEnd) {
+    return false;
+  }
+  const blockStart = $from.start();
+  editor.commands.setTextSelection({
+    from: blockStart + wordStart,
+    to: blockStart + wordEnd,
+  });
+  return true;
 }

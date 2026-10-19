@@ -19,6 +19,7 @@ const editorShortcuts: readonly ShortcutRow[] = [
   { keys: "Ctrl/Cmd + I", action: "Italic" },
   { keys: "Ctrl/Cmd + U", action: "Underline" },
   { keys: "Ctrl/Cmd + E", action: "Inline code" },
+  { keys: "Ctrl/Cmd + K", action: "Edit link on selection" },
   { keys: "Ctrl/Cmd + Shift + S", action: "Strikethrough" },
   { keys: "Ctrl/Cmd + Shift + ↑ / ↓", action: "Move block up / down" },
   { keys: "Tab / Shift + Tab", action: "Indent / outdent list item" },
