@@ -73,7 +73,21 @@ export interface IpcContract {
     args: [];
     result: void;
   };
+  /**
+   * FR-4.3: push channel for native menu items. Accelerators stay in the main
+   * process; the renderer executes the actions.
+   */
+  "app:menu-action": {
+    args: [action: MenuAction];
+    result: void;
+  };
 }
+
+export type MenuAction =
+  | "new-page"
+  | "toggle-sidebar"
+  | "toggle-theme"
+  | "show-shortcuts";
 
 export interface SaveAttachmentInput {
   mime: string;
@@ -225,6 +239,7 @@ export interface LifeOsAPI {
   saveAttachment(input: SaveAttachmentInput): Promise<StoredAttachment>;
   onRequestFlush(callback: () => void): () => void;
   signalFlushDone(): void;
+  onMenuAction(callback: (action: MenuAction) => void): () => void;
 }
 
 declare global {

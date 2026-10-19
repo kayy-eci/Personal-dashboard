@@ -3,20 +3,23 @@ import {
   BrowserWindow,
   dialog,
   ipcMain,
+  Menu,
   net,
   protocol,
   shell,
   type IpcMainEvent,
   type IpcMainInvokeEvent,
+  type MenuItemConstructorOptions,
 } from "electron";
 import { realpath, stat } from "node:fs/promises";
 import { readFile } from "node:fs/promises";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
+import { cleanupOrphanAttachments } from "./attachments/cleanup";
 import { openDatabase, type DatabaseConnection } from "./database";
 import { MigrationError } from "./database/migrations";
-import { devices } from "./database/schema";
-import { isSaveAttachmentArgs } from "./ipc-contract";
+import { devices, pages } from "./database/schema";
+import { isSaveAttachmentArgs, type MenuAction } from "./ipc-contract";
 import { registerIpcHandler } from "./ipc-main";
 import { registerPageIpcHandlers } from "./pages/ipc";
 import { PageRepository } from "./pages/repository";
@@ -25,6 +28,13 @@ import {
   getMimeForAttachmentFileName,
   saveAttachment,
 } from "./attachments/store";
+import {
+  readWindowBounds,
+  writeWindowBounds,
+  windowMinHeight,
+  windowMinWidth,
+  type WindowBounds,
+} from "./window-state";
 
 const appScheme = "lifeos";
 const developmentUrl = process.env.LIFEOS_DEV_SERVER_URL;
@@ -32,6 +42,7 @@ const developmentOrigin = developmentUrl
   ? new URL(developmentUrl).origin
   : undefined;
 const exportDirectory = resolve(__dirname, "../../out");
+const defaultWindowBounds = { width: 1120, height: 760 };
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -47,6 +58,22 @@ protocol.registerSchemesAsPrivileged([
 let mainWindow: BrowserWindow | null = null;
 let databaseConnection: DatabaseConnection | null = null;
 let pageRepository: PageRepository | null = null;
+
+// FR-4.2: one LifeOS instance owns the workspace; a second launch focuses the
+// running window instead of opening another shell over the same database.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      return;
+    }
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.focus();
+  });
+}
 
 function attachmentsDirectory(): string {
   return join(app.getPath("userData"), "attachments");
@@ -192,9 +219,26 @@ function validateIpcSender(event: IpcMainInvokeEvent): void {
 let closeFlushComplete = false;
 let closeFlushResolver: (() => void) | null = null;
 
-function finishFlushClose(): void {
+/** FR-4.2: captures the current (normal) bounds so the next launch restores them. */
+async function persistWindowState(): Promise<void> {
+  const window = mainWindow;
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+  try {
+    await writeWindowBounds(app.getPath("userData"), {
+      ...window.getNormalBounds(),
+      maximized: window.isMaximized(),
+    });
+  } catch (error) {
+    console.warn("LifeOS could not persist window state", error);
+  }
+}
+
+async function finishFlushClose(): Promise<void> {
   closeFlushComplete = true;
   closeFlushResolver = null;
+  await persistWindowState();
   mainWindow?.close();
 }
 
@@ -215,12 +259,15 @@ ipcMain.on("app:flush-done", (event) => {
   }
 });
 
-function createWindow(): void {
+function createWindow(bounds: WindowBounds): void {
   mainWindow = new BrowserWindow({
-    width: 1120,
-    height: 760,
-    minWidth: 800,
-    minHeight: 560,
+    width: bounds.width,
+    height: bounds.height,
+    ...(bounds.x !== undefined && bounds.y !== undefined
+      ? { x: bounds.x, y: bounds.y }
+      : {}),
+    minWidth: windowMinWidth,
+    minHeight: windowMinHeight,
     title: "LifeOS",
     webPreferences: {
       preload: join(__dirname, "preload.js"),
@@ -231,6 +278,9 @@ function createWindow(): void {
       allowRunningInsecureContent: false,
     },
   });
+  if (bounds.maximized) {
+    mainWindow.maximize();
+  }
 
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event, url) => {
@@ -268,6 +318,119 @@ function createWindow(): void {
       console.error("LifeOS renderer failed to load", error);
       app.quit();
     });
+}
+
+/**
+ * FR-4.3: native application menu. Standard roles keep OS-correct shortcuts
+ * and menu semantics; LifeOS-specific actions are pushed to the renderer over
+ * the typed "app:menu-action" channel.
+ */
+function sendMenuAction(action: MenuAction): void {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+  mainWindow.webContents.send("app:menu-action", action);
+}
+
+function buildApplicationMenu(): void {
+  const isMac = process.platform === "darwin";
+  const template: MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: "about" as const },
+              { type: "separator" as const },
+              { role: "hide" as const },
+              { role: "quit" as const },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: "File",
+      submenu: [
+        {
+          label: "New page",
+          accelerator: "CmdOrCtrl+N",
+          click: () => sendMenuAction("new-page"),
+        },
+        {
+          label: "Toggle sidebar",
+          accelerator: "CmdOrCtrl+Shift+B",
+          click: () => sendMenuAction("toggle-sidebar"),
+        },
+        {
+          label: "Toggle theme",
+          accelerator: "CmdOrCtrl+Shift+L",
+          click: () => sendMenuAction("toggle-theme"),
+        },
+        { type: "separator" },
+        {
+          label: "Shortcut cheat sheet",
+          accelerator: "CmdOrCtrl+/",
+          click: () => sendMenuAction("show-shortcuts"),
+        },
+        { type: "separator" },
+        ...(isMac ? [] : [{ role: "quit" as const }]),
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        {
+          role: "pasteAndMatchStyle",
+          accelerator: "Shift+CmdOrCtrl+V",
+        },
+        { role: "selectAll" },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
+    },
+    { role: "windowMenu" },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+/** FR-3.6: weekly sweep of attachment files that no page references anymore. */
+async function scheduleAttachmentCleanup(): Promise<void> {
+  const database = databaseConnection;
+  if (!database) {
+    return;
+  }
+  try {
+    const rows = await database.db
+      .select({ contentJson: pages.contentJson })
+      .from(pages);
+    const result = await cleanupOrphanAttachments({
+      userDataDirectory: app.getPath("userData"),
+      attachmentsDirectory: attachmentsDirectory(),
+      readRows: async () => rows.map((row) => row.contentJson),
+      now: Date.now(),
+    });
+    if (result && result.removed.length > 0) {
+      console.log(
+        `LifeOS removed ${result.removed.length} orphan attachment file(s)`,
+      );
+    }
+  } catch (error) {
+    console.warn("LifeOS attachment cleanup failed", error);
+  }
 }
 
 registerIpcHandler(
@@ -308,12 +471,15 @@ void app.whenReady().then(async () => {
     device.id,
   );
   protocol.handle(appScheme, serveExport);
+  buildApplicationMenu();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      createWindow(defaultWindowBounds);
     }
   });
-  createWindow();
+  const restoreBounds = await readWindowBounds(app.getPath("userData"));
+  createWindow(restoreBounds);
+  void scheduleAttachmentCleanup();
 }).catch(async (error: unknown) => {
   console.error("LifeOS failed to start", error);
   try {

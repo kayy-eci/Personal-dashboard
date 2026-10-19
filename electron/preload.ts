@@ -1,9 +1,10 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 import type {
   IpcArgs,
   IpcChannel,
   IpcResult,
   LifeOsAPI,
+  MenuAction,
 } from "./ipc-contract";
 
 function invokeIpc<Channel extends IpcChannel>(
@@ -36,6 +37,15 @@ const lifeosApi: LifeOsAPI = {
   },
   signalFlushDone: () => {
     ipcRenderer.send("app:flush-done");
+  },
+  onMenuAction: (callback) => {
+    const listener = (_event: IpcRendererEvent, action: MenuAction) => {
+      callback(action);
+    };
+    ipcRenderer.on("app:menu-action", listener);
+    return () => {
+      ipcRenderer.off("app:menu-action", listener);
+    };
   },
 };
 
