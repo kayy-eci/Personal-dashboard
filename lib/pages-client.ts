@@ -47,6 +47,9 @@ const operationFallbacks = {
   restore: "The page could not be restored",
   listTree: "The page list could not be loaded",
   listTrash: "The trash could not be loaded",
+  getPageContent: "The page content could not be loaded",
+  saveContent: "The page could not be saved",
+  saveAttachment: "The image could not be saved",
 } as const;
 
 export type LifeOsApiOperation = keyof typeof operationFallbacks;

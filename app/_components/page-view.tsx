@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useRef } from "react";
 import { findNode, pathOf, truncateCrumbs } from "@/lib/page-tree";
 import { getLifeOsApi } from "@/lib/pages-client";
+import { PageDocEditor } from "./editor/doc-editor";
 import { useWorkspace } from "./workspace-provider";
 
 export function PageView() {
@@ -166,7 +167,7 @@ function PagePlaceholder() {
     );
   }
 
-  // The rich text editor (FR-1) ships in a later step; a calm empty canvas is
-  // shown for now.
-  return null;
+  // The rich text editor (FR-1). Keyed by page id so switching pages flushes
+  // the previous document and loads the next one into a fresh editor.
+  return <PageDocEditor key={workspace.activePageId} pageId={workspace.activePageId} />;
 }

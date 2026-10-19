@@ -67,6 +67,7 @@ export interface WorkspaceActions {
   toggleSidebar: () => void;
   retryLoadTree: () => void;
   dismissError: (message: string) => void;
+  pushError: (message: string) => void;
   startDrag: (pageId: string) => void;
   setHoveredRow: (pageId: string | null) => void;
   endDrag: () => void;
@@ -513,6 +514,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       toggleSidebar,
       retryLoadTree,
       dismissError,
+      pushError,
       startDrag,
       setHoveredRow,
       endDrag,
@@ -545,6 +547,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       toggleSidebar,
       retryLoadTree,
       dismissError,
+      pushError,
       startDrag,
       setHoveredRow,
       endDrag,
