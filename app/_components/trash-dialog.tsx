@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useWorkspace } from "./workspace-provider";
 import { CloseIcon, FileIcon, RestoreIcon } from "./icons";
 
 export function TrashDialog() {
-  const { trashOpen, closeTrash, isTrashLoading, trashEntries, restorePage } = useWorkspace();
+  const workspace = useWorkspace();
+  const {
+    trashOpen,
+    closeTrash,
+    isTrashLoading,
+    trashEntries,
+    restorePage,
+  } = workspace;
   const dialogRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -55,34 +62,80 @@ export function TrashDialog() {
         ) : (
           <ul className="trash-list">
             {trashEntries.map((entry) => (
-              <li key={entry.id} className="trash-item">
-                {entry.icon ? (
-                  <span className="trash-item-icon" aria-hidden>
-                    {entry.icon}
-                  </span>
-                ) : (
-                  <FileIcon className="trash-item-icon svg-icon" aria-hidden />
-                )}
-                <div className="trash-item-text">
-                  <span className="trash-item-title" title={entry.title}>
-                    {entry.title}
-                  </span>
-                  <span className="trash-item-date">{formatDeletedDate(entry.deletedAt)}</span>
-                </div>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => void restorePage(entry.id)}
-                >
-                  <RestoreIcon className="svg-icon" aria-hidden />
-                  Restore
-                </button>
-              </li>
+              <TrashRow
+                key={entry.id}
+                entry={entry}
+                onRestore={() => void restorePage(entry.id)}
+                onPurge={() => void workspace.purgePage(entry.id)}
+              />
             ))}
           </ul>
         )}
+        <p className="dialog-note">
+          Pages in the trash are removed automatically after 30 days.
+        </p>
       </div>
     </div>
+  );
+}
+
+interface TrashRowProps {
+  entry: {
+    id: string;
+    title: string;
+    icon: string | null;
+    deletedAt: string | null;
+  };
+  onRestore: () => void;
+  onPurge: () => void;
+}
+
+function TrashRow({ entry, onRestore, onPurge }: TrashRowProps) {
+  // FR-2.6: permanent deletion needs an explicit confirmation step. Per-row
+  // local state means closing the dialog or a reload clears it.
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <li className="trash-item">
+      {entry.icon ? (
+        <span className="trash-item-icon" aria-hidden>
+          {entry.icon}
+        </span>
+      ) : (
+        <FileIcon className="trash-item-icon svg-icon" aria-hidden />
+      )}
+      <div className="trash-item-text">
+        <span className="trash-item-title" title={entry.title}>
+          {entry.title}
+        </span>
+        <span className="trash-item-date">{formatDeletedDate(entry.deletedAt)}</span>
+      </div>
+      <button type="button" className="secondary-button" onClick={onRestore}>
+        <RestoreIcon className="svg-icon" aria-hidden />
+        Restore
+      </button>
+      {confirming ? (
+        <button
+          type="button"
+          className="secondary-button delete-permanently-confirm"
+          onClick={() => {
+            setConfirming(false);
+            onPurge();
+          }}
+        >
+          Really delete?
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="secondary-button delete-permanently"
+          aria-label={`Delete ${entry.title} permanently`}
+          onClick={() => setConfirming(true)}
+        >
+          Delete
+        </button>
+      )}
+    </li>
   );
 }
 

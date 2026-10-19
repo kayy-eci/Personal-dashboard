@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Editor } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
@@ -19,7 +19,7 @@ type LoadStatus = "loading" | "ready" | "error";
  * pending save, then loads the restored document into a fresh editor.
  */
 export function PageDocEditor({ pageId }: { pageId: string }) {
-  const { pushError } = useWorkspace();
+  const { pushError, createPage } = useWorkspace();
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [retryToken, setRetryToken] = useState(0);
   const [initialContent, setInitialContent] = useState<Record<string, unknown> | undefined>(
@@ -109,10 +109,18 @@ export function PageDocEditor({ pageId }: { pageId: string }) {
     };
   }, [pageId, pushError, retryToken]);
 
+  // FR-2.3: the slash menu can create a sub-page under the current page; the
+  // page created from slash menu opens right away via createPage.
+  const handleCreateSubPage = useCallback(() => {
+    void createPage({ parentId: pageId });
+  }, [createPage, pageId]);
+
   const editor = useEditor(
     {
       immediatelyRender: false,
-      extensions: createEditorExtensions(),
+      extensions: createEditorExtensions({
+        onCreateSubPage: handleCreateSubPage,
+      }),
       content: initialContent,
       onUpdate: () => {
         saverRef.current?.schedule();

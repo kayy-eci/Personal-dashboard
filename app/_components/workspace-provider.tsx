@@ -72,6 +72,7 @@ export interface WorkspaceActions {
   movePage: (request: MoveRequest) => Promise<boolean>;
   deletePage: (pageId: string) => Promise<void>;
   restorePage: (pageId: string) => Promise<void>;
+  purgePage: (pageId: string) => Promise<void>;
   openTrash: () => void;
   closeTrash: () => void;
   refreshTrash: () => Promise<void>;
@@ -508,6 +509,26 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     [loadTree, pushError, refreshTrash],
   );
 
+  // FR-2.6: permanent deletion. The dialog confirms before calling this.
+  const purgePage = useCallback(
+    async (pageId: string) => {
+      try {
+        await runPageOperation("purge", (api) => api.purgePage({ pageId }));
+        await loadTree();
+        if (trashOpen) {
+          await refreshTrash();
+        }
+      } catch (error) {
+        pushError(
+          error instanceof Error
+            ? error.message
+            : "The page could not be deleted permanently",
+        );
+      }
+    },
+    [loadTree, pushError, refreshTrash, trashOpen],
+  );
+
   const retryLoadTree = useCallback(() => {
     void loadTree();
   }, [loadTree]);
@@ -598,6 +619,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       movePage,
       deletePage,
       restorePage,
+      purgePage,
       openTrash,
       closeTrash,
       refreshTrash,
@@ -635,6 +657,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       movePage,
       deletePage,
       restorePage,
+      purgePage,
       openTrash,
       closeTrash,
       refreshTrash,

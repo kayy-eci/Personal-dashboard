@@ -68,121 +68,138 @@ function pickImageFile(editor: Editor, range: Range): void {
 }
 
 /** Slash menu items; labels and descriptions in sentence case. */
-export const slashItems: SlashItem[] = [
-  {
-    id: "heading-1",
-    label: "Heading 1",
-    description: "Section heading (large)",
-    keywords: ["h1", "title"],
-    run: heading(1),
-  },
-  {
-    id: "heading-2",
-    label: "Heading 2",
-    description: "Subsection heading (medium)",
-    keywords: ["h2"],
-    run: heading(2),
-  },
-  {
-    id: "heading-3",
-    label: "Heading 3",
-    description: "Minor grouping (small)",
-    keywords: ["h3"],
-    run: heading(3),
-  },
-  {
-    id: "bullet-list",
-    label: "Bulleted list",
-    description: "Simple list items",
-    keywords: ["unordered"],
-    run: toggleList("bulletList"),
-  },
-  {
-    id: "numbered-list",
-    label: "Numbered list",
-    description: "List with numbering",
-    keywords: ["ordered"],
-    run: toggleList("orderedList"),
-  },
-  {
-    id: "to-do-list",
-    label: "To-do list",
-    description: "Track tasks with checkboxes",
-    keywords: ["task", "checklist"],
-    run: toggleList("taskList"),
-  },
-  {
-    id: "quote",
-    label: "Quote",
-    description: "Capture a quotation",
-    run: (editor, range) => {
-      editor.chain().focus().deleteRange(range).toggleBlockquote().run();
+function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
+  return [
+    // FR-2.3: creating a sub-page from the slash menu.
+    ...(onCreateSubPage
+      ? [
+          {
+            id: "sub-page",
+            label: "Page",
+            description: "Create a sub-page under this page",
+            keywords: ["child", "sub", "notes"],
+            run: (editor: Editor, range: Range) => {
+              editor.chain().focus().deleteRange(range).run();
+              onCreateSubPage();
+            },
+          },
+        ]
+      : []),
+    {
+      id: "heading-1",
+      label: "Heading 1",
+      description: "Section heading (large)",
+      keywords: ["h1", "title"],
+      run: heading(1),
     },
-  },
-  {
-    id: "callout",
-    label: "Callout",
-    description: "Highlighted note with an icon",
-    keywords: ["info"],
-    run: (editor, range) => {
-      editor.chain().focus().deleteRange(range).setCallout().run();
+    {
+      id: "heading-2",
+      label: "Heading 2",
+      description: "Subsection heading (medium)",
+      keywords: ["h2"],
+      run: heading(2),
     },
-  },
-  {
-    id: "code-block",
-    label: "Code block",
-    description: "Code with syntax highlighting",
-    run: (editor, range) => {
-      editor.chain().focus().deleteRange(range).setCodeBlock().run();
+    {
+      id: "heading-3",
+      label: "Heading 3",
+      description: "Minor grouping (small)",
+      keywords: ["h3"],
+      run: heading(3),
     },
-  },
-  {
-    id: "divider",
-    label: "Divider",
-    description: "Visually separate sections",
-    keywords: ["hr", "line", "rule"],
-    run: (editor, range) => {
-      editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+    {
+      id: "bullet-list",
+      label: "Bulleted list",
+      description: "Simple list items",
+      keywords: ["unordered"],
+      run: toggleList("bulletList"),
     },
-  },
-  {
-    id: "image",
-    label: "Image",
-    description: "Insert an image file",
-    keywords: ["picture", "photo"],
-    run: pickImageFile,
-  },
-  {
-    id: "table",
-    label: "Table",
-    description: "Insert a simple table",
-    run: (editor, range) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertTable({ rows: 2, cols: 3, withHeaderRow: true })
-        .run();
+    {
+      id: "numbered-list",
+      label: "Numbered list",
+      description: "List with numbering",
+      keywords: ["ordered"],
+      run: toggleList("orderedList"),
     },
-  },
-  {
-    id: "toggle",
-    label: "Toggle",
-    description: "Collapsible section",
-    keywords: ["details", "summary"],
-    run: (editor, range) => {
-      editor.chain().focus().deleteRange(range).setDetails().run();
+    {
+      id: "to-do-list",
+      label: "To-do list",
+      description: "Track tasks with checkboxes",
+      keywords: ["task", "checklist"],
+      run: toggleList("taskList"),
     },
-  },
-];
+    {
+      id: "quote",
+      label: "Quote",
+      description: "Capture a quotation",
+      run: (editor, range) => {
+        editor.chain().focus().deleteRange(range).toggleBlockquote().run();
+      },
+    },
+    {
+      id: "callout",
+      label: "Callout",
+      description: "Highlighted note with an icon",
+      keywords: ["info"],
+      run: (editor, range) => {
+        editor.chain().focus().deleteRange(range).setCallout().run();
+      },
+    },
+    {
+      id: "code-block",
+      label: "Code block",
+      description: "Code with syntax highlighting",
+      run: (editor, range) => {
+        editor.chain().focus().deleteRange(range).setCodeBlock().run();
+      },
+    },
+    {
+      id: "divider",
+      label: "Divider",
+      description: "Visually separate sections",
+      keywords: ["hr", "line", "rule"],
+      run: (editor, range) => {
+        editor.chain().focus().deleteRange(range).setHorizontalRule().run();
+      },
+    },
+    {
+      id: "image",
+      label: "Image",
+      description: "Insert an image file",
+      keywords: ["picture", "photo"],
+      run: pickImageFile,
+    },
+    {
+      id: "table",
+      label: "Table",
+      description: "Insert a simple table",
+      run: (editor, range) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .insertTable({ rows: 2, cols: 3, withHeaderRow: true })
+          .run();
+      },
+    },
+    {
+      id: "toggle",
+      label: "Toggle",
+      description: "Collapsible section",
+      keywords: ["details", "summary"],
+      run: (editor, range) => {
+        editor.chain().focus().deleteRange(range).setDetails().run();
+      },
+    },
+  ];
+}
 
-function filterItems(query: string): SlashItem[] {
+function filterItems(items: readonly SlashItem[], query: string): SlashItem[] {
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) {
-    return slashItems;
+    return [...items];
   }
   const tokens = normalizedQuery.split(/\s+/);
-  return slashItems.filter((item) => {
+  return items.filter((item) => {
     const haystack = [
       item.label,
       item.description,
@@ -207,8 +224,16 @@ interface SlashMenuPopupProps {
 export const SlashMenu = Extension.create({
   name: "slashMenu",
 
+  addOptions() {
+    return {
+      // Provided by the page editor; without it the Page item is hidden.
+      onCreateSubPage: null as (() => void) | null,
+    };
+  },
+
   addProseMirrorPlugins() {
     const extensionEditor = this.editor;
+    const slashItems = createSlashItems(this.options.onCreateSubPage);
 
     return [
       Suggestion<SlashItem, SlashItem>({
@@ -216,7 +241,7 @@ export const SlashMenu = Extension.create({
         char: "/",
         startOfLine: false,
         placement: "bottom-start",
-        items: ({ query }) => filterItems(query),
+        items: ({ query }) => filterItems(slashItems, query),
         command: ({ editor, range, props: item }) => {
           item.run(editor, range);
         },

@@ -25,7 +25,11 @@ import type { Extensions } from "@tiptap/core";
 
 const lowlight = createLowlight(common);
 
-export function createEditorExtensions(): Extensions {
+export function createEditorExtensions(
+  options: {
+    onCreateSubPage?: (() => void) | null;
+  } = {},
+): Extensions {
   return [
     StarterKit.configure({
       codeBlock: false,
@@ -49,7 +53,9 @@ export function createEditorExtensions(): Extensions {
     Highlight.configure({ multicolor: true }),
     TextStyleKit,
     Callout,
-    SlashMenu,
+    SlashMenu.configure({
+      onCreateSubPage: options.onCreateSubPage ?? null,
+    }),
     ImagePaste,
     BlockEditing,
     Placeholder.configure({

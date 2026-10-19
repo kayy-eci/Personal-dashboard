@@ -627,6 +627,19 @@ body {
   font-size: 14px;
 }
 
+.delete-permanently {
+  color: var(--color-text-muted);
+}
+
+.delete-permanently-confirm {
+  color: #b42318;
+}
+
+.delete-permanently:hover,
+.delete-permanently-confirm:hover {
+  color: #b42318;
+}
+
 .shortcut-list {
   flex: 1;
   min-height: 0;
