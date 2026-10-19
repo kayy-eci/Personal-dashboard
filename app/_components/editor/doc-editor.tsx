@@ -5,7 +5,7 @@ import type { Editor } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { runPageOperation } from "@/lib/pages-client";
-import { createPageSaver, type PageSaver } from "@/lib/page-saver";
+import { createPageSaver, setActiveSaver, type PageSaver } from "@/lib/page-saver";
 import { saveStatusStore } from "@/lib/editor-save-status";
 import { useWorkspace } from "../workspace-provider";
 import { createEditorExtensions } from "./extensions";
@@ -57,6 +57,7 @@ export function PageDocEditor({ pageId }: { pageId: string }) {
       },
     });
     saverRef.current = saver;
+    setActiveSaver(saver);
 
     // The Retry button in the save indicator bumps a token; flush for it.
     let handledToken = saveStatusStore.getSnapshot().retryToken;
@@ -70,6 +71,7 @@ export function PageDocEditor({ pageId }: { pageId: string }) {
 
     return () => {
       unsubscribe();
+      setActiveSaver(null);
       saverRef.current = null;
     };
   }, [pageId, pushError]);

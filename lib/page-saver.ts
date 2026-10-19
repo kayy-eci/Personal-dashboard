@@ -26,6 +26,17 @@ export interface PageSaver {
   flush: () => Promise<void>;
 }
 
+let activeSaver: PageSaver | null = null;
+
+/** The active editor registers its saver for app-close flushing (FR-3.2). */
+export function setActiveSaver(saver: PageSaver | null): void {
+  activeSaver = saver;
+}
+
+export function flushActiveSaver(): Promise<void> {
+  return activeSaver ? activeSaver.flush() : Promise.resolve();
+}
+
 const saveLoopGuardRuns = 64;
 
 export function createPageSaver(options: PageSaverOptions): PageSaver {

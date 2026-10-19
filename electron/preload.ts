@@ -25,6 +25,18 @@ const lifeosApi: LifeOsAPI = {
   getPageContent: (input) => invokeIpc("pages:get-content", input),
   savePageContent: (input) => invokeIpc("pages:save-content", input),
   saveAttachment: (input) => invokeIpc("attachments:save", input),
+  onRequestFlush: (callback) => {
+    const listener = () => {
+      callback();
+    };
+    ipcRenderer.on("app:request-flush", listener);
+    return () => {
+      ipcRenderer.off("app:request-flush", listener);
+    };
+  },
+  signalFlushDone: () => {
+    ipcRenderer.send("app:flush-done");
+  },
 };
 
 contextBridge.exposeInMainWorld("lifeos", lifeosApi);

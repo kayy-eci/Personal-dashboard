@@ -61,6 +61,18 @@ export interface IpcContract {
     args: [input: SaveAttachmentInput];
     result: StoredAttachment;
   };
+  /**
+   * FR-3.2: push channels. The main process asks the renderer to flush before
+   * a window close; the renderer answers over "app:flush-done".
+   */
+  "app:request-flush": {
+    args: [];
+    result: void;
+  };
+  "app:flush-done": {
+    args: [];
+    result: void;
+  };
 }
 
 export interface SaveAttachmentInput {
@@ -211,6 +223,8 @@ export interface LifeOsAPI {
   getPageContent(input: PageIdInput): Promise<PageContent>;
   savePageContent(input: SavePageContentInput): Promise<PageRecord>;
   saveAttachment(input: SaveAttachmentInput): Promise<StoredAttachment>;
+  onRequestFlush(callback: () => void): () => void;
+  signalFlushDone(): void;
 }
 
 declare global {

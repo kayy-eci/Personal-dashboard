@@ -16,7 +16,8 @@ import type {
   PageTrashEntry,
   PageTreeNode,
 } from "@/lib/pages-client";
-import { runPageOperation } from "@/lib/pages-client";
+import { getLifeOsApi, runPageOperation } from "@/lib/pages-client";
+import { flushActiveSaver } from "@/lib/page-saver";
 import { ancestorsOf, findNode, isForbiddenMoveParent } from "@/lib/page-tree";
 import {
   isFiniteNumber,
@@ -484,6 +485,25 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [createPage, requestTitleFocus, toggleSidebar]);
+
+  // FR-3.2: the main process asks for a flush on window close and quit; the
+  // active page saver does the work and this shell always answers the shell
+  // handshake (also when no page editor is mounted).
+  useEffect(() => {
+    const api = getLifeOsApi();
+    if (!api?.onRequestFlush) {
+      return;
+    }
+    return api.onRequestFlush(() => {
+      void (async () => {
+        try {
+          await flushActiveSaver();
+        } finally {
+          api.signalFlushDone();
+        }
+      })();
+    });
+  }, []);
 
   const value = useMemo<WorkspaceActions>(
     () => ({

@@ -2,9 +2,11 @@ import {
   app,
   BrowserWindow,
   dialog,
+  ipcMain,
   net,
   protocol,
   shell,
+  type IpcMainEvent,
   type IpcMainInvokeEvent,
 } from "electron";
 import { realpath, stat } from "node:fs/promises";
@@ -182,6 +184,37 @@ function validateIpcSender(event: IpcMainInvokeEvent): void {
   }
 }
 
+/**
+ * FR-3.2: an immediate flush on window close and quit. The renderer flushes
+ * its dirty pages and answers over "app:flush-done"; a fail-safe timer closes
+ * the window anyway so data already committed by past saves stays durable.
+ */
+let closeFlushComplete = false;
+let closeFlushResolver: (() => void) | null = null;
+
+function finishFlushClose(): void {
+  closeFlushComplete = true;
+  closeFlushResolver = null;
+  mainWindow?.close();
+}
+
+function validateFlushReply(event: IpcMainEvent): boolean {
+  return Boolean(
+    mainWindow &&
+      event.sender === mainWindow.webContents &&
+      event.senderFrame === event.sender.mainFrame &&
+      isTrustedRendererUrl(event.senderFrame.url),
+  );
+}
+
+ipcMain.on("app:flush-done", (event) => {
+  if (validateFlushReply(event)) {
+    const resolveClose = closeFlushResolver;
+    closeFlushResolver = null;
+    resolveClose?.();
+  }
+});
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1120,
@@ -205,7 +238,27 @@ function createWindow(): void {
       event.preventDefault();
     }
   });
+  mainWindow.on("close", (event) => {
+    const window = mainWindow;
+    if (!window || closeFlushComplete || window.webContents.isDestroyed()) {
+      return;
+    }
+    if (closeFlushResolver) {
+      // A flush round is already running; keep this close prevented.
+      event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    window.webContents.send("app:request-flush");
+    closeFlushResolver = finishFlushClose;
+    setTimeout(() => {
+      if (closeFlushResolver === finishFlushClose) {
+        finishFlushClose();
+      }
+    }, 2500);
+  });
   mainWindow.on("closed", () => {
+    closeFlushResolver = null;
     mainWindow = null;
   });
 
