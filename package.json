@@ -11,6 +11,7 @@
     "build": "npm run typecheck && npm run build:renderer && node scripts/apply-csp.mjs && npm run build:electron",
     "start": "electron .",
     "package": "npm run build && electron-builder",
+    "test:kill": "node tests/forced-kill.e2e.mjs",
     "lint": "eslint",
     "test": "npm run build:electron && node --test tests/database.test.mjs tests/pages.test.mjs tests/page-saver.test.mjs tests/window-state.test.mjs tests/attachments-cleanup.test.mjs tests/markdown-paste.test.mjs"
   },
@@ -48,6 +49,7 @@
     "electron-builder": "26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "playwright": "^1.64.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

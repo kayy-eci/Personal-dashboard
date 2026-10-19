@@ -44,6 +44,13 @@ const developmentOrigin = developmentUrl
 const exportDirectory = resolve(__dirname, "../../out");
 const defaultWindowBounds = { width: 1120, height: 760 };
 
+// Test harness hook: the forced-kill suite (and any future CI run) redirects
+// the workspace to a throwaway directory instead of the real user profile.
+const userDataOverride = process.env.LIFEOS_USER_DATA_DIR;
+if (userDataOverride) {
+  app.setPath("userData", resolve(userDataOverride));
+}
+
 protocol.registerSchemesAsPrivileged([
   {
     scheme: appScheme,
