@@ -19,6 +19,7 @@ import { Placeholder } from "@tiptap/extensions";
 import { common, createLowlight } from "lowlight";
 import { Callout } from "./callout";
 import { BlockEditing } from "./block-editing";
+import { BlockIds } from "./block-ids";
 import { ImagePaste } from "./attachments";
 import { MarkdownPaste } from "./markdown-paste";
 import { SlashMenu } from "./slash-menu";
@@ -59,6 +60,7 @@ export function createEditorExtensions(
     }),
     ImagePaste,
     MarkdownPaste,
+    BlockIds,
     BlockEditing,
     Placeholder.configure({
       placeholder: ({ editor, node }) => {

@@ -202,7 +202,9 @@ test("reads and saves page content with validation", async () => {
     const page = repository.createPage();
     const content = repository.getContent(page.id);
     assert.equal(content.pageId, page.id);
-    assert.equal(content.schemaVersion, 1);
+    // The default document has no block ids, so the first load migrates it
+    // to document schema version 2 (FR-1.1).
+    assert.equal(content.schemaVersion, 2);
     assert.equal(JSON.parse(content.contentJson).type, "doc");
 
     const document = {
@@ -213,7 +215,11 @@ test("reads and saves page content with validation", async () => {
       contentJson: JSON.stringify(document),
     });
     assert.equal(updated.updatedAt > content.updatedAt, true);
-    assert.equal(repository.getContent(page.id).contentJson, JSON.stringify(document));
+    // The saved document was id-less, so the save normalized it and the
+    // re-read carries the assigned stable block id (FR-1.1).
+    const reread = JSON.parse(repository.getContent(page.id).contentJson);
+    assert.equal(reread.content[0].type, "paragraph");
+    assert.equal(typeof reread.content[0].attrs.id, "string");
 
     assert.throws(
       () => repository.saveContent(page.id, { contentJson: "" }),
@@ -464,6 +470,65 @@ test("version 3 migration adds the nullable cover column and keeps existing rows
     db.close();
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test("page loads assign stable unique ids to top-level blocks missing them", async () => {
+  await withRepository(({ repository, connection }) => {
+    const page = repository.createPage();
+    // A stored document written "before" block ids existed.
+    const legacyDocument = {
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "one" }] },
+        { type: "heading", attrs: { level: 1 }, content: [] },
+        { type: "horizontalRule" },
+      ],
+    };
+    connection.sqlite
+      .prepare("UPDATE pages SET content_json = ?, schema_version = 1 WHERE id = ?")
+      .run(JSON.stringify(legacyDocument), page.id);
+
+    const loaded = repository.getContent(page.id);
+    assert.equal(loaded.schemaVersion, 2);
+    const loadedDoc = JSON.parse(loaded.contentJson);
+    const ids = loadedDoc.content.map((node) => node.attrs.id);
+    assert.equal(ids.length, 3);
+    assert.ok(ids.every((id) => typeof id === "string" && id.length > 0));
+    assert.equal(new Set(ids).size, ids.length, "ids are unique");
+    // Other attributes survive the normalization.
+    assert.equal(loadedDoc.content[1].attrs.level, 1);
+
+    // The migration itself is a logged write.
+    assert.equal(
+      connection.sqlite
+        .prepare(
+          "SELECT COUNT(*) AS count FROM change_log WHERE entity_id = ? AND operation = 'update'",
+        )
+        .get(page.id).count,
+      1,
+    );
+
+    // Reloading the page keeps the same ids (stable) and stops rewriting.
+    const reloaded = repository.getContent(page.id);
+    const reloadedIds = JSON.parse(reloaded.contentJson).content.map(
+      (node) => node.attrs.id,
+    );
+    assert.deepEqual(reloadedIds, ids);
+
+    // Editor saves without ids are normalized too and bump the version.
+    const saved = repository.saveContent(page.id, {
+      contentJson: JSON.stringify({
+        type: "doc",
+        content: [{ type: "paragraph" }],
+      }),
+    });
+    assert.equal(saved.schemaVersion, 2);
+    const savedDoc = JSON.parse(
+      repository.getContent(page.id).contentJson,
+    );
+    assert.equal(typeof savedDoc.content[0].attrs.id, "string");
+    assert.equal(repository.getContent(page.id).schemaVersion, 2);
+  });
 });
 
 test("validates every page IPC input shape and rejects extra or malformed fields", () => {

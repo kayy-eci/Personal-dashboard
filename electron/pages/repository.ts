@@ -18,6 +18,61 @@ import type {
 const positionLimit = 0xffff_ffff_ffff_ffffn;
 const positionPattern = /^[0-9a-f]{16}$/;
 
+/**
+ * FR-1.1: document schema version 2 means every top-level block carries a
+ * stable unique `id`. Documents saved by older versions migrate lazily:
+ * ids are assigned when a page loads (getContent) or is saved (saveContent).
+ */
+const DOC_SCHEMA_VERSION = 2;
+
+interface DocumentNode {
+  type: string;
+  attrs?: Record<string, unknown>;
+}
+
+interface DocumentJson {
+  type: string;
+  content?: DocumentNode[];
+}
+
+export interface BlockIdNormalization {
+  contentJson: string;
+  assignedIds: number;
+}
+
+/**
+ * Assigns a stable unique id to every top-level document block that lacks
+ * one. Returns null when the stored JSON is not a parseable document and the
+ * caller must persist the input unchanged.
+ */
+export function normalizeBlockIds(
+  contentJson: string,
+  nextId: () => string,
+): BlockIdNormalization | null {
+  let document: DocumentJson;
+  try {
+    document = JSON.parse(contentJson) as DocumentJson;
+  } catch {
+    return null;
+  }
+  if (!isDocumentContent(document)) {
+    return null;
+  }
+
+  let assignedIds = 0;
+  for (const node of document.content!) {
+    const attrs =
+      typeof node.attrs === "object" && node.attrs !== null
+        ? node.attrs
+        : (node.attrs = {});
+    if (typeof attrs.id !== "string" || attrs.id === "") {
+      attrs.id = nextId();
+      assignedIds += 1;
+    }
+  }
+  return { contentJson: JSON.stringify(document), assignedIds };
+}
+
 export class PageRepositoryError extends Error {
   constructor(
     readonly code: PageRepositoryErrorCode,
@@ -50,7 +105,7 @@ function comparePages(
       : left.id.localeCompare(right.id);
 }
 
-function isDocumentContent(value: unknown): boolean {
+function isDocumentContent(value: DocumentJson | unknown): boolean {
   if (typeof value !== "object" || value === null) {
     return false;
   }
@@ -150,11 +205,57 @@ export class PageRepository {
 
   getContent(pageId: string): PageContent {
     const page = this.requireActivePage(pageId);
+    const normalized = normalizeBlockIds(page.contentJson, uuidv7);
+    if (normalized === null) {
+      return {
+        pageId: page.id,
+        contentJson: page.contentJson,
+        schemaVersion: page.schemaVersion,
+        updatedAt: page.updatedAt,
+      };
+    }
+
+    const needsPersist =
+      normalized.assignedIds > 0 || page.schemaVersion < DOC_SCHEMA_VERSION;
+    if (!needsPersist) {
+      return {
+        pageId: page.id,
+        contentJson: page.contentJson,
+        schemaVersion: page.schemaVersion,
+        updatedAt: page.updatedAt,
+      };
+    }
+
+    // FR-1.1 + FR-3.4: stored documents written before block ids migrate on
+    // first load; the write itself is a transactional, logged update.
+    const timestamp = new Date().toISOString();
+    const persisted = this.transact(() => {
+      this.db
+        .update(pages)
+        .set({
+          contentJson: normalized.contentJson,
+          schemaVersion: DOC_SCHEMA_VERSION,
+          updatedAt: timestamp,
+        })
+        .where(eq(pages.id, pageId))
+        .run();
+      this.logChange(
+        pageId,
+        "update",
+        {
+          schemaVersion: DOC_SCHEMA_VERSION,
+          blockIdsAssigned: normalized.assignedIds,
+        },
+        timestamp,
+      );
+      return this.requirePage(pageId);
+    });
+
     return {
-      pageId: page.id,
-      contentJson: page.contentJson,
-      schemaVersion: page.schemaVersion,
-      updatedAt: page.updatedAt,
+      pageId: persisted.id,
+      contentJson: normalized.contentJson,
+      schemaVersion: persisted.schemaVersion,
+      updatedAt: persisted.updatedAt,
     };
   }
 
@@ -168,26 +269,37 @@ export class PageRepository {
     ) {
       throw new PageRepositoryError("INVALID_INPUT", "Page content is invalid");
     }
+
+    const normalized = normalizeBlockIds(contentJson, uuidv7);
+    const normalizedJson = normalized ? normalized.contentJson : contentJson;
     let content: unknown;
     try {
-      content = JSON.parse(contentJson);
+      content = JSON.parse(normalizedJson);
     } catch {
       throw new PageRepositoryError("INVALID_INPUT", "Page content is invalid");
     }
     if (!isDocumentContent(content)) {
       throw new PageRepositoryError("INVALID_INPUT", "Page content is invalid");
     }
+    const nextSchemaVersion =
+      normalized && normalized.assignedIds > 0
+        ? DOC_SCHEMA_VERSION
+        : page.schemaVersion;
 
     return this.transact(() => {
       const timestamp = new Date().toISOString();
       this.db
         .update(pages)
-        .set({ contentJson, updatedAt: timestamp })
+        .set({
+          contentJson: normalizedJson,
+          schemaVersion: nextSchemaVersion,
+          updatedAt: timestamp,
+        })
         .where(eq(pages.id, pageId))
         .run();
       this.logChange(pageId, "update", {
-        contentLength: contentJson.length,
-        schemaVersion: page.schemaVersion,
+        contentLength: normalizedJson.length,
+        schemaVersion: nextSchemaVersion,
       }, timestamp);
       return this.requirePage(pageId);
     });
