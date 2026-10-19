@@ -170,7 +170,7 @@ Each feature PRD below uses the same structure: problem, goals and non-goals, us
 - FR-2.3 (P0) Create page: sidebar + button, Ctrl/Cmd+N, sub-page from the slash menu or the + on a tree node; a new page opens with the cursor in the title.
 - FR-2.4 (P0) Rename inline from the page title or the sidebar; changes reflect everywhere instantly.
 - FR-2.5 (P0) Move and reorder by drag and drop with drop indicators (before, after, inside). Ordering uses fractional indexing so a move updates one row. Moving a page into its own descendant is rejected.
-- FR-2.6 (P0) Delete moves the page and its whole subtree to Trash. The Trash view lists deleted pages; restore returns the subtree to its original place (or to root if the parent is gone); permanent delete needs confirmation; auto-purge after 30 days, configurable.
+- FR-2.6 (P0) Delete moves the page and its whole subtree to Trash. The Trash view lists deleted pages; restore returns the subtree to its original place (or to root if the parent is gone); permanent delete needs confirmation; auto-purge after 30 days.
 - FR-2.7 (P0) Breadcrumbs on every page; each crumb is clickable; long paths truncate in the middle.
 - FR-2.8 (P1) Favorites section at the top of the sidebar, reorderable.
 - FR-2.9 (P1) Back and forward history (Alt+Left/Right, mouse buttons) and a Recents list.
@@ -178,6 +178,7 @@ Each feature PRD below uses the same structure: problem, goals and non-goals, us
 - FR-2.11 (P1) Backlinks panel listing pages that link to the current one (depends on FR-1.11).
 - FR-2.12 (P1) Page options: full width, small text, lock page (read-only).
 - FR-2.13 (P2) Tabs, split view and multiple windows.
+- FR-2.14 (P1) Trash retention is configurable from the settings window (FR-4.10).
 
 **Non-functional requirements.**
 
@@ -230,7 +231,7 @@ Each feature PRD below uses the same structure: problem, goals and non-goals, us
 **Functional requirements.**
 
 - FR-3.1 (P0) One SQLite database in the OS user-data directory; WAL mode; foreign keys on; every write in a transaction.
-- FR-3.2 (P0) Autosave: debounce 500 ms after the last keystroke, a hard flush every 5 seconds of continuous typing, and an immediate flush on blur, page change, window close and quit.
+- FR-3.2 (P0) Autosave: debounce 500 ms after the last keystroke, a hard flush every 1.5 seconds of continuous typing, and an immediate flush on blur, page change, window close and quit.
 - FR-3.3 (P0) Save-state indicator: Saving, Saved, or Error with retry. Failures never pass silently and unsaved content stays in memory.
 - FR-3.4 (P0) Schema migrations: ordered, versioned, idempotent; an automatic copy of the database file is made before any migration; a failed migration rolls back and offers recovery options.
 - FR-3.5 (P0) Sync-ready data model: UUIDv7 or ULID keys, UTC created_at/updated_at, soft-delete tombstones, a device_id, and an append-only change log for every write.
@@ -264,7 +265,7 @@ Each feature PRD below uses the same structure: problem, goals and non-goals, us
 
 **Acceptance criteria.**
 
-- Given I am typing, when the process is killed, then at most the last 500 ms of typing is lost on relaunch.
+- Given I am typing, when the process is killed, then at most the last 500 ms of intermittent typing is lost (the debounce window), and at most 1.5 s of continuous typing (the hard flush window) is lost on relaunch — verified across 50 forced-kill rounds.
 - Given a new app version with a schema change, when I launch it, then a backup is created first and my data appears intact.
 - Given a page edited over several days, when I open version history, then I see timestamped versions and can restore one without losing the current state.
 
