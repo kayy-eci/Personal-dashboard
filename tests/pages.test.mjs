@@ -531,6 +531,54 @@ test("page loads assign stable unique ids to top-level blocks missing them", asy
   });
 });
 
+test("every write path appends a change_log row", async () => {
+  await withRepository(({ repository, connection }) => {
+    const operations = () =>
+      connection.sqlite
+        .prepare("SELECT entity_id, operation FROM change_log ORDER BY sequence")
+        .all();
+
+    const parent = repository.createPage();
+    const child = repository.createPage({ parentId: parent.id });
+
+    // FR-1 content save (uses a pre-id'd block so normalization is a no-op).
+    repository.saveContent(child.id, {
+      contentJson: JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            attrs: { id: "00000000-0000-7000-8000-000000000001" },
+          },
+        ],
+      }),
+    });
+    // FR-2.4 rename.
+    repository.renamePage(parent.id, "Renamed");
+    // FR-2.5 move.
+    repository.movePage(child.id, { parentId: null });
+    // FR-2.6 trash, restore, and purge.
+    repository.deletePage(child.id);
+    repository.restorePage(child.id);
+    repository.deletePage(child.id);
+    repository.purgePage(child.id);
+
+    const expected = [
+      [parent.id, "create"],
+      [child.id, "create"],
+      [child.id, "update"], // content save
+      [parent.id, "update"], // rename
+      [child.id, "move"],
+      [child.id, "delete"], // to trash
+      [child.id, "restore"],
+      [child.id, "delete"], // to trash again
+      [child.id, "purge"],
+    ];
+    const actual = operations().map((row) => [row.entity_id, row.operation]);
+    assert.deepEqual(actual, expected);
+  });
+});
+
 test("validates every page IPC input shape and rejects extra or malformed fields", () => {
   const pageId = uuidv7();
   const parentId = uuidv7();
