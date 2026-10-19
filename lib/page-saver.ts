@@ -2,7 +2,8 @@
  * The autosave engine of one page editor (FR-3.2/FR-3.3). Pure closures with
  * a serialized save queue so overlapping schedules cannot race. The renderer
  * wires `snapshot` (the live editor JSON) and `savePage` (typed IPC) and maps
- * state changes onto the save status store.
+ * state changes onto the save status store. Debounce 500 ms with a 1.5 s
+ * hard flush of continuous typing.
  */
 
 export type SaveState = "saving" | "saved" | "error" | "dirty";
@@ -46,7 +47,7 @@ export function createPageSaver(options: PageSaverOptions): PageSaver {
     savePage,
     onStateChange,
     debounceMs = 500,
-    hardFlushMs = 5000,
+    hardFlushMs = 1500,
   } = options;
 
   let lastSavedJson = "";

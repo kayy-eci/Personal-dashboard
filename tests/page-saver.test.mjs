@@ -22,7 +22,6 @@ function makeSaver(overrides = {}) {
       events.states.push(state);
     },
     debounceMs: 20,
-    hardFlushMs: 5000,
     ...overrides,
   });
   return { saver, events, setSnapshot: (json) => { snapshotJson = json; } };
@@ -67,6 +66,37 @@ test("continuous typing triggers a hard flush before the debounce elapses", asyn
   await saver.flush();
 
   assert.ok(events.saves.length >= 1, "at least one hard flush happened mid-typing");
+  assert.equal(events.saves.at(-1), `{"v":${version}}`);
+  assert.equal(events.states.at(-1), "saved");
+});
+
+test("the default hard flush window is 1.5 seconds of continuous typing", async () => {
+  // A debounce far beyond the test duration isolates the hard flush.
+  const { saver, events, setSnapshot } = makeSaver({ debounceMs: 10000 });
+
+  let version = 0;
+  setSnapshot(`{"v":${version}}`);
+  saver.setPersisted(`{"v":${version}}`);
+
+  // Type one edit every 40 ms for about 1.76 s; nothing but the default
+  // 1.5 s hard flush may persist during that window.
+  for (let tick = 0; tick < 44; tick += 1) {
+    version += 1;
+    setSnapshot(`{"v":${version}}`);
+    saver.schedule();
+    await delay(40);
+  }
+
+  assert.equal(events.saves.length, 1, "exactly one hard flush during typing");
+  assert.match(events.saves[0], /^\{"v":\d+\}$/);
+  assert.notEqual(
+    events.saves[0],
+    `{"v":${version}}`,
+    "the hard flush saved a mid-typing snapshot, not the final edit",
+  );
+
+  // The remaining content waits for the debounce/window close flush.
+  await saver.flush();
   assert.equal(events.saves.at(-1), `{"v":${version}}`);
   assert.equal(events.states.at(-1), "saved");
 });
