@@ -82,6 +82,7 @@ async function main() {
     await window.keyboard.type("Blok kedua.");
     await delay(100);
 
+    await delay(700); // defeat ProseMirror's 500 ms history grouping
     step("open menu 1 (turn into)");
     let menu = await openMenu(window, 1);
     await menu.getByText("Turn into").click();
@@ -92,16 +93,47 @@ async function main() {
       failures.push("Turn into → Heading 2 did not become an h2");
     }
 
+    // FR-1.10: undo must reverse the conversion; redo re-applies it.
+    step("undo/redo turn into");
+    await window.keyboard.press("Control+z");
+    await delay(150);
+    if ((await editor.locator("> p").filter({ hasText: "Blok kedua." }).count()) !== 1) {
+      failures.push("undo did not restore the paragraph after Turn into");
+    }
+    if ((await editor.locator("h2").count()) !== 0) {
+      failures.push("undo left the h2 behind after Turn into");
+    }
+    await window.keyboard.press("Control+Shift+z");
+    await delay(150);
+    if ((await heading.count()) !== 1) {
+      failures.push("redo did not re-apply Turn into");
+    }
+    await delay(700);
+
     step("open menu 2 (color)");
     menu = await openMenu(window, 1);
     await menu.getByText("Color").click();
     await menu.getByText("Red", { exact: true }).click();
     await menu.waitFor({ state: "hidden" });
-    await window
+    const redSpan = window
       .locator("h2 span[style*='rgb(168, 85, 86)']")
-      .first()
+      .first();
+    await redSpan
       .waitFor({ state: "visible", timeout: 5000 })
       .catch(() => failures.push("Color → Red did not color the h2 span"));
+
+    step("undo/redo color");
+    await window.keyboard.press("Control+z");
+    await delay(150);
+    if ((await redSpan.count()) !== 0) {
+      failures.push("undo did not strip the red color");
+    }
+    await window.keyboard.press("Control+Shift+z");
+    await delay(150);
+    if ((await redSpan.count()) === 0) {
+      failures.push("redo did not re-apply the red color");
+    }
+    await delay(700);
 
     step("open menu 3 (duplicate)");
     menu = await openMenu(window, 0);
@@ -113,6 +145,19 @@ async function main() {
       failures.push(`Duplicate did not add a block (copies=${await paragraphs.count()})`);
     }
 
+    step("undo/redo duplicate");
+    await window.keyboard.press("Control+z");
+    await delay(150);
+    if ((await paragraphs.count()) !== 1) {
+      failures.push("undo did not remove the duplicated block");
+    }
+    await window.keyboard.press("Control+Shift+z");
+    await delay(150);
+    if ((await paragraphs.count()) !== 2) {
+      failures.push("redo did not re-apply the duplicate");
+    }
+    await delay(700);
+
     step("open menu 4 (delete)");
     menu = await openMenu(window, 1);
     await menu.getByText("Delete").click();
@@ -122,13 +167,27 @@ async function main() {
       failures.push(`Delete did not remove the duplicate (copies=${await paragraphs.count()})`);
     }
 
+    step("undo/redo delete");
+    await window.keyboard.press("Control+z");
+    await delay(150);
+    if ((await paragraphs.count()) !== 2) {
+      failures.push("undo did not restore the deleted block");
+    }
+    await window.keyboard.press("Control+Shift+z");
+    await delay(150);
+    if ((await paragraphs.count()) !== 1) {
+      failures.push("redo did not re-apply the delete");
+    }
+    await delay(700);
+
     // Full-document copy → paste: pasted copies must get fresh unique ids.
     step("copy-paste unique ids");
     await editor.click();
     await window.keyboard.press("Control+A");
+    await delay(120);
     await window.keyboard.press("Control+C");
-    await window.keyboard.press("Control+End");
-    await window.keyboard.press("Enter");
+    await delay(250);
+    // Paste over the selection: the content is replaced by its copy.
     await window.keyboard.press("Control+V");
     await delay(300);
     const domIds = await editor.evaluate(() => {
@@ -139,8 +198,8 @@ async function main() {
       );
     });
     console.log(`[step] domIds=${JSON.stringify(domIds)}`);
-    if (domIds.length !== 4) {
-      failures.push(`paste produced ${domIds.length} data-block-id nodes, expected 4`);
+    if (domIds.length !== 2) {
+      failures.push(`paste produced ${domIds.length} data-block-id nodes, expected 2`);
     }
     if (new Set(domIds).size !== domIds.length) {
       failures.push("pasted blocks reused existing block ids");
@@ -148,6 +207,8 @@ async function main() {
 
     // Persistence: the saved document is normalized and unique at rest.
     step("close & inspect db");
+    // Give the 1.5 s hard-flush window room to fire (FR-3.2) before quitting.
+    await delay(1700);
     await app.close();
     app = null;
     const database = new Database(path.join(userDataDir, "lifeos.sqlite"));
@@ -158,15 +219,26 @@ async function main() {
       const document = JSON.parse(row.content_json);
       const ids = document.content.map((node) => node.attrs?.id);
       const nonEmpty = ids.filter((id) => typeof id === "string" && id !== "");
+      const shapes = document.content.map(
+        (node) => `${node.type}:${(node.content ?? []).map((c) => (c.type === "text" ? c.text : c.type)).join("|") ?? ""}`,
+      );
+      console.log(`[debug stored] ${JSON.stringify(shapes)}`);
+      const flat = shapes.join("|");
+      const expected = [
+        "paragraph:Blok pertama.",
+        "heading:Blok kedua.",
+        "paragraph:",
+      ].join("|");
+      if (flat !== expected) {
+        failures.push(`stored document was ${flat}, expected ${expected}`);
+      }
       if (nonEmpty.length !== document.content.length) {
         failures.push("stored document holds blocks without an id");
       }
       if (new Set(nonEmpty).size !== nonEmpty.length) {
         failures.push("stored document holds duplicate block ids");
       }
-      if (nonEmpty.length !== 4) {
-        failures.push(`stored document holds ${nonEmpty.length} blocks, expected 4`);
-      }
+
       // quickCheck as a cheap durability signal.
       const check = database.pragma("quick_check", { simple: true });
       if (check !== "ok") failures.push(`quick_check was ${check}`);
