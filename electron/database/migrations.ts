@@ -5,6 +5,12 @@ import type Database from "better-sqlite3";
 interface Migration {
   version: number;
   sql: string;
+  /**
+   * Optional guarded application for migrations that cannot be expressed as
+   * plain SQL (SQLite has no conditional ALTER TABLE). Returning early is
+   * still safe: the version bump happens after apply() finishes.
+   */
+  apply?: (sqlite: InstanceType<typeof Database>) => void;
 }
 
 export class MigrationError extends Error {
@@ -124,6 +130,24 @@ const migrations: readonly Migration[] = [
         END;
     `,
   },
+  {
+    // FR-2.1: the page entity allows an optional cover image. Version 3 adds
+    // the nullable column in place, keeping every row, index and trigger.
+    // Guarded because an archived database may predate the pages table.
+    version: 3,
+    sql: "",
+    apply: (sqlite) => {
+      const hasPages =
+        sqlite
+          .prepare<never[], { count: number }>(
+            "SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'pages'",
+          )
+          .get()?.count ?? 0;
+      if (hasPages > 0) {
+        sqlite.exec("ALTER TABLE pages ADD COLUMN cover TEXT;");
+      }
+    },
+  },
 ];
 
 function createBackupPath(userDataDirectory: string, version: number): string {
@@ -183,7 +207,11 @@ export async function runMigrations(
 
   for (const migration of pendingMigrations) {
     const applyMigration = sqlite.transaction(() => {
-      sqlite.exec(migration.sql);
+      if (migration.apply) {
+        migration.apply(sqlite);
+      } else {
+        sqlite.exec(migration.sql);
+      }
       sqlite.pragma(`user_version = ${migration.version}`);
     });
     try {

@@ -42,6 +42,7 @@ export interface PageRecord {
   parentId: string | null;
   title: string;
   icon: string | null;
+  cover: string | null;
   position: string;
   isFavorite: boolean;
   contentJson: string;

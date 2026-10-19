@@ -31,6 +31,7 @@ export const pages = sqliteTable(
       .notNull()
       .default('{"type":"doc","content":[{"type":"paragraph"}]}'),
     schemaVersion: integer("schema_version").notNull().default(1),
+    cover: text("cover"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
     deletedAt: text("deleted_at"),

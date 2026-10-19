@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import Database from "better-sqlite3";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -384,6 +384,81 @@ test("version 2 migration preserves change_log entries and allows the purge oper
     assert.equal(
       db.prepare("SELECT COUNT(*) AS count FROM change_log").get().count,
       2,
+    );
+  } finally {
+    db.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("version 3 migration adds the nullable cover column and keeps existing rows", async () => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), "lifeos-migrations-v3-"));
+  const db = new Database(path.join(directory, "lifeos.sqlite"));
+  try {
+    db.pragma("journal_mode = WAL");
+    db.exec(`
+      CREATE TABLE devices (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE TABLE pages (
+        id TEXT PRIMARY KEY,
+        parent_id TEXT REFERENCES pages(id) ON DELETE SET NULL,
+        title TEXT NOT NULL DEFAULT 'Untitled',
+        icon TEXT,
+        position TEXT NOT NULL,
+        is_favorite INTEGER NOT NULL DEFAULT 0 CHECK (is_favorite IN (0, 1)),
+        content_json TEXT NOT NULL DEFAULT '{"type":"doc","content":[{"type":"paragraph"}]}'
+          CHECK (json_valid(content_json)),
+        schema_version INTEGER NOT NULL DEFAULT 1 CHECK (schema_version >= 1),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        deleted_at TEXT
+      );
+      INSERT INTO devices (id, name, created_at, updated_at) VALUES ('device-1', 'Test', '2026-01-01', '2026-01-01');
+      INSERT INTO pages (id, title, position, created_at, updated_at)
+        VALUES ('page-1', 'Kept', '8000000000000000', '2026-01-01', '2026-01-01');
+      PRAGMA user_version = 2;
+    `);
+
+    const backupPath = await runMigrations(db, directory);
+
+    // The pre-migration backup exists (FR-3.4).
+    assert.ok(backupPath);
+    assert.ok(existsSync(backupPath));
+    const backup = new Database(backupPath, { readonly: true });
+    try {
+      assert.equal(backup.pragma("user_version", { simple: true }), 2);
+      assert.equal(
+        backup
+          .prepare("SELECT COUNT(*) AS count FROM pragma_table_info('pages') WHERE name = 'cover'")
+          .get().count,
+        0,
+      );
+    } finally {
+      backup.close();
+    }
+
+    // The column exists in place, is nullable, and the row survived.
+    assert.equal(
+      db
+        .prepare("SELECT COUNT(*) AS count FROM pragma_table_info('pages') WHERE name = 'cover'")
+        .get().count,
+      1,
+    );
+    const kept = db
+      .prepare("SELECT title, cover FROM pages WHERE id = 'page-1'")
+      .get();
+    assert.equal(kept.title, "Kept");
+    assert.equal(kept.cover, null);
+
+    // The new column accepts values.
+    db.prepare("UPDATE pages SET cover = 'bg.png' WHERE id = 'page-1'").run();
+    assert.equal(
+      db.prepare("SELECT cover FROM pages WHERE id = 'page-1'").get().cover,
+      "bg.png",
     );
   } finally {
     db.close();
