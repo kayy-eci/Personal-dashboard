@@ -14,7 +14,7 @@ function findTopLevelBlock(editor: Editor): TopLevelBlock | null {
   const { state } = editor;
   const { selection } = state;
   const $from = selection.$from;
-  if (state.doc.childCount === 0) {
+  if (state.doc.childCount === 0 || $from.depth < 1) {
     return null;
   }
   // The index of the innermost top-level block that contains the selection.

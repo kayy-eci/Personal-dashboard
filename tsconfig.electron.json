@@ -10,6 +10,6 @@
     "rootDir": ".",
     "outDir": "dist-electron"
   },
-  "include": ["electron/**/*.ts"],
+  "include": ["electron/**/*.ts", "lib/page-saver.ts"],
   "exclude": ["node_modules", "dist-electron"]
 }

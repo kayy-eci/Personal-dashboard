@@ -458,7 +458,8 @@ body {
 }
 
 .page-title-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -469,12 +470,51 @@ body {
   font-weight: 700;
 }
 
+/* ------------------------------------------------- save status indicator */
 .page-title-input::placeholder {
   color: var(--color-text-muted);
 }
 
 .page-title-input:focus {
   outline: none;
+}
+
+/* ------------------------------------------------- save status indicator */
+
+.save-status {
+  align-self: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.save-status[data-save-status="dirty"] {
+  visibility: hidden;
+  height: 0;
+}
+
+.save-status-error {
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.save-status-retry {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.save-status-retry:hover {
+  background: var(--sb-hover);
 }
 
 /* --------------------------------------------------------- empty states */

@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef } from "react";
 import { findNode, pathOf, truncateCrumbs } from "@/lib/page-tree";
 import { getLifeOsApi } from "@/lib/pages-client";
 import { PageDocEditor } from "./editor/doc-editor";
+import { SaveStatusIndicator } from "./save-status-indicator";
 import { useWorkspace } from "./workspace-provider";
 
 export function PageView() {
@@ -145,6 +146,7 @@ function TitleInput({ initialTitle }: { initialTitle: string }) {
           }
         }}
       />
+      <SaveStatusIndicator />
     </header>
   );
 }

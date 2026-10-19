@@ -5,102 +5,11 @@ import type { Editor } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { runPageOperation } from "@/lib/pages-client";
+import { createPageSaver, type PageSaver } from "@/lib/page-saver";
+import { saveStatusStore } from "@/lib/editor-save-status";
 import { useWorkspace } from "../workspace-provider";
 import { createEditorExtensions } from "./extensions";
 import { FloatingToolbar } from "./floating-toolbar";
-
-const saveDebounceMs = 500;
-const saveHardFlushMs = 5000;
-const saveRetryMs = 250;
-
-interface PageSaver {
-  /** Marks the given document JSON as already persisted. */
-  setPersisted: (contentJson: string) => void;
-  /** Queues a debounced (or throttled) save after an edit. */
-  schedule: () => void;
-  /** Cancels the debounce and saves immediately. */
-  flush: () => void;
-}
-
-/**
- * The persistence engine of one page editor. Plain closures (no React) so the
- * timers and in-flight guard behave exactly once per active page. The snapshot
- * callback reads the latest document synchronously, so flushing during
- * unmount/page switch still acts on the live content.
- */
-function createPageSaver(
-  pageId: string,
-  onError: (message: string) => void,
-  snapshot: () => string | null,
-): PageSaver {
-  let lastSavedJson = "";
-  let lastSaveTime = 0;
-  let saveTimer: number | null = null;
-  let saving = false;
-
-  function queue(ms: number): void {
-    if (saveTimer !== null) {
-      window.clearTimeout(saveTimer);
-    }
-    saveTimer = window.setTimeout(() => {
-      saveTimer = null;
-      void save();
-    }, ms);
-  }
-
-  async function save(): Promise<void> {
-    const contentJson = snapshot();
-    if (!contentJson || contentJson === lastSavedJson) {
-      return;
-    }
-    if (saving) {
-      // Wait for the in-flight save, then try again with the latest snapshot.
-      queue(saveRetryMs);
-      return;
-    }
-    saving = true;
-    try {
-      await runPageOperation("saveContent", (api) =>
-        api.savePageContent({ pageId, contentJson }),
-      );
-      lastSavedJson = contentJson;
-      lastSaveTime = Date.now();
-    } catch {
-      onError("The page could not be saved. It will be retried on the next edit.");
-    }
-    saving = false;
-    // Typing continued while the save was in flight; persist the newer state.
-    const latest = snapshot();
-    if (latest && latest !== lastSavedJson) {
-      void save();
-    }
-  }
-
-  return {
-    setPersisted(contentJson) {
-      lastSavedJson = contentJson;
-      lastSaveTime = Date.now();
-    },
-    schedule() {
-      const now = Date.now();
-      // Continuous typing never starves persistence: force a save at most
-      // this often while the user types.
-      if (now - lastSaveTime >= saveHardFlushMs) {
-        lastSaveTime = now;
-        void save();
-        return;
-      }
-      queue(saveDebounceMs);
-    },
-    flush() {
-      if (saveTimer !== null) {
-        window.clearTimeout(saveTimer);
-        saveTimer = null;
-      }
-      void save();
-    },
-  };
-}
 
 type LoadStatus = "loading" | "ready" | "error";
 
@@ -120,17 +29,49 @@ export function PageDocEditor({ pageId }: { pageId: string }) {
   const editorRef = useRef<Editor | null>(null);
   const saverRef = useRef<PageSaver | null>(null);
 
+  // The autosave engine (FR-3.2/FR-3.3). Kept out of render state so the
+  // serialized save queue and its timers run exactly once per active page.
   useEffect(() => {
-    saverRef.current = createPageSaver(
+    const saver = createPageSaver({
       pageId,
-      (message) => pushError(message),
-      () => {
+      snapshot: () => {
         const currentEditor = editorRef.current;
         return currentEditor && !currentEditor.isDestroyed
           ? JSON.stringify(currentEditor.getJSON())
           : null;
       },
-    );
+      savePage: async (id, contentJson) => {
+        try {
+          await runPageOperation("saveContent", (api) =>
+            api.savePageContent({ pageId: id, contentJson }),
+          );
+        } catch (error) {
+          pushError(
+            error instanceof Error ? error.message : "The page could not be saved.",
+          );
+          throw error;
+        }
+      },
+      onStateChange: (state) => {
+        saveStatusStore.set(state);
+      },
+    });
+    saverRef.current = saver;
+
+    // The Retry button in the save indicator bumps a token; flush for it.
+    let handledToken = saveStatusStore.getSnapshot().retryToken;
+    const unsubscribe = saveStatusStore.subscribe(() => {
+      const { retryToken: requested } = saveStatusStore.getSnapshot();
+      if (requested > handledToken) {
+        handledToken = requested;
+        void saver.flush();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      saverRef.current = null;
+    };
   }, [pageId, pushError]);
 
   useEffect(() => {
@@ -162,9 +103,9 @@ export function PageDocEditor({ pageId }: { pageId: string }) {
     return () => {
       cancelled = true;
       // Switching away from the page: persist whatever is on screen.
-      saverRef.current?.flush();
+      void saverRef.current?.flush();
     };
-  }, [pageId, retryToken, pushError]);
+  }, [pageId, pushError, retryToken]);
 
   const editor = useEditor(
     {
@@ -175,7 +116,7 @@ export function PageDocEditor({ pageId }: { pageId: string }) {
         saverRef.current?.schedule();
       },
       onBlur: () => {
-        saverRef.current?.flush();
+        void saverRef.current?.flush();
       },
     },
     // Recreate only when a different page document is loaded.
