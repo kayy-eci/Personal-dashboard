@@ -80,6 +80,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
             label: "Page",
             description: "Create a sub-page under this page",
             keywords: ["child", "sub", "notes"],
+            aliases: ["page"],
             run: (editor: Editor, range: Range) => {
               editor.chain().focus().deleteRange(range).run();
               onCreateSubPage();
@@ -137,7 +138,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       id: "quote",
       label: "Quote",
       description: "Capture a quotation",
-      aliases: ["bq", "blockquote"],
+      aliases: ["bq", "quote", "blockquote"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).toggleBlockquote().run();
       },
@@ -147,7 +148,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       label: "Callout",
       description: "Highlighted note with an icon",
       keywords: ["info"],
-      aliases: ["note", "highlight"],
+      aliases: ["callout", "note", "highlight"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).setCallout().run();
       },
@@ -166,7 +167,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       label: "Divider",
       description: "Visually separate sections",
       keywords: ["rule"],
-      aliases: ["hr", "line", "separator"],
+      aliases: ["divider", "hr", "line", "separator"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).setHorizontalRule().run();
       },
@@ -176,14 +177,14 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       label: "Image",
       description: "Insert an image file",
       keywords: ["photo"],
-      aliases: ["img", "picture", "picture file"],
+      aliases: ["image", "img", "picture"],
       run: pickImageFile,
     },
     {
       id: "table",
       label: "Table",
       description: "Insert a simple table",
-      aliases: ["grid"],
+      aliases: ["table", "grid"],
       run: (editor, range) => {
         editor
           .chain()
@@ -197,7 +198,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       id: "toggle",
       label: "Toggle",
       description: "Collapsible section",
-      aliases: ["details", "summary", "acc", "accordion"],
+      aliases: ["toggle", "details", "summary", "accordion"],
       run: (editor, range) => {
         editor.chain().focus().deleteRange(range).setDetails().run();
       },
