@@ -49,3 +49,25 @@ test("collectReferencedHashes also keeps page header icon and cover images", () 
   assert.ok(hashes.has(hashA));
   assert.ok(hashes.has(hashB));
 });
+
+test("GIF references are treated like any other attachment by cleanup", () => {
+  const contentGif = Array(64).fill("c").join("");
+  const headerGif = Array(64).fill("d").join("");
+  const orphanGif = Array(64).fill("e").join("");
+  const rows = [
+    JSON.stringify({
+      attrs: { src: `lifeos://app/attachment/${contentGif}.gif` },
+    }),
+    `image:${headerGif}.gif`,
+  ];
+  const hashes = collectReferencedHashes(rows);
+  assert.ok(hashes.has(contentGif));
+  assert.ok(hashes.has(headerGif));
+  assert.deepEqual(
+    listOrphanFileNames(
+      [`${contentGif}.gif`, `${headerGif}.gif`, `${orphanGif}.gif`],
+      hashes,
+    ),
+    [`${orphanGif}.gif`],
+  );
+});

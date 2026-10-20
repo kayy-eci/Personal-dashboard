@@ -10,7 +10,9 @@ import type {
   SuggestionProps,
 } from "@tiptap/suggestion";
 import { ReactRenderer } from "@tiptap/react";
+import { IMAGE_ACCEPT } from "@/lib/attachment-limits";
 import { filterSlashItems } from "@/lib/slash-filter";
+import { saveAndInsertImage, type AttachmentErrorHandler } from "./attachments";
 import { SlashMenuPopup, type SlashMenuRef } from "./slash-popup";
 
 export interface SlashItem {
@@ -43,34 +45,31 @@ function toggleList(
   };
 }
 
-function pickImageFile(editor: Editor, range: Range): void {
+function pickImageFile(
+  editor: Editor,
+  range: Range,
+  onError?: AttachmentErrorHandler,
+): void {
   editor.chain().focus().deleteRange(range).run();
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = "image/png,image/jpeg,image/gif,image/webp,image/avif";
-  input.onchange = async () => {
+  input.accept = IMAGE_ACCEPT;
+  input.onchange = () => {
     const file = input.files?.[0];
     input.remove();
     if (!file) {
       return;
     }
-    const bytes = await file.arrayBuffer();
-    const api = window.lifeos;
-    if (!api) {
-      return;
-    }
-    try {
-      const stored = await api.saveAttachment({ mime: file.type, bytes });
-      editor.chain().focus().setImage({ src: stored.urlPath, alt: file.name }).run();
-    } catch {
-      console.error("LifeOS could not save the attached image");
-    }
+    void saveAndInsertImage(editor, file, onError);
   };
   input.click();
 }
 
 /** Slash menu items; labels and descriptions in sentence case. */
-function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
+function createSlashItems(
+  onCreateSubPage?: (() => void) | null,
+  onError?: AttachmentErrorHandler,
+): SlashItem[] {
   return [
     // FR-2.3: creating a sub-page from the slash menu.
     ...(onCreateSubPage
@@ -178,7 +177,7 @@ function createSlashItems(onCreateSubPage?: (() => void) | null): SlashItem[] {
       description: "Insert an image file",
       keywords: ["photo"],
       aliases: ["image", "img", "picture"],
-      run: pickImageFile,
+      run: (editor, range) => pickImageFile(editor, range, onError),
     },
     {
       id: "table",
@@ -223,12 +222,16 @@ export const SlashMenu = Extension.create({
     return {
       // Provided by the page editor; without it the Page item is hidden.
       onCreateSubPage: null as (() => void) | null,
+      onError: null as AttachmentErrorHandler | null,
     };
   },
 
   addProseMirrorPlugins() {
     const extensionEditor = this.editor;
-    const slashItems = createSlashItems(this.options.onCreateSubPage);
+    const slashItems = createSlashItems(
+      this.options.onCreateSubPage,
+      this.options.onError ?? undefined,
+    );
 
     return [
       Suggestion<SlashItem, SlashItem>({

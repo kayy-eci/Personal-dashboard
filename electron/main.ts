@@ -476,7 +476,7 @@ registerIpcHandler(
   isSaveAttachmentArgs,
   validateIpcSender,
   (_event, input) =>
-    saveAttachment(attachmentsDirectory(), input.mime, input.bytes),
+    saveAttachment(attachmentsDirectory(), input.bytes),
 );
 
 registerPageIpcHandlers(validateIpcSender, () => {

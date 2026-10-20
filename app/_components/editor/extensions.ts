@@ -30,6 +30,7 @@ const lowlight = createLowlight(common);
 export function createEditorExtensions(
   options: {
     onCreateSubPage?: (() => void) | null;
+    onError?: (message: string) => void;
   } = {},
 ): Extensions {
   return [
@@ -57,8 +58,11 @@ export function createEditorExtensions(
     Callout,
     SlashMenu.configure({
       onCreateSubPage: options.onCreateSubPage ?? null,
+      onError: options.onError ?? null,
     }),
-    ImagePaste,
+    ImagePaste.configure({
+      onError: options.onError ?? null,
+    }),
     MarkdownPaste,
     BlockIds,
     BlockEditing,

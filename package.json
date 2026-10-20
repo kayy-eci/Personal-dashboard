@@ -20,7 +20,7 @@
     "test:page-header": "node tests/page-header.e2e.mjs",
     "test:perf": "node tests/perf-baseline.e2e.mjs",
     "lint": "eslint",
-    "test": "npm run build:electron && node --test tests/database.test.mjs tests/pages.test.mjs tests/page-saver.test.mjs tests/window-state.test.mjs tests/attachments-cleanup.test.mjs tests/markdown-paste.test.mjs tests/slash-filter.test.mjs"
+    "test": "npm run build:electron && node --test tests/database.test.mjs tests/pages.test.mjs tests/page-saver.test.mjs tests/window-state.test.mjs tests/attachments-cleanup.test.mjs tests/attachments.test.mjs tests/markdown-paste.test.mjs tests/slash-filter.test.mjs"
   },
   "dependencies": {
     "@tiptap/core": "^3.32.0",

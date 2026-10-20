@@ -1,6 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  ATTACHMENT_MAX_BYTES,
+  ICON_MAX_BYTES,
+  IMAGE_ACCEPT,
+  IMAGE_FORMATS_LABEL,
+  attachmentErrorMessage,
+  imageTooLargeMessage,
+} from "@/lib/attachment-limits";
 import { getLifeOsApi } from "@/lib/pages-client";
 import { SaveStatusIndicator } from "./save-status-indicator";
 import { useWorkspace } from "./workspace-provider";
@@ -346,33 +354,33 @@ export function PageHeader() {
 
   const handleUploadIcon = async (file: File) => {
     if (!api) return;
-    if (file.size > 5 * 1024 * 1024) {
-      workspace.pushError?.("Icon image must be 5 MB or smaller.");
+    if (file.size > ICON_MAX_BYTES) {
+      workspace.pushError?.(imageTooLargeMessage(ICON_MAX_BYTES));
       return;
     }
-    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
-      workspace.pushError?.("Icon must be PNG, JPG or WebP.");
-      return;
-    }
-    const bytes = await file.arrayBuffer();
     try {
-      const stored = await api.saveAttachment({ mime: file.type, bytes });
+      const bytes = await file.arrayBuffer();
+      const stored = await api.saveAttachment({ bytes });
       await workspace.setPageIcon(workspace.activePageId!, `image:${stored.fileName}`);
       setIconPickerOpen(false);
     } catch (error) {
-      workspace.pushError?.(error instanceof Error ? error.message : "Icon upload failed");
+      workspace.pushError?.(attachmentErrorMessage(error));
     }
   };
 
   const handleUploadCover = async (file: File) => {
     if (!api) return;
-    const bytes = await file.arrayBuffer();
+    if (file.size > ATTACHMENT_MAX_BYTES) {
+      workspace.pushError?.(imageTooLargeMessage(ATTACHMENT_MAX_BYTES));
+      return;
+    }
     try {
-      const stored = await api.saveAttachment({ mime: file.type, bytes });
+      const bytes = await file.arrayBuffer();
+      const stored = await api.saveAttachment({ bytes });
       await workspace.setPageCover(workspace.activePageId!, `image:${stored.fileName}`);
       setCoverMenuOpen(false);
     } catch (error) {
-      workspace.pushError?.(error instanceof Error ? error.message : "Cover upload failed");
+      workspace.pushError?.(attachmentErrorMessage(error));
     }
   };
 
@@ -408,13 +416,13 @@ export function PageHeader() {
       <div className="page-header-upload">
         <input
           type="file"
-          accept="image/png,image/jpeg,image/gif,image/webp,image/avif"
+          accept={IMAGE_ACCEPT}
           onChange={(event) => {
             const file = event.target.files?.[0];
             if (file) void handleUploadCover(file);
           }}
         />
-        <p className="page-header-help">Image upload, up to 20 MB.</p>
+        <p className="page-header-help">{IMAGE_FORMATS_LABEL}, up to 20 MB.</p>
       </div>
       <button
         type="button"
@@ -575,13 +583,13 @@ export function PageHeader() {
                 <div className="page-header-upload">
                   <input
                     type="file"
-                    accept="image/png,image/jpeg,image/webp"
+                    accept={IMAGE_ACCEPT}
                     onChange={(event) => {
                       const file = event.target.files?.[0];
                       if (file) void handleUploadIcon(file);
                     }}
                   />
-                  <p className="page-header-help">PNG, JPG or WebP, up to 5 MB.</p>
+                  <p className="page-header-help">{IMAGE_FORMATS_LABEL}, up to 5 MB.</p>
                 </div>
               )}
             </div>

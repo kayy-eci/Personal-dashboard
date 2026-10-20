@@ -8,7 +8,8 @@
  *
  * Usage: node tests/page-header.e2e.mjs (requires `npm run build` output).
  */
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -19,6 +20,12 @@ const projectRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
+const animatedGif = readFileSync(
+  path.join(projectRoot, "tests/fixtures/animated.gif"),
+);
+const animatedGifHash = createHash("sha256")
+  .update(animatedGif)
+  .digest("hex");
 
 function delay(ms) {
   return new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
@@ -193,6 +200,109 @@ async function main() {
         check(near(cover.width, pane.width), "cover does not fill the narrow pane");
         check(near(cover.height, 180), "cover is not at the 180 px minimum height");
       }
+    }
+
+    step("GIF cover: served as image/gif with the original animated bytes");
+    await app.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0].setSize(1280, 900);
+    });
+    await delay(400);
+    await window.getByRole("button", { name: "Change cover" }).click();
+    await window
+      .locator(".page-header-cover-menu input[type=file]")
+      .setInputFiles({
+        name: "animated.gif",
+        mimeType: "image/gif",
+        buffer: animatedGif,
+      });
+    await window.locator(".page-cover-image").waitFor({ timeout: 10000 });
+    {
+      const src = await window.locator(".page-cover-image").getAttribute("src");
+      check(
+        src === `/attachment/${animatedGifHash}.gif`,
+        `GIF cover src should be the content-addressed .gif, got ${src}`,
+      );
+      const fetched = await window.evaluate(async (url) => {
+        const response = await fetch(url);
+        const bytes = await response.arrayBuffer();
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        const hash = [...new Uint8Array(digest)]
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+        return {
+          contentType: response.headers.get("content-type"),
+          hash,
+          size: bytes.byteLength,
+        };
+      }, src);
+      check(fetched.contentType === "image/gif", "GIF cover is not served as image/gif");
+      check(fetched.hash === animatedGifHash, "GIF cover bytes were re-encoded");
+      check(fetched.size === animatedGif.length, "GIF cover size changed");
+      const decoded = await window.locator(".page-cover-image").evaluate((img) => ({
+        complete: img.complete,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+      }));
+      check(
+        decoded.complete && decoded.naturalWidth === 16 && decoded.naturalHeight === 16,
+        "GIF cover did not decode in Chromium",
+      );
+      const firstFrame = await window.locator(".page-cover").screenshot();
+      await delay(620);
+      const secondFrame = await window.locator(".page-cover").screenshot();
+      check(
+        !firstFrame.equals(secondFrame),
+        "GIF cover is not animating after it is displayed",
+      );
+    }
+
+    step("GIF icon: accepted by the picker and stored as .gif");
+    await window.getByRole("button", { name: "Add icon" }).click();
+    await window.getByRole("button", { name: "Upload" }).click();
+    await window
+      .getByRole("dialog", { name: "Choose icon" })
+      .locator("input[type=file]")
+      .setInputFiles({
+        name: "animated.gif",
+        mimeType: "image/gif",
+        buffer: animatedGif,
+      });
+    await window.locator(".page-header-icon-image img").waitFor({ timeout: 10000 });
+    {
+      const src = await window
+        .locator(".page-header-icon-image img")
+        .getAttribute("src");
+      check(
+        src === `/attachment/${animatedGifHash}.gif`,
+        `GIF icon src should be the content-addressed .gif, got ${src}`,
+      );
+      const fetched = await window.evaluate(async (url) => {
+        const response = await fetch(url);
+        return response.headers.get("content-type");
+      }, src);
+      check(fetched === "image/gif", "GIF icon is not served as image/gif");
+    }
+
+    step("GIF paste in the editor: image block keeps the .gif bytes");
+    {
+      const editor = window.locator(".page-doc-content .ProseMirror");
+      await editor.click();
+      await editor.evaluate((node, base64) => {
+        const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+        const file = new File([bytes], "pasted.gif", { type: "image/gif" });
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        node.dispatchEvent(
+          new ClipboardEvent("paste", {
+            clipboardData: transfer,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      }, animatedGif.toString("base64"));
+      const pasted = editor.locator(`img[src="/attachment/${animatedGifHash}.gif"]`);
+      await pasted.waitFor({ timeout: 10000 });
+      check((await pasted.count()) === 1, "pasted GIF did not become an image block");
     }
   } finally {
     if (app) {

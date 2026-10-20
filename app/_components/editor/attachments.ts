@@ -1,59 +1,69 @@
 import { Extension } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
+import {
+  ATTACHMENT_MAX_BYTES,
+  attachmentErrorMessage,
+  imageTooLargeMessage,
+} from "@/lib/attachment-limits";
 
-const supportedImageMimes = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/gif",
-  "image/webp",
-  "image/avif",
-]);
-
-export function isSupportedImageFile(file: File): boolean {
-  return supportedImageMimes.has(file.type.toLowerCase());
-}
+export type AttachmentErrorHandler = (message: string) => void;
 
 /**
  * FR-1.9: pasted or dropped images are stored as local attachment files
  * (SHA-256 names via the attachments IPC) and never inlined as base64.
+ * The main process reads the image type from the bytes, so the file name or
+ * the browser-declared MIME can never decide how the bytes are served.
  */
 export async function saveAndInsertImage(
   editor: import("@tiptap/core").Editor,
   file: File,
+  onError?: AttachmentErrorHandler,
 ): Promise<boolean> {
   const api = window.lifeos;
   if (!api) {
     return false;
   }
+  if (file.size > ATTACHMENT_MAX_BYTES) {
+    onError?.(imageTooLargeMessage(ATTACHMENT_MAX_BYTES));
+    return false;
+  }
   try {
     const bytes = await file.arrayBuffer();
-    const stored = await api.saveAttachment({ mime: file.type, bytes });
+    const stored = await api.saveAttachment({ bytes });
     editor
       .chain()
       .focus()
       .setImage({ src: stored.urlPath, alt: file.name })
       .run();
     return true;
-  } catch {
-    console.error("LifeOS could not save the attached image");
+  } catch (error) {
+    onError?.(attachmentErrorMessage(error));
     return false;
   }
 }
 
-export const ImagePaste = Extension.create({
+export interface ImagePasteOptions {
+  onError: AttachmentErrorHandler | null;
+}
+
+export const ImagePaste = Extension.create<ImagePasteOptions>({
   name: "imagePaste",
+
+  addOptions() {
+    return { onError: null };
+  },
 
   addProseMirrorPlugins() {
     const editor = this.editor;
+    const onError = this.options.onError ?? undefined;
 
     const handleFiles = (files: readonly File[]): boolean => {
-      const images = files.filter(isSupportedImageFile);
-      if (images.length === 0) {
+      if (files.length === 0) {
         return false;
       }
-      for (const image of images) {
-        void saveAndInsertImage(editor, image);
+      for (const file of files) {
+        void saveAndInsertImage(editor, file, onError);
       }
       return true;
     };

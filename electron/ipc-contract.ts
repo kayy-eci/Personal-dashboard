@@ -12,11 +12,8 @@ import type {
   SetPageIconInput,
 } from "./pages/types";
 import { PAGE_CONTENT_MAX_LENGTH } from "./pages/types";
-import {
-  ATTACHMENT_MAX_BYTES,
-  type StoredAttachment,
-  isSupportedImageMime,
-} from "./attachments/store";
+import { ATTACHMENT_MAX_BYTES } from "../lib/attachment-limits";
+import type { StoredAttachment } from "./attachments/store";
 
 export interface IpcContract {
   "app:get-version": {
@@ -108,7 +105,6 @@ export type MenuAction =
   | "show-shortcuts";
 
 export interface SaveAttachmentInput {
-  mime: string;
   bytes: ArrayBuffer;
 }
 
@@ -126,7 +122,7 @@ const allowedKeys = {
   saveContent: new Set(["pageId", "contentJson"]),
   saveIcon: new Set(["pageId", "icon"]),
   saveCover: new Set(["pageId", "cover"]),
-  saveAttachment: new Set(["mime", "bytes"]),
+  saveAttachment: new Set(["bytes"]),
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -259,7 +255,6 @@ export function isSaveAttachmentArgs(
     args.length === 1 &&
     isRecord(input) &&
     hasOnlyKeys(input, allowedKeys.saveAttachment) &&
-    isSupportedImageMime(input.mime) &&
     input.bytes instanceof ArrayBuffer &&
     input.bytes.byteLength > 0 &&
     input.bytes.byteLength <= ATTACHMENT_MAX_BYTES

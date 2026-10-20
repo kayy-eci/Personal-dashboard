@@ -153,6 +153,7 @@ export function PageDocEditor({ pageId }: { pageId: string }) {
       immediatelyRender: false,
       extensions: createEditorExtensions({
         onCreateSubPage: handleCreateSubPage,
+        onError: pushError,
       }),
       content: initialContent,
       onUpdate: () => {

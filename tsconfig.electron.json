@@ -12,6 +12,7 @@
   },
   "include": [
     "electron/**/*.ts",
+    "lib/attachment-limits.ts",
     "lib/page-saver.ts",
     "lib/markdown-paste.ts",
     "lib/slash-filter.ts",
