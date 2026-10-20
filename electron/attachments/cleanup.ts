@@ -20,16 +20,22 @@ export interface CleanupState {
 /** Extracts every attachment hash referenced by document JSON rows. */
 export function collectReferencedHashes(rows: readonly string[]): Set<string> {
   const referenced = new Set<string>();
-  // A single RegExp instance with /g keeps lastIndex between rows; per-row
-  // instances are safer than a shared one.
   for (const row of rows) {
-    if (!row.includes("/attachment/")) {
+    if (typeof row !== "string") {
       continue;
     }
-    const matches = row.matchAll(
+    // Content JSON stores attachment URLs as /attachment/<hash>.<ext>.
+    const urlMatches = row.matchAll(
       /attachment\/([0-9a-f]{64})\.(?:png|jpe?g|gif|webp|avif)/g,
     );
-    for (const match of matches) {
+    for (const match of urlMatches) {
+      referenced.add(match[1]);
+    }
+    // Page headers store icon/cover as image:<hash>.<ext>.
+    const headerMatches = row.matchAll(
+      /image:([0-9a-f]{64})\.(?:png|jpe?g|gif|webp|avif)/g,
+    );
+    for (const match of headerMatches) {
       referenced.add(match[1]);
     }
   }

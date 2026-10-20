@@ -38,3 +38,14 @@ test("isCleanupDue runs the first time and then at most once per interval", () =
   assert.equal(isCleanupDue({ lastRun: now - 6 * 24 * 60 * 60 * 1000 }, now), false);
   assert.equal(isCleanupDue({ lastRun: now - 7 * 24 * 60 * 60 * 1000 }, now), true);
 });
+test("collectReferencedHashes also keeps page header icon and cover images", () => {
+  const hashA = Array(64).fill("a").join("");
+  const hashB = Array(64).fill("b").join("");
+  const rows = [
+    JSON.stringify({ type: "doc", content: [] }) + " image:" + hashA + ".png",
+    "image:" + hashB + ".webp",
+  ];
+  const hashes = collectReferencedHashes(rows);
+  assert.ok(hashes.has(hashA));
+  assert.ok(hashes.has(hashB));
+});

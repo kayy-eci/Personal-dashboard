@@ -422,12 +422,15 @@ async function scheduleAttachmentCleanup(): Promise<void> {
   }
   try {
     const rows = await database.db
-      .select({ contentJson: pages.contentJson })
+      .select({ contentJson: pages.contentJson, icon: pages.icon, cover: pages.cover })
       .from(pages);
     const result = await cleanupOrphanAttachments({
       userDataDirectory: app.getPath("userData"),
       attachmentsDirectory: attachmentsDirectory(),
-      readRows: async () => rows.map((row) => row.contentJson),
+      readRows: async () =>
+        rows.map((row) =>
+          [row.contentJson, row.icon ?? "", row.cover ?? ""].join(" "),
+        ),
       now: Date.now(),
     });
     if (result && result.removed.length > 0) {
