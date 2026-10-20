@@ -15,7 +15,7 @@
     "package": "npm run build && electron-builder",
     "test:kill": "node tests/forced-kill.e2e.mjs",
     "test:block-menu": "node tests/block-menu.e2e.mjs",
-    "test:block-ids": "node tests/block-ids.e2e.mjs",
+    "test:perf-benchmark": "node tests/perf-benchmark.e2e.mjs",
     "test:editor-smoke": "node tests/editor-smoke.e2e.mjs",
     "test:perf": "node tests/perf-baseline.e2e.mjs",
     "lint": "eslint",
