@@ -8,6 +8,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+## Roadmap
+
+- 10b Page header (FR-2.14): icon + cover + title above every page.
+- 11 Settings window (FR-4.10): trash retention (FR-2.15), data location (FR-3.10).
+
 ## Status (Step 10 — 2026-10-20)
 
 ### P0 requirements not yet verified done

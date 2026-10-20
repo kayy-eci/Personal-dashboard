@@ -178,7 +178,8 @@ Each feature PRD below uses the same structure: problem, goals and non-goals, us
 - FR-2.11 (P1) Backlinks panel listing pages that link to the current one (depends on FR-1.11).
 - FR-2.12 (P1) Page options: full width, small text, lock page (read-only).
 - FR-2.13 (P2) Tabs, split view and multiple windows.
-- FR-2.14 (P1) Trash retention is configurable from the settings window (FR-4.10).
+- FR-2.14 (P1) Page header: optional cover across the content width (fixed height, image cropped to fit) with an icon overlapping the cover's bottom edge, left-aligned with the content column (above the title when there is no cover), then the title. When the icon or cover is missing, "Add icon" and "Add cover" appear on hover above the title (also keyboard reachable). Icon: an emoji or an uploaded image (png, jpg, webp; 5 MB max); clicking opens a picker (emoji list with search, type/paste any emoji, Upload tab, Remove). Cover: a flat color preset from the design guideline palette, or an uploaded image (reuse the attachment store: SHA-256, image-only, SVG rejected, 20 MB max); a "Change cover" menu offers presets, upload and remove. Icons appear in the sidebar and in breadcrumbs.
+- FR-2.15 (P1) Trash retention is configurable from the settings window (FR-4.10).
 
 **Non-functional requirements.**
 

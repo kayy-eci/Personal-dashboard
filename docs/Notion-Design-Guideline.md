@@ -195,7 +195,7 @@ Every margin, padding and gap is a multiple of 4 px. Allowed values: 4, 8, 12, 1
 
 ### 5.9 Icons and covers
 
-- **Spec:** One icon style across the workspace: simple line icons, 16-20 px, in #6B6B6B. Use the accent for at most one icon per page. Covers are optional: a flat #F7F7F7 or #647C64 field with no imagery, text or gradient. Working pages need no cover.
+- **Spec:** One icon style across the workspace: simple line icons, 16-20 px, in #6B6B6B. Use the accent for at most one icon per page. Covers are optional: a flat preset from the design guideline palette, or an uploaded image; no gradients and no text on covers. Working pages need no cover.
 - **Notion:** Choose page icons from the Icons tab (not a mix of emoji and icons), and pick the Gray color consistently. Use a Green icon only for a hub or home page.
 - **Manual:** For a flat cover, create a solid-color image (at least 1500 px wide) in #F7F7F7, upload it through Add cover, then Upload. Notion's color pickers cannot match the HEX value exactly, but an uploaded image can.
 
