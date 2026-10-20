@@ -13,24 +13,37 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 10b Page header (FR-2.14): icon + cover + title above every page.
 - 11 Settings window (FR-4.10): trash retention (FR-2.15), data location (FR-3.10).
 
-## Status (Step 10 — 2026-10-20)
+## Status (Step 10b — 2026-10-20)
 
-### P0 requirements not yet verified done
-- FR-1.8 image paste (clipboard image → image block + file in attachments folder) — no automated test; verify by hand.
-- FR-1.11 internal `[[page]]` links and the backlinks panel (FR-2.11) — no e2e; verify by hand.
-- F2 sidebar UI interactions (drag-move pages, collapse/expand persistence, 200–480 px resize) — no e2e; verify by hand.
-- F5 search (Cmd/Ctrl+K, ranking, open result) — no e2e; verify by hand.
-- FR-4.5 clean-machine installer verification — deferred to the user's dogfooding period; see CI instructions below.
-- FR-2.6 trash retention configurability — deferred to Step 11 (Settings), tied to FR-4.10.
+### Delivered
+- FR-2.14 page header: icon + cover + title above every page (P1).
+- Data: `pages.icon` / `pages.cover` store `emoji:<char>`, `image:<hash>.<ext>`, `color:<#hex>`; typed validated IPC `pages:set-icon` / `pages:set-cover` (malformed + unknown hash rejected), transactional with `updated_at` + `change_log`.
+- Attachment cleanup now treats icon/cover hashes (active + trashed pages) as in use.
+- UI: `PageHeader` with cover, icon, hover controls, emoji picker (search + type/paste + upload + remove), cover menu (presets + upload + remove); Esc + keyboard nav.
+- 16 px icon in sidebar tree and breadcrumbs.
 
-### CI: how to run the workflow and verify the installer on a clean Windows machine
-1. Push the branch (`git push origin feature/lifeos-p0`) or run `gh workflow run build.yml --ref feature/lifeos-p0`. The workflow also triggers on every push to `main` or `feature/**`.
-2. Open the Actions tab, wait for `build-windows` to finish, then download the `LifeOS-windows-installer` artifact (`LifeOS Setup 0.1.0.exe`).
-3. On a clean Windows machine: run the installer (NSIS, unsigned — SmartScreen warning expected, click "More info → Run anyway"), let it install into `%LOCALAPPDATA%\Programs\LifeOS` (or the chosen dir).
-4. Launch "LifeOS" from the Start menu. Confirm the app window opens and the database is created at `%APPDATA%\LifeOS\lifeos.sqlite` (or under `LIFEOS_USER_DATA_DIR` if set).
-5. Create a page, type several blocks, close the app, relaunch, confirm the content persisted (read/write round trip).
-6. Optional durability check: run `npm run test:forced-kill` against a dev build before shipping.
-7. Do NOT mark FR-4.5 done until this clean-machine run is confirmed by the user.
+### P0/P1 not yet verified by hand
+- FR-1.8 image paste (clipboard → image block + file in attachments) — verify by hand.
+- FR-1.11 internal `[[page]]` links + backlinks panel — verify by hand.
+- F2 sidebar UI (drag-move pages, collapse/expand persistence, resize) — verify by hand.
+- F5 search (Cmd/Ctrl+K, ranking, open result) — verify by hand.
+- FR-4.5 clean-machine installer verification — deferred; see CI instructions below.
+
+### How to verify Step 10b by hand
+1. Open a page: hover above the title → "Add icon" and "Add cover" appear. Add an emoji icon and a flat color cover; confirm layout (cover across content width, icon overlapping cover bottom edge, title below). Remove both; confirm controls reappear on hover.
+2. Icon picker: search an emoji, type/paste a custom emoji + Enter, switch to Upload tab and upload a PNG/JPG/WebP (≤5 MB) — icon renders as 78 px image. Test Remove.
+3. Cover menu: pick a flat preset, upload an image, Remove. Confirm no gradients/text on covers.
+4. Restart the app: icon and cover persist.
+5. Trash a page that has a header image, then restore it: icon/cover still present.
+6. Run the cleanup helper (trigger `cleanupOrphanAttachments` or the weekly job) against a workspace containing a page with a header image: confirm the referenced image file survives (not deleted).
+7. Check sidebar (16 px icon, emoji or image) and breadcrumbs (icon before label) update on change.
+8. Light and dark themes: pickers and controls readable; Esc closes pickers; Tab/Enter navigate.
+
+### CI: clean-machine installer verification
+1. Push branch or `gh workflow run build.yml --ref feature/lifeos-p0`; download `LifeOS-windows-installer` artifact.
+2. On a clean Windows machine run the installer (unsigned — SmartScreen "More info → Run anyway").
+3. Launch LifeOS; confirm DB at `%APPDATA%\LifeOS\lifeos.sqlite`; create a page with icon+cover, type, close, relaunch, confirm persistence.
+4. Do not mark FR-4.5 done until confirmed by the user.
 
 ### Next named step
-Step 11 — Settings window (FR-4.10): trash retention (FR-2.6), data location (FR-3.10). Do not start until the user names it.
+Step 11 — Settings window (FR-4.10): trash retention (FR-2.15), data location (FR-3.10). Do not start until the user names it.
