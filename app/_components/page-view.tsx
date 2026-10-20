@@ -1,10 +1,10 @@
 "use client";
 
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment } from "react";
 import { findNode, pathOf, truncateCrumbs } from "@/lib/page-tree";
 import { getLifeOsApi } from "@/lib/pages-client";
 import { PageDocEditor } from "./editor/doc-editor";
-import { SaveStatusIndicator } from "./save-status-indicator";
+import { PageHeader } from "./page-header";
 import { useWorkspace } from "./workspace-provider";
 
 export function PageView() {
@@ -21,7 +21,7 @@ export function PageView() {
   return (
     <main className="page-view">
       <Breadcrumbs />
-      <PageTitle />
+      <PageHeader />
       <article className="page-body">
         <PagePlaceholder />
       </article>
@@ -79,75 +79,6 @@ function Breadcrumbs() {
         );
       })}
     </nav>
-  );
-}
-
-function PageTitle() {
-  const workspace = useWorkspace();
-  const activePage =
-    workspace.tree && workspace.activePageId
-      ? findNode(workspace.tree, workspace.activePageId)
-      : undefined;
-
-  if (!activePage) {
-    return null;
-  }
-
-  return <TitleInput key={`${activePage.id}:${activePage.title}`} initialTitle={activePage.title} />;
-}
-
-function TitleInput({ initialTitle }: { initialTitle: string }) {
-  const workspace = useWorkspace();
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const handledFocusToken = useRef(0);
-
-  useEffect(() => {
-    if (workspace.pageTitleFocusToken > handledFocusToken.current) {
-      handledFocusToken.current = workspace.pageTitleFocusToken;
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-  }, [workspace.pageTitleFocusToken]);
-
-  const commit = (value: string) => {
-    if (!workspace.activePageId) {
-      return;
-    }
-    if (value !== initialTitle && value.trim()) {
-      void workspace.renamePage(workspace.activePageId, value);
-    }
-  };
-
-  return (
-    <header className="page-title-row">
-      <input
-        ref={inputRef}
-        className="page-title-input"
-        type="text"
-        defaultValue={initialTitle}
-        maxLength={500}
-        aria-label="Page title"
-        placeholder="Untitled"
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            commit(event.currentTarget.value);
-            event.currentTarget.blur();
-          } else if (event.key === "Escape") {
-            event.preventDefault();
-            event.currentTarget.value = initialTitle;
-            event.currentTarget.blur();
-          }
-        }}
-        onBlur={(event) => {
-          commit(event.currentTarget.value);
-          if (event.currentTarget.value.trim() === "") {
-            event.currentTarget.value = initialTitle;
-          }
-        }}
-      />
-      <SaveStatusIndicator />
-    </header>
   );
 }
 
