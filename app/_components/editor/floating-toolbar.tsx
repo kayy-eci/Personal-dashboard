@@ -81,9 +81,16 @@ export function FloatingToolbar({ editor }: { editor: Editor }) {
 
   // FR-1.3: Ctrl/Cmd+K opens the link editor on the current selection; a
   // collapsed cursor selects the word under it first.
+  //
+  // The listener lives on the document because the editor view is created
+  // asynchronously: on the first effect pass `editor.view` is not mounted yet
+  // (Tiptap throws "The editor view is not available"). The handler checks
+  // readiness before touching the view.
   useEffect(() => {
-    const dom = editor.view.dom;
     const openLinkEditor = (event: KeyboardEvent): void => {
+      if (!editor.isInitialized || !editor.isFocused) {
+        return;
+      }
       if (
         !event.altKey &&
         (event.ctrlKey || event.metaKey) &&
@@ -101,8 +108,8 @@ export function FloatingToolbar({ editor }: { editor: Editor }) {
         setEditingLink(true);
       }
     };
-    dom.addEventListener("keydown", openLinkEditor);
-    return () => dom.removeEventListener("keydown", openLinkEditor);
+    document.addEventListener("keydown", openLinkEditor);
+    return () => document.removeEventListener("keydown", openLinkEditor);
   }, [editor]);
 
   const closeLinkEditor = () => {

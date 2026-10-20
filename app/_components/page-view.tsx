@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useSyncExternalStore } from "react";
 import { PageTreeNode } from "@/electron/pages/types";
 import { findNode, pathOf, truncateCrumbs } from "@/lib/page-tree";
 import { getLifeOsApi } from "@/lib/pages-client";
@@ -8,8 +8,25 @@ import { PageDocEditor } from "./editor/doc-editor";
 import { PageHeader } from "./page-header";
 import { useWorkspace } from "./workspace-provider";
 
+const emptySubscribe = () => () => {};
+
+/**
+ * False during the static-export prerender and the hydration render, true
+ * after hydration. Keeps the first client render identical to the server
+ * markup while `window.lifeos` only exists in the desktop renderer.
+ */
+function useIsClient(): boolean {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+}
+
 export function PageView() {
-  if (!getLifeOsApi()) {
+  const isClient = useIsClient();
+
+  if (!isClient || !getLifeOsApi()) {
     return (
       <main className="page-view">
         <div className="page-empty-state">

@@ -60,7 +60,6 @@ const EMOJI_LIST: { emoji: string; name: string }[] = [
   { emoji: "🤠", name: "cowboy" },
   { emoji: "🥳", name: "party" },
   { emoji: "🥸", name: "disguise" },
-  { emoji: "😎", name: "cool" },
   { emoji: "🤓", name: "nerd" },
   { emoji: "🧐", name: "monocle" },
   { emoji: "😕", name: "confused" },
@@ -215,7 +214,6 @@ const EMOJI_LIST: { emoji: string; name: string }[] = [
   { emoji: "🐬", name: "dolphin" },
   { emoji: "🦂", name: "scorpion" },
   { emoji: "🕷️", name: "spider" },
-  { emoji: "🐢", name: "tortoise" },
   { emoji: "🍎", name: "apple" },
   { emoji: "🍊", name: "orange" },
   { emoji: "🍋", name: "lemon" },
@@ -261,7 +259,6 @@ const EMOJI_LIST: { emoji: string; name: string }[] = [
   { emoji: "🛕", name: "hindu temple" },
   { emoji: "🕍", name: "synagogue" },
   { emoji: "⛩️", name: "shinto shrine" },
-  { emoji: "エネルギー", name: "energy" },
 ];
 
 const ICON_DISPLAY = (value: string | null): { kind: "emoji" | "image" | null; value: string } => {
