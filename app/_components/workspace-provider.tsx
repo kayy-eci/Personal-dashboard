@@ -69,6 +69,8 @@ export interface WorkspaceActions {
   toggleExpanded: (pageId: string) => void;
   createPage: (options?: { parentId?: string | null }) => Promise<void>;
   renamePage: (pageId: string, title: string) => Promise<boolean>;
+  setPageIcon: (pageId: string, icon: string | null) => Promise<boolean>;
+  setPageCover: (pageId: string, cover: string | null) => Promise<boolean>;
   movePage: (request: MoveRequest) => Promise<boolean>;
   deletePage: (pageId: string) => Promise<void>;
   restorePage: (pageId: string) => Promise<void>;
@@ -403,6 +405,42 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     [loadTree, pushError],
   );
 
+  const setPageIcon = useCallback(
+    async (pageId: string, icon: string | null) => {
+      try {
+        await runPageOperation("setPageIcon", (api) =>
+          api.savePageIcon({ pageId, icon }),
+        );
+        await loadTree();
+        return true;
+      } catch (error) {
+        pushError(
+          error instanceof Error ? error.message : "The page icon could not be updated",
+        );
+        return false;
+      }
+    },
+    [loadTree, pushError],
+  );
+
+  const setPageCover = useCallback(
+    async (pageId: string, cover: string | null) => {
+      try {
+        await runPageOperation("setPageCover", (api) =>
+          api.savePageCover({ pageId, cover }),
+        );
+        await loadTree();
+        return true;
+      } catch (error) {
+        pushError(
+          error instanceof Error ? error.message : "The page cover could not be updated",
+        );
+        return false;
+      }
+    },
+    [loadTree, pushError],
+  );
+
   const movePageRaw = useCallback(
     async (request: MoveRequest) => {
       try {
@@ -616,6 +654,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       toggleExpanded,
       createPage,
       renamePage,
+
+      setPageIcon,
+      setPageCover,
       movePage,
       deletePage,
       restorePage,
@@ -654,6 +695,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       toggleExpanded,
       createPage,
       renamePage,
+
+      setPageIcon,
+      setPageCover,
       movePage,
       deletePage,
       restorePage,

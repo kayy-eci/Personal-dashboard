@@ -4,11 +4,9 @@
  *
  * Usage:
  *   node scripts/seed-workspace.mjs [targetUserDataDir] [--pages 5000]
- *
- * The target directory is created if missing; an existing lifeos.sqlite there
- * is removed first (this is a dev-only seeding tool).
  */
 import { mkdirSync, rmSync, existsSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -32,12 +30,15 @@ for (let index = 0; index < args.length; index += 1) {
   }
 }
 
-import { pathToFileURL } from "node:url";
-
-// ...
-const { openDatabase } = await import(pathToFileURL(path.join(projectRoot, "dist-electron", "electron", "database", "index.js")).href);
-const { PageRepository } = await import(pathToFileURL(path.join(projectRoot, "dist-electron", "electron", "pages", "repository.js")).href);
-const schema = await import(pathToFileURL(path.join(projectRoot, "dist-electron", "electron", "database", "schema.js")).href);
+const { openDatabase } = await import(
+  pathToFileURL(path.join(projectRoot, "dist-electron", "electron", "database", "index.js")).href,
+);
+const { PageRepository } = await import(
+  pathToFileURL(path.join(projectRoot, "dist-electron", "electron", "pages", "repository.js")).href,
+);
+const schema = await import(
+  pathToFileURL(path.join(projectRoot, "dist-electron", "electron", "database", "schema.js")).href,
+);
 
 mkdirSync(targetDir, { recursive: true });
 const dbFile = path.join(targetDir, "lifeos.sqlite");
@@ -70,14 +71,6 @@ const startedAt = Date.now();
 
 const roots = Math.ceil(Math.cbrt(pageCount));
 let created = 0;
-const createOne = (title, parentId) => {
-  const page = repository.createPage({ title, parentId });
-  repository.saveContent(page.id, { contentJson });
-  created += 1;
-  if (created % 500 === 0) {
-    console.log(`  ${created}/${pageCount}`);
-  }
-};
 
 for (let rootIndex = 0; rootIndex < roots && created < pageCount; rootIndex += 1) {
   const root = repository.createPage({ title: `Root ${rootIndex + 1}` });
@@ -103,6 +96,9 @@ for (let rootIndex = 0; rootIndex < roots && created < pageCount; rootIndex += 1
       });
       repository.saveContent(grand.id, { contentJson });
       created += 1;
+      if (created % 500 === 0) {
+        console.log(`  ${created}/${pageCount}`);
+      }
     }
   }
 }

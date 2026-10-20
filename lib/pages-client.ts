@@ -51,6 +51,8 @@ const operationFallbacks = {
   getPageContent: "The page content could not be loaded",
   saveContent: "The page could not be saved",
   saveAttachment: "The image could not be saved",
+  setPageIcon: "The page icon could not be updated",
+  setPageCover: "The page cover could not be updated",
 } as const;
 
 export type LifeOsApiOperation = keyof typeof operationFallbacks;
