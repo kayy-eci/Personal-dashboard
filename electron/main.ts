@@ -497,6 +497,7 @@ void app.whenReady().then(async () => {
     databaseConnection.db,
     databaseConnection.sqlite,
     device.id,
+    attachmentsDirectory(),
   );
   protocol.handle(appScheme, serveExport);
   buildApplicationMenu();

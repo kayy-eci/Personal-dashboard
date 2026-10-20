@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import type Database from "better-sqlite3";
 import type { LifeOsDatabase } from "../database";
@@ -146,6 +148,38 @@ function pageTreeNode(page: PageRecord): PageTreeNode {
   };
 }
 
+export function isValidPageIcon(value: string | null): boolean {
+  if (value === null) return true;
+  if (typeof value !== "string" || value.length === 0 || value.length > 200) {
+    return false;
+  }
+  if (value.startsWith("emoji:")) {
+    const char = value.slice("emoji:".length);
+    return char.length > 0 && char.length <= 16;
+  }
+  if (value.startsWith("image:")) {
+    const fileName = value.slice("image:".length);
+    return /^([0-9a-f]{64})\.(png|jpg|jpeg|gif|webp|avif)$/i.test(fileName);
+  }
+  return false;
+}
+
+export function isValidPageCover(value: string | null): boolean {
+  if (value === null) return true;
+  if (typeof value !== "string" || value.length === 0 || value.length > 200) {
+    return false;
+  }
+  if (value.startsWith("color:")) {
+    const hex = value.slice("color:".length);
+    return /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(hex);
+  }
+  if (value.startsWith("image:")) {
+    const fileName = value.slice("image:".length);
+    return /^([0-9a-f]{64})\.(png|jpg|jpeg|gif|webp|avif)$/i.test(fileName);
+  }
+  return false;
+}
+
 export class PageRepository {
   private readonly isDescendantStatement: Database.Statement<
     [string, string],
@@ -156,6 +190,7 @@ export class PageRepository {
     private readonly db: LifeOsDatabase,
     private readonly sqlite: InstanceType<typeof Database>,
     private readonly deviceId: string,
+    private readonly attachmentsDirectory?: string,
   ) {
     this.isDescendantStatement = sqlite.prepare<[string, string], { found: number }>(
       `WITH RECURSIVE descendants(id) AS (
@@ -309,6 +344,72 @@ export class PageRepository {
       this.logChange(pageId, "update", {
         contentLength: normalizedJson.length,
         schemaVersion: nextSchemaVersion,
+      }, timestamp);
+      return this.requirePage(pageId);
+    });
+  }
+
+  setPageIcon(pageId: string, icon: string | null): PageRecord {
+    if (!isValidPageIcon(icon)) {
+      throw new PageRepositoryError("INVALID_INPUT", "Page icon is invalid");
+    }
+    if (icon && icon.startsWith("image:")) {
+      const fileName = icon.slice("image:".length);
+      if (
+        this.attachmentsDirectory &&
+        !existsSync(join(this.attachmentsDirectory, fileName))
+      ) {
+        throw new PageRepositoryError(
+          "INVALID_INPUT",
+          "Page icon references an unknown attachment",
+        );
+      }
+    }
+
+    return this.transact(() => {
+      const currentPage = this.requireActivePage(pageId);
+      const timestamp = new Date().toISOString();
+      this.db
+        .update(pages)
+        .set({ icon, updatedAt: timestamp })
+        .where(eq(pages.id, pageId))
+        .run();
+      this.logChange(pageId, "update", {
+        previousIcon: currentPage.icon,
+        icon,
+      }, timestamp);
+      return this.requirePage(pageId);
+    });
+  }
+
+  setPageCover(pageId: string, cover: string | null): PageRecord {
+    if (!isValidPageCover(cover)) {
+      throw new PageRepositoryError("INVALID_INPUT", "Page cover is invalid");
+    }
+    if (cover && cover.startsWith("image:")) {
+      const fileName = cover.slice("image:".length);
+      if (
+        this.attachmentsDirectory &&
+        !existsSync(join(this.attachmentsDirectory, fileName))
+      ) {
+        throw new PageRepositoryError(
+          "INVALID_INPUT",
+          "Page cover references an unknown attachment",
+        );
+      }
+    }
+
+    return this.transact(() => {
+      const currentPage = this.requireActivePage(pageId);
+      const timestamp = new Date().toISOString();
+      this.db
+        .update(pages)
+        .set({ cover, updatedAt: timestamp })
+        .where(eq(pages.id, pageId))
+        .run();
+      this.logChange(pageId, "update", {
+        previousCover: currentPage.cover,
+        cover,
       }, timestamp);
       return this.requirePage(pageId);
     });

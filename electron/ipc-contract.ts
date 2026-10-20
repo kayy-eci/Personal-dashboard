@@ -8,6 +8,8 @@ import type {
   PageTreeNode,
   RenamePageInput,
   SavePageContentInput,
+  SetPageCoverInput,
+  SetPageIconInput,
 } from "./pages/types";
 import { PAGE_CONTENT_MAX_LENGTH } from "./pages/types";
 import {
@@ -65,6 +67,14 @@ export interface IpcContract {
     args: [input: SavePageContentInput];
     result: PageRecord;
   };
+  "pages:set-icon": {
+    args: [input: SetPageIconInput];
+    result: PageRecord;
+  };
+  "pages:set-cover": {
+    args: [input: SetPageCoverInput];
+    result: PageRecord;
+  };
   "attachments:save": {
     args: [input: SaveAttachmentInput];
     result: StoredAttachment;
@@ -114,6 +124,8 @@ const allowedKeys = {
   pageId: new Set(["pageId"]),
   rename: new Set(["pageId", "title"]),
   saveContent: new Set(["pageId", "contentJson"]),
+  saveIcon: new Set(["pageId", "icon"]),
+  saveCover: new Set(["pageId", "cover"]),
   saveAttachment: new Set(["mime", "bytes"]),
 };
 
@@ -203,6 +215,27 @@ export function hasNoIpcArgs(args: unknown[]): args is [] {
   return args.length === 0;
 }
 
+export function isSetPageIconArgs(args: unknown[]): args is [SetPageIconInput] {
+  const [input] = args;
+  return (
+    args.length === 1 &&
+    isRecord(input) &&
+    hasOnlyKeys(input, allowedKeys.saveIcon) &&
+    isPageId(input.pageId) &&
+    (input.icon === null || (typeof input.icon === "string" && input.icon.length > 0 && input.icon.length <= 200))
+  );
+}
+
+export function isSetPageCoverArgs(args: unknown[]): args is [SetPageCoverInput] {
+  const [input] = args;
+  return (
+    args.length === 1 &&
+    isRecord(input) &&
+    hasOnlyKeys(input, allowedKeys.saveCover) &&
+    isPageId(input.pageId) &&
+    (input.cover === null || (typeof input.cover === "string" && input.cover.length > 0 && input.cover.length <= 200))
+  );
+}
 export function isSavePageContentArgs(
   args: unknown[],
 ): args is [SavePageContentInput] {
@@ -245,6 +278,8 @@ export interface LifeOsAPI {
   listTrash(): Promise<PageTrashEntry[]>;
   getPageContent(input: PageIdInput): Promise<PageContent>;
   savePageContent(input: SavePageContentInput): Promise<PageRecord>;
+  savePageIcon(input: SetPageIconInput): Promise<PageRecord>;
+  savePageCover(input: SetPageCoverInput): Promise<PageRecord>;
   saveAttachment(input: SaveAttachmentInput): Promise<StoredAttachment>;
   onRequestFlush(callback: () => void): () => void;
   signalFlushDone(): void;

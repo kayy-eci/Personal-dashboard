@@ -13,8 +13,15 @@ import {
   isPageIdArgs,
   isRenamePageArgs,
   isSavePageContentArgs,
+  isSetPageCoverArgs,
+  isSetPageIconArgs,
 } from "../dist-electron/electron/ipc-contract.js";
-import { PageRepository, PageRepositoryError } from "../dist-electron/electron/pages/repository.js";
+import {
+  isValidPageCover,
+  isValidPageIcon,
+  PageRepository,
+  PageRepositoryError,
+} from "../dist-electron/electron/pages/repository.js";
 
 async function withRepository(run) {
   const directory = mkdtempSync(path.join(os.tmpdir(), "lifeos-pages-"));
@@ -656,4 +663,85 @@ test("validates every page IPC input shape and rejects extra or malformed fields
     isSavePageContentArgs([{ pageId, contentJson: "x".repeat(5 * 1024 * 1024) }]),
     false,
   );
+});
+test("isSetPageIconArgs and isSetPageCoverArgs validate their shapes", () => {
+  const pageId = uuidv7();
+  assert.equal(isSetPageIconArgs([{ pageId, icon: null }]), true);
+  assert.equal(isSetPageIconArgs([{ pageId, icon: "emoji:X" }]), true);
+  assert.equal(isSetPageIconArgs([{ pageId, icon: "image:" + "a".repeat(64) + ".png" }]), true);
+  assert.equal(isSetPageIconArgs([{ pageId, icon: "bad" }]), true);
+  assert.equal(isSetPageIconArgs([{ pageId, icon: "" }]), false);
+  assert.equal(isSetPageIconArgs([{ pageId, icon: "emoji:X", extra: 1 }]), false);
+
+  assert.equal(isSetPageCoverArgs([{ pageId, cover: null }]), true);
+  assert.equal(isSetPageCoverArgs([{ pageId, cover: "color:#647C64" }]), true);
+  assert.equal(isSetPageCoverArgs([{ pageId, cover: "image:" + "b".repeat(64) + ".webp" }]), true);
+  assert.equal(isSetPageCoverArgs([{ pageId, cover: "color:red" }]), true);
+  assert.equal(isSetPageCoverArgs([{ pageId, cover: "gradient:#fff" }]), true);
+  assert.equal(isSetPageCoverArgs([{ pageId }]), false);
+});
+
+test("isValidPageIcon and isValidPageCover accept the documented value shapes", () => {
+  assert.equal(isValidPageIcon(null), true);
+  assert.equal(isValidPageIcon("emoji:X"), true);
+  assert.equal(isValidPageIcon("image:" + "c".repeat(64) + ".png"), true);
+  assert.equal(isValidPageIcon("image:" + "c".repeat(63) + ".png"), false);
+  assert.equal(isValidPageIcon("color:#fff"), false);
+  assert.equal(isValidPageIcon("emoji:"), false);
+
+  assert.equal(isValidPageCover(null), true);
+  assert.equal(isValidPageCover("color:#F7F7F7"), true);
+  assert.equal(isValidPageCover("color:#abc"), true);
+  assert.equal(isValidPageCover("color:#12345678"), true);
+  assert.equal(isValidPageCover("image:" + "d".repeat(64) + ".jpg"), true);
+  assert.equal(isValidPageCover("image:" + "d".repeat(64) + ".svg"), false);
+  assert.equal(isValidPageCover("flat:#fff"), false);
+});
+
+test("setPageIcon and setPageCover persist, log changes, and reject bad input", async () => {
+  await withRepository(async ({ repository, connection }) => {
+    const page = repository.createPage();
+
+    const withIcon = repository.setPageIcon(page.id, "emoji:X");
+    assert.equal(withIcon.icon, "emoji:X");
+
+    const cleared = repository.setPageIcon(page.id, null);
+    assert.equal(cleared.icon, null);
+
+    repository.setPageCover(page.id, "color:#647C64");
+    const withCover = repository.setPageCover(page.id, "color:#647C64");
+    assert.equal(withCover.cover, "color:#647C64");
+
+    for (const bad of ["", "emoji:", "image:not-a-hash.png", "color:red", "gradient:#fff", "flat"]) {
+      assert.throws(() => repository.setPageIcon(page.id, bad), PageRepositoryError);
+    }
+    for (const bad of ["", "color:red", "image:not-a-hash.png", "flat:#fff"]) {
+      assert.throws(() => repository.setPageCover(page.id, bad), PageRepositoryError);
+    }
+
+    const attachmentsDir = mkdtempSync(path.join(os.tmpdir(), "lifeos-attachments-"));
+    const conn2Dir = mkdtempSync(path.join(os.tmpdir(), "lifeos-pages2-"));
+    const conn2 = await openDatabase(conn2Dir);
+    try {
+      const dev = conn2.sqlite.prepare("SELECT id FROM devices LIMIT 1").get();
+      const repo2 = new PageRepository(conn2.db, conn2.sqlite, dev.id, attachmentsDir);
+      const p2 = repo2.createPage();
+      const hash = "f".repeat(64);
+      assert.throws(() => repo2.setPageIcon(p2.id, `image:${hash}.png`), PageRepositoryError);
+      assert.throws(() => repo2.setPageCover(p2.id, `image:${hash}.png`), PageRepositoryError);
+      const { writeFileSync } = await import("node:fs");
+      writeFileSync(path.join(attachmentsDir, `${hash}.png`), "x");
+      const accepted = repo2.setPageIcon(p2.id, `image:${hash}.png`);
+      assert.equal(accepted.icon, `image:${hash}.png`);
+    } finally {
+      conn2.sqlite.close();
+      rmSync(conn2Dir, { recursive: true, force: true });
+      rmSync(attachmentsDir, { recursive: true, force: true });
+    }
+
+    const count = connection.sqlite
+      .prepare("SELECT COUNT(*) AS count FROM change_log WHERE entity_id = ?")
+      .get(page.id).count;
+    assert.ok(count >= 3);
+  });
 });

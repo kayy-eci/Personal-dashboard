@@ -7,6 +7,8 @@ import {
   isPageIdArgs,
   isRenamePageArgs,
   isSavePageContentArgs,
+  isSetPageCoverArgs,
+  isSetPageIconArgs,
 } from "../ipc-contract";
 import { registerIpcHandler } from "../ipc-main";
 import { PageRepository, PageRepositoryError } from "./repository";
@@ -107,6 +109,24 @@ export function registerPageIpcHandlers(
         getRepository().saveContent(input.pageId, {
           contentJson: input.contentJson,
         }),
+      ),
+  );
+  registerIpcHandler(
+    "pages:set-icon",
+    isSetPageIconArgs,
+    validateSender,
+    (_event, input) =>
+      runPageOperation(() =>
+        getRepository().setPageIcon(input.pageId, input.icon),
+      ),
+  );
+  registerIpcHandler(
+    "pages:set-cover",
+    isSetPageCoverArgs,
+    validateSender,
+    (_event, input) =>
+      runPageOperation(() =>
+        getRepository().setPageCover(input.pageId, input.cover),
       ),
   );
 }

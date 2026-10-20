@@ -24,6 +24,16 @@ export interface SavePageContentInput {
   contentJson: string;
 }
 
+export interface SetPageIconInput {
+  pageId: string;
+  icon: string | null;
+}
+
+export interface SetPageCoverInput {
+  pageId: string;
+  cover: string | null;
+}
+
 /** Upper bound for stored page documents. */
 export const PAGE_CONTENT_MAX_LENGTH = 4 * 1024 * 1024;
 

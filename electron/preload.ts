@@ -26,6 +26,8 @@ const lifeosApi: LifeOsAPI = {
   listTrash: () => invokeIpc("pages:list-trash"),
   getPageContent: (input) => invokeIpc("pages:get-content", input),
   savePageContent: (input) => invokeIpc("pages:save-content", input),
+  savePageIcon: (input) => invokeIpc("pages:set-icon", input),
+  savePageCover: (input) => invokeIpc("pages:set-cover", input),
   saveAttachment: (input) => invokeIpc("attachments:save", input),
   onRequestFlush: (callback) => {
     const listener = () => {
