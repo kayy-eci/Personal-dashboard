@@ -85,12 +85,13 @@ body {
   flex: 1;
   flex-direction: column;
   overflow: hidden auto;
-  padding: 24px 64px;
+  padding: 0;
 }
 
 .page-body {
-  width: 100%;
+  width: auto;
   max-width: 720px;
+  margin-inline: 64px;
 }
 
 /* -------------------------------------------------------------- sidebar */
@@ -417,9 +418,11 @@ body {
   align-items: center;
   gap: 6px;
   min-height: 32px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+  padding: 16px 64px 0;
   width: 100%;
-  max-width: 720px;
+  max-width: 848px;
+  box-sizing: border-box;
   font-size: 14px;
   line-height: 20px;
   color: var(--color-text-muted);
@@ -1367,60 +1370,121 @@ body {
 .page-header {
   position: relative;
   width: 100%;
-  max-width: 720px;
   margin-bottom: 8px;
 }
 
 .page-cover {
+  position: relative;
   width: 100%;
-  height: 200px;
-  border-radius: 6px;
-  overflow: hidden;
+  height: clamp(180px, 30vh, 400px);
   background: var(--color-surface);
-  margin-bottom: 0;
 }
 
 .page-cover-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   display: block;
 }
 
-.page-header-body {
-  position: relative;
-  padding-top: 8px;
-}
-
-.page-header-add-cover,
-.page-header-change-cover {
+.page-cover-toolbar {
   position: absolute;
-  top: 8px;
-  right: 0;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
   opacity: 0;
   transition: opacity 120ms ease;
-  background: var(--color-surface);
+}
+
+.page-cover:hover .page-cover-toolbar,
+.page-cover:focus-within .page-cover-toolbar {
+  opacity: 1;
+}
+
+.page-cover-toolbar-button {
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 12px;
+  line-height: 16px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+}
+
+.page-cover-toolbar .page-header-popover {
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+}
+
+.page-header-body {
+  position: relative;
+}
+
+.page-header-content {
+  position: relative;
+  width: auto;
+  max-width: 720px;
+  margin-inline: 64px;
+}
+
+.page-header:not(.has-cover) .page-header-content {
+  padding-top: 24px;
+}
+
+.page-header.has-cover .page-header-content {
+  padding-top: 0;
+}
+
+.page-header-add-cover,
+.page-header-add-icon {
+  position: absolute;
+  top: 0;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 16px;
   color: var(--color-text-muted);
   cursor: pointer;
 }
 
+.page-header-add-cover {
+  right: 0;
+}
+
+.page-header-add-icon {
+  left: 0;
+}
+
 .page-header:hover .page-header-add-cover,
 .page-header:focus-within .page-header-add-cover,
-.page-header:hover .page-header-change-cover,
-.page-header:focus-within .page-header-change-cover {
+.page-header:hover .page-header-add-icon,
+.page-header:focus-within .page-header-add-icon {
   opacity: 1;
 }
 
 .page-header-icon-row {
-  margin-bottom: 4px;
-  min-height: 24px;
+  width: 78px;
+  height: 78px;
+}
+
+.page-header.has-cover .page-header-icon-row {
+  margin-top: -39px;
 }
 
 .page-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -1430,39 +1494,34 @@ body {
 
 .page-header-icon-emoji {
   font-size: 78px;
-  line-height: 1.1;
 }
 
 .page-header-icon-image {
-  width: 78px;
-  height: 78px;
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
-  display: inline-block;
 }
 
 .page-header-icon-image img {
-  width: 100%;
-  height: 100%;
+  width: 78px;
+  height: 78px;
   object-fit: cover;
   display: block;
 }
 
-.page-header-add-icon {
-  opacity: 0;
-  transition: opacity 120ms ease;
-  background: transparent;
-  border: 1px dashed var(--color-border);
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 13px;
-  color: var(--color-text-muted);
-  cursor: pointer;
+.page-title-row {
+  margin-top: 0;
 }
 
-.page-header:hover .page-header-add-icon,
-.page-header:focus-within .page-header-add-icon {
-  opacity: 1;
+.page-header.has-icon .page-title-row {
+  margin-top: 24px;
+}
+
+.page-header.has-cover .page-title-row {
+  margin-top: 40px;
+}
+
+.page-header.has-cover.has-icon .page-title-row {
+  margin-top: 33px;
 }
 
 .page-header-popover {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { getLifeOsApi } from "@/lib/pages-client";
 import { SaveStatusIndicator } from "./save-status-indicator";
 import { useWorkspace } from "./workspace-provider";
@@ -268,15 +268,20 @@ const ICON_DISPLAY = (value: string | null): { kind: "emoji" | "image" | null; v
   return { kind: null, value: "" };
 };
 
-function CoverView({ cover }: { cover: string }) {
+function CoverView({ cover, children }: { cover: string; children?: ReactNode }) {
   if (cover.startsWith("color:")) {
-    return <div className="page-cover" style={{ background: cover.slice(6) }} />;
+    return (
+      <div className="page-cover" style={{ background: cover.slice(6) }}>
+        {children}
+      </div>
+    );
   }
   if (cover.startsWith("image:")) {
     const file = cover.slice(6);
     return (
       <div className="page-cover">
         <img src={`/attachment/${file}`} alt="" className="page-cover-image" />
+        {children}
       </div>
     );
   }
@@ -292,7 +297,6 @@ export function PageHeader() {
 
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [coverMenuOpen, setCoverMenuOpen] = useState(false);
-  const [hover, setHover] = useState(false);
   const [emojiQuery, setEmojiQuery] = useState("");
   const [customEmoji, setCustomEmoji] = useState("");
   const [uploadTab, setUploadTab] = useState<"emoji" | "upload">("emoji");
@@ -379,54 +383,87 @@ export function PageHeader() {
       )
     : EMOJI_LIST;
 
+  const coverMenu = coverMenuOpen ? (
+    <div
+      ref={coverMenuRef}
+      className="page-header-popover page-header-cover-menu"
+      role="dialog"
+      aria-label="Change cover"
+    >
+      <div className="page-header-cover-presets">
+        {COVER_PRESETS.map((color) => (
+          <button
+            key={color}
+            type="button"
+            className="page-header-cover-preset"
+            style={{ background: color }}
+            aria-label={`Cover color ${color}`}
+            onClick={() => {
+              void workspace.setPageCover(workspace.activePageId!, `color:${color}`);
+              setCoverMenuOpen(false);
+            }}
+          />
+        ))}
+      </div>
+      <div className="page-header-upload">
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/gif,image/webp,image/avif"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void handleUploadCover(file);
+          }}
+        />
+        <p className="page-header-help">Image upload, up to 20 MB.</p>
+      </div>
+      <button
+        type="button"
+        className="page-header-remove"
+        onClick={() => {
+          void workspace.setPageCover(workspace.activePageId!, null);
+          setCoverMenuOpen(false);
+        }}
+      >
+        Remove cover
+      </button>
+    </div>
+  ) : null;
+
   return (
     <div
-      className="page-header"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      className={`page-header${activePage.cover ? " has-cover" : ""}${
+        iconInfo.kind ? " has-icon" : ""
+      }`}
     >
-      {activePage.cover ? <CoverView cover={activePage.cover} /> : null}
+      {activePage.cover ? (
+        <CoverView cover={activePage.cover}>
+          <div className="page-cover-toolbar">
+            <button
+              type="button"
+              className="page-cover-toolbar-button"
+              data-cover-menu-toggle
+              onClick={() => setCoverMenuOpen(true)}
+            >
+              Change cover
+            </button>
+            {coverMenu}
+          </div>
+        </CoverView>
+      ) : null}
 
       <div className="page-header-body">
-        {!activePage.cover && hover ? (
-          <button
-            type="button"
-            className="page-header-add-cover"
-            onClick={() => setCoverMenuOpen(true)}
-          >
-            Add cover
-          </button>
-        ) : null}
-        {activePage.cover && hover ? (
-          <button
-            type="button"
-            className="page-header-change-cover"
-            onClick={() => setCoverMenuOpen(true)}
-          >
-            Change cover
-          </button>
-        ) : null}
-
-        <div className="page-header-icon-row">
-          {iconInfo.kind === "emoji" ? (
+        <div className="page-header-content">
+          {!activePage.cover ? (
             <button
               type="button"
-              className="page-header-icon page-header-icon-emoji"
-              onClick={() => setIconPickerOpen(true)}
-              aria-label="Change page icon"
+              className="page-header-add-cover"
+              data-cover-menu-toggle
+              onClick={() => setCoverMenuOpen(true)}
             >
-              {iconInfo.value}
+              Add cover
             </button>
-          ) : iconInfo.kind === "image" ? (
-            <button
-              type="button"
-              className="page-header-icon page-header-icon-image"
-              onClick={() => setIconPickerOpen(true)}
-              aria-label="Change page icon"
-            >
-              <img src={`/attachment/${iconInfo.value}`} alt="" />
-            </button>
-          ) : hover ? (
+          ) : null}
+          {!iconInfo.kind ? (
             <button
               type="button"
               className="page-header-add-icon"
@@ -435,138 +472,123 @@ export function PageHeader() {
               Add icon
             </button>
           ) : null}
-        </div>
 
-        <TitleInput initialTitle={activePage.title} />
-
-        {iconPickerOpen ? (
-          <div ref={iconPickerRef} className="page-header-popover" role="dialog" aria-label="Choose icon">
-            <div className="page-header-popover-tabs">
-              <button
-                type="button"
-                className={uploadTab === "emoji" ? "active" : ""}
-                onClick={() => setUploadTab("emoji")}
-              >
-                Emoji
-              </button>
-              <button
-                type="button"
-                className={uploadTab === "upload" ? "active" : ""}
-                onClick={() => setUploadTab("upload")}
-              >
-                Upload
-              </button>
-            </div>
-            {uploadTab === "emoji" ? (
-              <>
-                <input
-                  type="search"
-                  className="page-header-popover-search"
-                  placeholder="Search emoji"
-                  value={emojiQuery}
-                  onChange={(event) => setEmojiQuery(event.target.value)}
-                  aria-label="Search emoji"
-                />
-                <input
-                  type="text"
-                  className="page-header-popover-custom"
-                  placeholder="Type or paste any emoji"
-                  value={customEmoji}
-                  onChange={(event) => setCustomEmoji(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && customEmoji.trim()) {
-                      event.preventDefault();
-                      void workspace.setPageIcon(workspace.activePageId!, `emoji:${customEmoji.trim()}`);
-                      setCustomEmoji("");
-                      setIconPickerOpen(false);
-                    }
-                  }}
-                  aria-label="Custom emoji"
-                />
-                <div className="page-header-emoji-grid">
-                  {filteredEmoji.map((entry) => (
-                    <button
-                      key={entry.emoji}
-                      type="button"
-                      className="page-header-emoji-button"
-                      title={entry.name}
-                      aria-label={entry.name}
-                      onClick={() => {
-                        void workspace.setPageIcon(workspace.activePageId!, `emoji:${entry.emoji}`);
-                        setIconPickerOpen(false);
-                      }}
-                    >
-                      {entry.emoji}
-                    </button>
-                  ))}
-                </div>
+          {iconInfo.kind ? (
+            <div className="page-header-icon-row">
+              {iconInfo.kind === "emoji" ? (
                 <button
                   type="button"
-                  className="page-header-remove"
-                  onClick={() => {
-                    void workspace.setPageIcon(workspace.activePageId!, null);
-                    setIconPickerOpen(false);
-                  }}
+                  className="page-header-icon page-header-icon-emoji"
+                  onClick={() => setIconPickerOpen(true)}
+                  aria-label="Change page icon"
                 >
-                  Remove
+                  {iconInfo.value}
                 </button>
-              </>
-            ) : (
-              <div className="page-header-upload">
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) void handleUploadIcon(file);
-                  }}
-                />
-                <p className="page-header-help">PNG, JPG or WebP, up to 5 MB.</p>
-              </div>
-            )}
-          </div>
-        ) : null}
-
-        {coverMenuOpen ? (
-          <div ref={coverMenuRef} className="page-header-popover page-header-cover-menu" role="dialog" aria-label="Change cover">
-            <div className="page-header-cover-presets">
-              {COVER_PRESETS.map((color) => (
+              ) : (
                 <button
-                  key={color}
                   type="button"
-                  className="page-header-cover-preset"
-                  style={{ background: color }}
-                  aria-label={`Cover color ${color}`}
-                  onClick={() => {
-                    void workspace.setPageCover(workspace.activePageId!, `color:${color}`);
-                    setCoverMenuOpen(false);
-                  }}
-                />
-              ))}
+                  className="page-header-icon page-header-icon-image"
+                  onClick={() => setIconPickerOpen(true)}
+                  aria-label="Change page icon"
+                >
+                  <img src={`/attachment/${iconInfo.value}`} alt="" />
+                </button>
+              )}
             </div>
-            <div className="page-header-upload">
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/gif,image/webp,image/avif"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void handleUploadCover(file);
-                }}
-              />
-              <p className="page-header-help">Image upload, up to 20 MB.</p>
+          ) : null}
+
+          <TitleInput initialTitle={activePage.title} />
+
+          {iconPickerOpen ? (
+            <div ref={iconPickerRef} className="page-header-popover" role="dialog" aria-label="Choose icon">
+              <div className="page-header-popover-tabs">
+                <button
+                  type="button"
+                  className={uploadTab === "emoji" ? "active" : ""}
+                  onClick={() => setUploadTab("emoji")}
+                >
+                  Emoji
+                </button>
+                <button
+                  type="button"
+                  className={uploadTab === "upload" ? "active" : ""}
+                  onClick={() => setUploadTab("upload")}
+                >
+                  Upload
+                </button>
+              </div>
+              {uploadTab === "emoji" ? (
+                <>
+                  <input
+                    type="search"
+                    className="page-header-popover-search"
+                    placeholder="Search emoji"
+                    value={emojiQuery}
+                    onChange={(event) => setEmojiQuery(event.target.value)}
+                    aria-label="Search emoji"
+                  />
+                  <input
+                    type="text"
+                    className="page-header-popover-custom"
+                    placeholder="Type or paste any emoji"
+                    value={customEmoji}
+                    onChange={(event) => setCustomEmoji(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && customEmoji.trim()) {
+                        event.preventDefault();
+                        void workspace.setPageIcon(workspace.activePageId!, `emoji:${customEmoji.trim()}`);
+                        setCustomEmoji("");
+                        setIconPickerOpen(false);
+                      }
+                    }}
+                    aria-label="Custom emoji"
+                  />
+                  <div className="page-header-emoji-grid">
+                    {filteredEmoji.map((entry) => (
+                      <button
+                        key={entry.emoji}
+                        type="button"
+                        className="page-header-emoji-button"
+                        title={entry.name}
+                        aria-label={entry.name}
+                        onClick={() => {
+                          void workspace.setPageIcon(workspace.activePageId!, `emoji:${entry.emoji}`);
+                          setIconPickerOpen(false);
+                        }}
+                      >
+                        {entry.emoji}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="page-header-remove"
+                    onClick={() => {
+                      void workspace.setPageIcon(workspace.activePageId!, null);
+                      setIconPickerOpen(false);
+                    }}
+                  >
+                    Remove
+                  </button>
+                </>
+              ) : (
+                <div className="page-header-upload">
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void handleUploadIcon(file);
+                    }}
+                  />
+                  <p className="page-header-help">PNG, JPG or WebP, up to 5 MB.</p>
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              className="page-header-remove"
-              onClick={() => {
-                void workspace.setPageCover(workspace.activePageId!, null);
-                setCoverMenuOpen(false);
-              }}
-            >
-              Remove cover
-            </button>
-          </div>
-        ) : null}
+          ) : null}
+
+          {!activePage.cover ? coverMenu : null}
+        </div>
       </div>
     </div>
   );
