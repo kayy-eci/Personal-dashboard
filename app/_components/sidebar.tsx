@@ -419,11 +419,22 @@ function TreeRow({ node, depth }: TreeRowProps) {
 type PageIconProps = { node: PageTreeNode };
 
 function PageIconNode({ node }: PageIconProps) {
-  if (node.icon) {
+  if (node.icon?.startsWith("emoji:")) {
     return (
-      <span className="tree-row-icon" aria-hidden>
-        {node.icon}
+      <span className="tree-row-icon tree-row-icon-emoji" aria-hidden>
+        {node.icon.slice(6)}
       </span>
+    );
+  }
+  if (node.icon?.startsWith("image:")) {
+    const file = node.icon.slice(6);
+    return (
+      <img
+        src={`/attachment/${file}`}
+        alt=""
+        className="tree-row-icon tree-row-icon-image"
+        aria-hidden
+      />
     );
   }
   return <FileIcon className="tree-row-icon svg-icon" aria-hidden />;

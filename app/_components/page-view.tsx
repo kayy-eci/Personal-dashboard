@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import { PageTreeNode } from "@/electron/pages/types";
 import { findNode, pathOf, truncateCrumbs } from "@/lib/page-tree";
 import { getLifeOsApi } from "@/lib/pages-client";
 import { PageDocEditor } from "./editor/doc-editor";
@@ -64,7 +65,7 @@ function Breadcrumbs() {
             ) : null}
             {isCurrent ? (
               <span className="breadcrumb-current" aria-current="page">
-                {label}
+                <BreadcrumbIcon pageId={pageId} tree={workspace.tree} /> {label}
               </span>
             ) : (
               <button
@@ -72,7 +73,7 @@ function Breadcrumbs() {
                 className="breadcrumb-link"
                 onClick={() => workspace.selectPage(pageId)}
               >
-                {label}
+                <BreadcrumbIcon pageId={pageId} tree={workspace.tree} /> {label}
               </button>
             )}
           </Fragment>
@@ -80,6 +81,25 @@ function Breadcrumbs() {
       })}
     </nav>
   );
+}
+
+function BreadcrumbIcon({ pageId, tree }: { pageId: string; tree: unknown }) {
+  const node = findNode(Array.isArray(tree) ? (tree as PageTreeNode[]) : [], pageId);
+  const icon = node?.icon;
+  if (icon?.startsWith("emoji:")) {
+    return <span className="breadcrumb-icon" aria-hidden>{icon.slice(6)}</span>;
+  }
+  if (icon?.startsWith("image:")) {
+    return (
+      <img
+        src={`/attachment/${icon.slice(6)}`}
+        alt=""
+        className="breadcrumb-icon breadcrumb-icon-image"
+        aria-hidden
+      />
+    );
+  }
+  return null;
 }
 
 function PagePlaceholder() {

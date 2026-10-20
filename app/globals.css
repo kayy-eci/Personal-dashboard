@@ -306,11 +306,24 @@ body {
 
 .tree-row-icon {
   flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 14px;
+  line-height: 1;
 }
 
 .tree-row-icon.svg-icon {
   color: var(--sb-icon);
+}
+
+.tree-row-icon-image {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  object-fit: cover;
 }
 
 .tree-row-toggle {
@@ -1564,4 +1577,20 @@ body {
 .page-header-cover-menu {
   left: auto;
   right: 0;
+}
+.breadcrumb-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 14px;
+  line-height: 1;
+  margin-inline-end: 4px;
+  vertical-align: middle;
+}
+
+.breadcrumb-icon-image {
+  border-radius: 3px;
+  object-fit: cover;
 }
